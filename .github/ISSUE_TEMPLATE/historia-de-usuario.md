@@ -12,7 +12,7 @@ assignees: ''
 **I want** [acción a realizar]
 **So that** [valor o beneficio]
 
-### Acceptance Criteria
+### Acceptance Criterio
 **Scenario:** [Título del escenario]
 **Given** [estado inicial o contexto]
 **And** [contexto adicional]
