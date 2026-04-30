@@ -1,7 +1,7 @@
 ## 📝 Descripción de la Solución
 [Describe brevemente qué hace este Pull Request y cómo soluciona el requerimiento]
 
-**Resuelve el Issue:** #[Escribe el número del Issue aquí, ej: #12]
+**Resuelve el Issue:** #[Escribe el número del Issue aquí]
 
 ## 🛠️ Tipo de cambio (Marca con una X)
 - [ ] ✨ Nueva funcionalidad (Feature)
@@ -10,10 +10,10 @@
 - [ ] ⚙️ Infraestructura / DevOps / CI-CD
 - [ ] 📝 Documentación
 
-## ✅ Checklist de Calidad (Quality Gate manual)
+## ✅ Checklist de Calidad
 Antes de solicitar revisión, asegúrate de cumplir con lo siguiente:
 - [ ] Mi código compila localmente sin errores.
-- [ ] He probado que se cumplen los Criterios de Aceptación (Gherkin) de la Historia de Usuario.
+- [ ] He probado que se cumplen los Criterios de Aceptación de la Historia de Usuario.
 - [ ] El código no tiene alertas graves en la extensión SonarLint.
 - [ ] He añadido/actualizado las pruebas unitarias correspondientes (cobertura > 60%).
 
