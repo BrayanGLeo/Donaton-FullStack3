@@ -1,7 +1,7 @@
 ## 📝 Descripción de la Solución
 [Describe brevemente qué hace este Pull Request y cómo soluciona el requerimiento]
 
-**Resuelve el Issue:** #[Escribe el número del Issue aquí, ej: #12]
+**Resuelve el Issue:** #[Escribe el número del Issue aquí]
 
 ## 🛠️ Tipo de solucion (Marca con una X)
 - [ ] 🐛 Solución de error (hotfixes)
