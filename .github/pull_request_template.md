@@ -3,14 +3,13 @@
 
 **Resuelve el Issue:** #[Escribe el número del Issue aquí, ej: #12]
 
-## 🛠️ Tipo de cambio (Marca con una X)
-- [ ] ✨ Nueva funcionalidad (Feature)
-- [ ] 🐛 Solución de error (Bug fix)
-- [ ] ♻️ Refactorización de código
-- [ ] ⚙️ Infraestructura / DevOps / CI-CD
-- [ ] 📝 Documentación
+## 🛠️ Tipo de solucion (Marca con una X)
+- [ ] 🐛 Solución de error (hotfixes)
+- [ ] ♻️ Prueba temporal (relase branches)
+- [ ] ⚙️ Desarrollo (develop)
+- [ ] ✨ Nueva funcionalidad (Feature branches)
 
-## ✅ Checklist de Calidad (Quality Gate manual)
+## ✅ Checklist de Calidad
 Antes de solicitar revisión, asegúrate de cumplir con lo siguiente:
 - [ ] Mi código compila localmente sin errores.
 - [ ] He probado que se cumplen los Criterios de Aceptación (Gherkin) de la Historia de Usuario.
