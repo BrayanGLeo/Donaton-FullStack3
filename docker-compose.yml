@@ -1,0 +1,42 @@
+services:
+  # Base de Datos MySQL
+  mysql-server:
+    image: mysql:8.0
+    container_name: donaton-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password_123
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./db-init:/docker-entrypoint-initdb.d
+      - mysql-data:/var/lib/mysql
+    networks:
+      - donaton-network
+
+  # Servidor de Calidad SonarQube (US-13)
+  sonarqube:
+    image: sonarqube:lts-community
+    container_name: donaton-sonarqube
+    restart: always
+    ports:
+      - "9000:9000"
+    environment:
+      - SONAR_FORCEAUTHENTICATION=false
+    volumes:
+      - sonarqube-data:/opt/sonarqube/data
+      - sonarqube-logs:/opt/sonarqube/logs
+      - sonarqube-extensions:/opt/sonarqube/extensions
+    networks:
+      - donaton-network
+
+# Definición de redes y volúmenes persistentes
+networks:
+  donaton-network:
+    driver: bridge
+
+volumes:
+  mysql-data:
+  sonarqube-data:
+  sonarqube-logs:
+  sonarqube-extensions:
