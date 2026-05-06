@@ -1,0 +1,38 @@
+name: Integración Continua Donatón (CI)
+
+# El pipeline se disparará cuando se haga un Pull Request hacia la rama main
+on:
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    name: Compilación y Pruebas Unitarias
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 📥 Descargar código fuente
+      uses: actions/checkout@v4
+
+    - name: ☕ Configurar Java 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: maven
+
+    - name: 🚀 Compilar y Ejecutar Pruebas (Microservicios)
+      run: |
+        echo "Buscando microservicios Maven en el repositorio..."
+        POM_FILES=$(find . -mindepth 2 -name "pom.xml" -type f)
+        
+        if [ -z "$POM_FILES" ]; then
+          echo "No se encontraron proyectos Maven todavía. Todo en orden."
+        else
+          for pom in $POM_FILES; do
+            echo "========================================="
+            echo "⚙️ Compilando microservicio: $pom"
+            echo "========================================="
+            mvn clean verify -f "$pom" --batch-mode --fail-at-end
+          done
+        fi
