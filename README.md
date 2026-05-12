@@ -14,4 +14,4 @@ Para iniciar la infraestructura, ejecuta en la raíz del proyecto:
 ```bash
 docker-compose up -d
 
-mvn clean verify sonar:sonar -Dsonar.projectKey=donaton-plataforma -Dsonar.host.url=http://localhost:9000 -Dsonar.login=TU_TOKEN_AQUI
+.\mvnw.cmd clean verify sonar:sonar "-Dsonar.projectKey=donaton-plataforma" "-Dsonar.host.url=http://localhost:9000" "-Dsonar.login=sqp_08e204b11ce2d11ab56ee01bc9b70dd400ab4f8c"
