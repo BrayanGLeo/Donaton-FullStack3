@@ -2,6 +2,13 @@
     "configurations": [
         {
             "type": "java",
+            "name": "DonatonAuthApplication",
+            "request": "launch",
+            "mainClass": "com.donaton.donaton_auth.DonatonAuthApplication",
+            "projectName": ""
+        },
+        {
+            "type": "java",
             "name": "DonatonBffApplication",
             "request": "launch",
             "mainClass": "com.donaton.donaton_bff.DonatonBffApplication",
@@ -36,6 +43,17 @@
             "cwd": "${workspaceFolder}",
             "mainClass": "com.donaton.donaton_bff.DonatonBffApplication",
             "projectName": "donaton-bff",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env",
+            "vmArgs": " -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=52685 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dspring.jmx.enabled=true -Djava.rmi.server.hostname=localhost -Dspring.application.admin.enabled=true -Dspring.boot.project.name=donaton-bff"
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-DonatonAuthApplication<donaton-auth>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.donaton.donaton_auth.DonatonAuthApplication",
+            "projectName": "donaton-auth",
             "args": "",
             "envFile": "${workspaceFolder}/.env"
         }
