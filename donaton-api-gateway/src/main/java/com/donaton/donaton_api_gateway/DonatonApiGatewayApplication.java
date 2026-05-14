@@ -6,8 +6,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class DonatonApiGatewayApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(DonatonApiGatewayApplication.class, args);
-	}
-
+    public static void main(String[] args) {
+        SpringApplication.run(DonatonApiGatewayApplication.class, args);
+    }
 }
