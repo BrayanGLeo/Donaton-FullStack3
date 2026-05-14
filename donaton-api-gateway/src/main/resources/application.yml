@@ -1,0 +1,17 @@
+server:
+    port: 8081
+
+spring:
+    application:
+        name: donaton-api-gateway
+    cloud:
+        gateway:
+            discovery:
+                locator:
+                    enabled: true
+                    lower-case-service-id: true
+
+eureka:
+    client:
+        service-url:
+            defaultZone: http://localhost:8761/eureka/
