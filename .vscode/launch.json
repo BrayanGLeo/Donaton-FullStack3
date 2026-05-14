@@ -2,11 +2,40 @@
     "configurations": [
         {
             "type": "java",
+            "name": "DonatonBffApplication",
+            "request": "launch",
+            "mainClass": "com.donaton.donaton_bff.DonatonBffApplication",
+            "projectName": ""
+        },
+        {
+            "type": "java",
             "name": "Spring Boot-DonatonEurekaServerApplication<donaton-eureka-server>",
             "request": "launch",
             "cwd": "${workspaceFolder}",
             "mainClass": "com.donaton.donaton_eureka_server.DonatonEurekaServerApplication",
             "projectName": "donaton-eureka-server",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env",
+            "vmArgs": " -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=36347 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dspring.jmx.enabled=true -Djava.rmi.server.hostname=localhost -Dspring.application.admin.enabled=true -Dspring.boot.project.name=donaton-eureka-server"
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-DonatonApiGatewayApplication<donaton-api-gateway>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.donaton.donaton_api_gateway.DonatonApiGatewayApplication",
+            "projectName": "donaton-api-gateway",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env",
+            "vmArgs": " -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=9182 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dspring.jmx.enabled=true -Djava.rmi.server.hostname=localhost -Dspring.application.admin.enabled=true -Dspring.boot.project.name=donaton-api-gateway"
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-DonatonBffApplication<donaton-bff>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.donaton.donaton_bff.DonatonBffApplication",
+            "projectName": "donaton-bff",
             "args": "",
             "envFile": "${workspaceFolder}/.env"
         }
