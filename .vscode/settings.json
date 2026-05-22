@@ -2,7 +2,5 @@
     "sonarlint.connectedMode.project": {
         "connectionId": "Sonar Local",
         "projectKey": "donaton-plataforma"
-    },
-    "java.configuration.updateBuildConfiguration": "interactive",
-    "java.compile.nullAnalysis.mode": "automatic"
+    }
 }
