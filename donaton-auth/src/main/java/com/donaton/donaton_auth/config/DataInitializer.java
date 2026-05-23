@@ -1,5 +1,7 @@
 package com.donaton.donaton_auth.config;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
@@ -11,6 +13,8 @@ import com.donaton.donaton_auth.repository.UsuarioRepository;
 
 @Configuration
 public class DataInitializer {
+
+    private static final Logger logger = LoggerFactory.getLogger(DataInitializer.class);
 
     @Value("${donaton.admin.password}")
     private String adminPassword;
@@ -27,7 +31,7 @@ public class DataInitializer {
 
                 repository.save(testUser);
 
-                System.out.println("Usuario de prueba creado: admin@donaton.cl");
+                logger.info("Usuario de prueba creado: admin@donaton.cl");
             }
         };
     }
