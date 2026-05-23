@@ -6,6 +6,7 @@ import com.donaton.donaton_donaciones.repository.DonacionRepository;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class DonacionService {
@@ -23,9 +24,12 @@ public class DonacionService {
         donacion.setFechaRegistro(LocalDateTime.now());
         
         Donacion donacionGuardada = repository.save(donacion);
-        
         rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.ROUTING_KEY, donacionGuardada);
         
         return donacionGuardada;
+    }
+
+    public List<Donacion> obtenerTodas() {
+        return repository.findAll();
     }
 }
