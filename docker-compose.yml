@@ -1,16 +1,16 @@
 services:
-  # Base de Datos MySQL
-  mysql-server:
+  # CAPA DE ALMACENAMIENTO (BASES DE DATOS AISLADAS)
+  mysql-auth:
     image: mysql:8.0
-    container_name: donaton-mysql
+    container_name: donaton-mysql-auth
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: root_password_123
+      MYSQL_DATABASE: donaton_db
     ports:
       - "3306:3306"
     volumes:
-      - ./db-init:/docker-entrypoint-initdb.d
-      - mysql-data:/var/lib/mysql
+      - mysql-auth-data:/var/lib/mysql
     networks:
       - donaton-network
     healthcheck:
@@ -19,7 +19,64 @@ services:
       timeout: 5s
       retries: 5
 
-  # Servidor de Calidad SonarQube
+  mysql-donaciones:
+    image: mysql:8.0
+    container_name: donaton-mysql-donaciones
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password_123
+      MYSQL_DATABASE: donaciones_db
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-donaciones-data:/var/lib/mysql
+    networks:
+      - donaton-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot_password_123"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mysql-logistica:
+    image: mysql:8.0
+    container_name: donaton-mysql-logistica
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password_123
+      MYSQL_DATABASE: logistica_db
+    ports:
+      - "3308:3306"
+    volumes:
+      - mysql-logistica-data:/var/lib/mysql
+    networks:
+      - donaton-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot_password_123"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mysql-necesidades:
+    image: mysql:8.0
+    container_name: donaton-mysql-necesidades
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password_123
+      MYSQL_DATABASE: necesidades_db
+    ports:
+      - "3309:3306"
+    volumes:
+      - mysql-necesidades-data:/var/lib/mysql
+    networks:
+      - donaton-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot_password_123"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # SOPORTE Y CALIDAD
   sonarqube:
     image: sonarqube:lts-community
     container_name: donaton-sonarqube
@@ -35,7 +92,6 @@ services:
     networks:
       - donaton-network
 
-  # Broker de Mensajería RabbitMQ
   rabbitmq:
     image: rabbitmq:3.13-management
     container_name: donaton-rabbitmq
@@ -51,7 +107,59 @@ services:
       timeout: 5s
       retries: 5
 
-  # Microservicio de Donaciones
+  # SERVICIOS DE INFRAESTRUCTURA CORE
+  donaton-eureka-server:
+    build:
+      context: ./donaton-eureka-server
+      dockerfile: Dockerfile
+    container_name: donaton-eureka-server
+    restart: always
+    ports:
+      - "8761:8761"
+    networks:
+      - donaton-network
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8761/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  donaton-api-gateway:
+    build:
+      context: ./donaton-api-gateway
+      dockerfile: Dockerfile
+    container_name: donaton-api-gateway
+    restart: always
+    ports:
+      - "8081:8081"
+    environment:
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://donaton-eureka-server:8761/eureka/
+    depends_on:
+      donaton-eureka-server:
+        condition: service_healthy
+    networks:
+      - donaton-network
+
+  # MICROSERVICIOS DE NEGOCIO Y AUTENTICACIÓN
+  donaton-auth:
+    build:
+      context: ./donaton-auth
+      dockerfile: Dockerfile
+    container_name: donaton-auth
+    restart: always
+    ports:
+      - "8084:8084"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-auth:3306/donaton_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://donaton-eureka-server:8761/eureka/
+    depends_on:
+      mysql-auth:
+        condition: service_healthy
+      donaton-eureka-server:
+        condition: service_healthy
+    networks:
+      - donaton-network
+
   donaton-donaciones:
     build:
       context: ./donaton-donaciones
@@ -61,26 +169,47 @@ services:
     ports:
       - "8085:8085"
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-server:3306/donaciones_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-      - SPRING_DATASOURCE_USERNAME=donaton_user
-      - SPRING_DATASOURCE_PASSWORD=donaton_password
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-donaciones:3306/donaciones_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root_password_123
       - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://donaton-eureka-server:8761/eureka/
       - SPRING_RABBITMQ_HOST=rabbitmq
     depends_on:
-      mysql-server:
+      mysql-donaciones:
         condition: service_healthy
       rabbitmq:
+        condition: service_healthy
+      donaton-eureka-server:
         condition: service_healthy
     networks:
       - donaton-network
 
-# Definición de redes y volúmenes persistentes
+  donaton-bff:
+    build:
+      context: ./donaton-bff
+      dockerfile: Dockerfile
+    container_name: donaton-bff
+    restart: always
+    ports:
+      - "8083:8083"
+    environment:
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://donaton-eureka-server:8761/eureka/
+    depends_on:
+      donaton-eureka-server:
+        condition: service_healthy
+    networks:
+      - donaton-network
+
+# Configuración de Almacenamiento Persistente Volumétrico
 networks:
   donaton-network:
     driver: bridge
 
 volumes:
-  mysql-data:
+  mysql-auth-data:
+  mysql-donaciones-data:
+  mysql-logistica-data:
+  mysql-necesidades-data:
   sonarqube-data:
   sonarqube-logs:
   sonarqube-extensions:
