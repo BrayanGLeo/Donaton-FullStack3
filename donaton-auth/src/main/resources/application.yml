@@ -11,7 +11,6 @@ spring:
         password: root_password_123
         driver-class-name: com.mysql.cj.jdbc.Driver
         
-    
     jpa:
         show-sql: true
         hibernate:
@@ -24,3 +23,7 @@ eureka:
     client:
         service-url:
             defaultZone: http://localhost:8761/eureka/
+
+donaton:
+    admin:
+        password: "123456"
