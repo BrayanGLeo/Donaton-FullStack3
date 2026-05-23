@@ -100,14 +100,18 @@
 
 	<build>
 		<plugins>
-			<plugin>
-				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-maven-plugin</artifactId>
-			</plugin>
-			<plugin>
+<plugin>
 				<groupId>org.jacoco</groupId>
 				<artifactId>jacoco-maven-plugin</artifactId>
 				<version>0.8.11</version>
+				<configuration>
+					<excludes>
+						<exclude>com/donaton/donaton_auth/config/**</exclude>
+						<exclude>com/donaton/donaton_auth/dto/**</exclude>
+						<exclude>com/donaton/donaton_auth/entity/**</exclude>
+						<exclude>com/donaton/donaton_auth/*Application*</exclude>
+					</excludes>
+				</configuration>
 				<executions>
 					<execution>
 						<goals>
