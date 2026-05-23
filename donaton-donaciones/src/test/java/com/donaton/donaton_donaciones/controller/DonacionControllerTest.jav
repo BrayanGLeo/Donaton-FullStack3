@@ -12,9 +12,12 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -60,5 +63,19 @@ class DonacionControllerTest {
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.recurso").value("Mantas"))
                 .andExpect(jsonPath("$.estado").value("Pendiente"));
+    }
+
+    @Test
+    void testListarDonacionesEndpoint() throws Exception {
+        List<Donacion> listaMock = Arrays.asList(donacionMock);
+        when(donacionService.obtenerTodas()).thenReturn(listaMock);
+
+        mockMvc.perform(get("/api/donaciones")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$[0].id").value(1))
+                .andExpect(jsonPath("$[0].recurso").value("Mantas"))
+                .andExpect(jsonPath("$[0].estado").value("Pendiente"));
     }
 }

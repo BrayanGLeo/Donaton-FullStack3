@@ -12,6 +12,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -62,11 +64,24 @@ class DonacionServiceTest {
         assertNotNull(resultado.getFechaRegistro());
 
         verify(repository).save(donacionEntrada);
-
         verify(rabbitTemplate).convertAndSend(
                 eq(RabbitMQConfig.EXCHANGE),
                 eq(RabbitMQConfig.ROUTING_KEY),
                 eq(donacionGuardada)
         );
+    }
+
+    @Test
+    void testObtenerTodas() {
+        List<Donacion> listaSimulada = Arrays.asList(donacionGuardada);
+        when(repository.findAll()).thenReturn(listaSimulada);
+
+        List<Donacion> resultado = donacionService.obtenerTodas();
+
+        assertNotNull(resultado);
+        assertEquals(1, resultado.size());
+        assertEquals("Agua Embotellada", resultado.get(0).getRecurso());
+        
+        verify(repository).findAll();
     }
 }
