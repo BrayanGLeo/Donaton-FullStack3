@@ -2,6 +2,13 @@
     "configurations": [
         {
             "type": "java",
+            "name": "DonatonDonacionesApplication",
+            "request": "launch",
+            "mainClass": "com.donaton.donaton_donaciones.DonatonDonacionesApplication",
+            "projectName": "donaton-donaciones"
+        },
+        {
+            "type": "java",
             "name": "DonatonBffApplication",
             "request": "launch",
             "mainClass": "com.donaton.donaton_bff.DonatonBffApplication",
@@ -36,6 +43,16 @@
             "cwd": "${workspaceFolder}",
             "mainClass": "com.donaton.donaton_bff.DonatonBffApplication",
             "projectName": "donaton-bff",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-DonatonAuthApplication<donaton-auth>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.donaton.donaton_auth.DonatonAuthApplication",
+            "projectName": "donaton-auth",
             "args": "",
             "envFile": "${workspaceFolder}/.env"
         }

@@ -13,8 +13,13 @@ services:
       - mysql-data:/var/lib/mysql
     networks:
       - donaton-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot_password_123"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  # Servidor de Calidad SonarQube (US-13)
+  # Servidor de Calidad SonarQube
   sonarqube:
     image: sonarqube:lts-community
     container_name: donaton-sonarqube
@@ -27,6 +32,45 @@ services:
       - sonarqube-data:/opt/sonarqube/data
       - sonarqube-logs:/opt/sonarqube/logs
       - sonarqube-extensions:/opt/sonarqube/extensions
+    networks:
+      - donaton-network
+
+  # Broker de Mensajería RabbitMQ
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: donaton-rabbitmq
+    restart: always
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - donaton-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Microservicio de Donaciones
+  donaton-donaciones:
+    build:
+      context: ./donaton-donaciones
+      dockerfile: Dockerfile
+    container_name: donaton-donaciones
+    restart: always
+    ports:
+      - "8085:8085"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-server:3306/donaciones_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=donaton_user
+      - SPRING_DATASOURCE_PASSWORD=donaton_password
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://donaton-eureka-server:8761/eureka/
+      - SPRING_RABBITMQ_HOST=rabbitmq
+    depends_on:
+      mysql-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     networks:
       - donaton-network
 
