@@ -14,4 +14,4 @@ Para iniciar la infraestructura, ejecuta en la raíz del proyecto:
 ```bash
 docker-compose up -d
 
-.\mvnw.cmd clean verify sonar:sonar "-Dsonar.projectKey="nombre de microservicio a testear"" "-Dsonar.host.url=http://localhost:9000/" "-Dsonar.login=squ_0f04117e7b2c9d048625dbe86c1e7b63834435fd"
+mvn clean verify sonar:sonar "-Dsonar.projectKey=donaton-logistica" "-Dsonar.host.url=http://localhost:9000/" "-Dsonar.login=squ_5c7845ca9ba8bc70c9a26a9f088e10d83c870e61"
