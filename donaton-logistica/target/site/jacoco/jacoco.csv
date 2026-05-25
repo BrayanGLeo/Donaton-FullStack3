@@ -1,6 +1,10 @@
 GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+donaton-logistica,com.donaton.logistica.dto,DespachoRequestDTO,15,31,0,0,6,14,1,9,1,9
 donaton-logistica,com.donaton.logistica.dto,DonacionEventDTO,9,29,0,0,3,14,3,8,3,8
-donaton-logistica,com.donaton.logistica.entity,Inventario,14,19,0,0,7,8,4,4,4,4
+donaton-logistica,com.donaton.logistica.entity,Despacho,42,21,0,0,19,8,12,2,12,2
+donaton-logistica,com.donaton.logistica.entity,Inventario,3,30,0,0,1,14,1,7,1,7
+donaton-logistica,com.donaton.logistica.controller,DespachoController,16,0,0,0,5,0,2,0,2,0
 donaton-logistica,com.donaton.logistica.config,RabbitMQConfig,7,0,0,0,2,0,2,0,2,0
 donaton-logistica,com.donaton.logistica,DonatonLogisticaApplication,8,0,0,0,3,0,2,0,2,0
 donaton-logistica,com.donaton.logistica.service,LogisticaService,0,51,0,2,0,11,0,3,0,2
+donaton-logistica,com.donaton.logistica.service,DespachoService,5,77,0,4,0,18,1,4,1,2
