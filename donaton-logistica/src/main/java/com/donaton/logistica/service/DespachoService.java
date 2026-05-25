@@ -47,4 +47,14 @@ public class DespachoService {
         );
         return despachoRepository.save(despacho);
     }
+
+    @Transactional(readOnly = true)
+    public java.util.List<Inventario> obtenerInventario() {
+        return inventarioRepository.findAll();
+    }
+
+    @Transactional(readOnly = true)
+    public java.util.List<Despacho> obtenerDespachos() {
+        return despachoRepository.findAll();
+    }
 }

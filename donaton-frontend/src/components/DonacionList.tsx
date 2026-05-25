@@ -19,6 +19,7 @@ export const DonacionList: React.FC<Props> = ({ refreshTrigger }) => {
         const data = await listarDonaciones();
         setDonaciones(data);
       } catch (err) {
+        console.error(err);
         setError('Ocurrió un error al cargar las donaciones.');
       } finally {
         setIsLoading(false);

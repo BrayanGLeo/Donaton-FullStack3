@@ -22,4 +22,9 @@ public class DespachoController {
         Despacho despacho = despachoService.asignarTransporte(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(despacho);
     }
+
+    @GetMapping
+    public ResponseEntity<java.util.List<Despacho>> obtenerDespachos() {
+        return ResponseEntity.ok(despachoService.obtenerDespachos());
+    }
 }
