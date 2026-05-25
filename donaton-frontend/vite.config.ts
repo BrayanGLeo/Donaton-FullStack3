@@ -6,8 +6,12 @@ export default defineConfig({
   server: {
     port: 3000,
     proxy: {
-      '/api': {
+      '/api/donaciones': {
         target: 'http://127.0.0.1:8085',
+        changeOrigin: true,
+      },
+      '/api/logistica': {
+        target: 'http://127.0.0.1:8086',
         changeOrigin: true,
       }
     }

@@ -1,0 +1,37 @@
+import axios from 'axios';
+
+export interface InventarioItem {
+  id: number;
+  recurso: string;
+  cantidadTotal: number;
+}
+
+export interface DespachoRequest {
+  inventarioId: number;
+  cantidad: number;
+  vehiculo: string;
+  horario: string;
+}
+
+export interface DespachoItem {
+  id: number;
+  inventarioId: number;
+  cantidadDespachada: number;
+  vehiculo: string;
+  estado: string;
+}
+
+export const obtenerInventario = async (): Promise<InventarioItem[]> => {
+  const response = await axios.get('/api/logistica/inventario');
+  return response.data;
+};
+
+export const obtenerDespachos = async (): Promise<DespachoItem[]> => {
+  const response = await axios.get('/api/logistica/despachos');
+  return response.data;
+};
+
+export const asignarTransporte = async (request: DespachoRequest): Promise<DespachoItem> => {
+  const response = await axios.post('/api/logistica/despachos', request);
+  return response.data;
+};
