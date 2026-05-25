@@ -9,7 +9,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.core.AmqpTemplate;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -28,7 +28,7 @@ class DonacionServiceTest {
     private DonacionRepository repository;
 
     @Mock
-    private RabbitTemplate rabbitTemplate;
+    private AmqpTemplate rabbitTemplate;
 
     @InjectMocks
     private DonacionService donacionService;
