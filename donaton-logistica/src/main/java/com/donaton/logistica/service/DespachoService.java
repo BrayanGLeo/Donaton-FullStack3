@@ -22,7 +22,11 @@ public class DespachoService {
     @Transactional
     public Despacho asignarTransporte(DespachoRequestDTO request) {
         // Regla 1 (Stock)
-        Inventario inventario = inventarioRepository.findById(request.getInventarioId())
+        Long inventarioId = request.getInventarioId();
+        if (inventarioId == null) {
+            throw new IllegalArgumentException("Stock insuficiente o no validado");
+        }
+        Inventario inventario = inventarioRepository.findById(inventarioId)
                 .orElseThrow(() -> new IllegalArgumentException("Stock insuficiente o no validado"));
 
         if (request.getCantidad() > inventario.getCantidadTotal()) {
