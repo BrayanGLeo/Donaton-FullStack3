@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
+@SuppressWarnings("all")
 public class RabbitMQConfig {
 
     public static final String QUEUE = "donacion_creada_queue";
@@ -17,12 +18,12 @@ public class RabbitMQConfig {
     public static final String ROUTING_KEY = "donacion.routing.key";
 
     @Bean
-    public Queue queue() {
+    public Queue donacionQueue() {
         return new Queue(QUEUE, true);
     }
 
     @Bean
-    public TopicExchange exchange() {
+    public TopicExchange donacionExchange() {
         return new TopicExchange(EXCHANGE);
     }
 
@@ -32,7 +33,7 @@ public class RabbitMQConfig {
     }
 
     @Bean
-    public MessageConverter converter() {
+    public MessageConverter jsonMessageConverter() {
         return new Jackson2JsonMessageConverter();
     }
 }

@@ -6,12 +6,13 @@
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
 		<version>4.0.6</version>
-		<relativePath/> </parent>
+		<relativePath/> <!-- lookup parent from repository -->
+	</parent>
 	<groupId>com.donaton</groupId>
 	<artifactId>donaton-eureka-server</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>donaton-eureka-server</name>
-	<description/>
+	<description>Eureka Server for Donaton Microservices</description>
 	<url/>
 	<licenses>
 		<license/>

@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.2.4</version>
+		<version>4.0.6</version>
 		<relativePath />
 	</parent>
 	<groupId>com.donaton</groupId>
@@ -16,7 +16,7 @@
 
 	<properties>
 		<java.version>17</java.version>
-		<spring-cloud.version>2023.0.1</spring-cloud.version>
+		<spring-cloud.version>2025.1.1</spring-cloud.version>
 		<sonar.coverage.exclusions>
 			**/entity/**,
 			**/config/**,
