@@ -8,6 +8,7 @@
     <img src="https://img.shields.io/badge/Java-17-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white" alt="Java 17" />
     <img src="https://img.shields.io/badge/Spring_Boot-4-6DB33F?style=for-the-badge&logo=spring-boot&logoColor=white" alt="Spring Boot 4" />
     <img src="https://img.shields.io/badge/Spring_Cloud-6DB33F?style=for-the-badge&logo=spring&logoColor=white" alt="Spring Cloud" />
+    <img src="https://img.shields.io/badge/Netflix_Eureka-E50914?style=for-the-badge&logo=netflix&logoColor=white" alt="Netflix Eureka" />
     <img src="https://img.shields.io/badge/Spring_Security-6DB33F?style=for-the-badge&logo=spring-security&logoColor=white" alt="Spring Security" />
     <img src="https://img.shields.io/badge/JWT-black?style=for-the-badge&logo=JSON%20web%20tokens" alt="JWT" />
     <img src="https://img.shields.io/badge/React-18-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React 18" />
@@ -27,33 +28,9 @@
 
 El **Sistema Donatón** implementa una arquitectura de **Microservicios** altamente desacoplada y escalable. Utilizamos un patrón de **API Gateway** acoplado a un **BFF (Backend for Frontend)** para centralizar el acceso, orquestar llamadas a servicios subyacentes y optimizar la experiencia de los clientes (web y móviles). La comunicación asíncrona se gestiona mediante un bus de eventos, garantizando alta disponibilidad y consistencia eventual a lo largo del flujo logístico.
 
-```mermaid
-flowchart TD
-    Client[Cliente React y PWA]
-    API_GW[API Gateway y BFF]
-    Eureka[Eureka Server]
-    RabbitMQ[RabbitMQ Event Bus]
-    Auth[Auth Service]
-    Donaciones[Donaciones Service]
-    Logistica[Logistica Service]
-    Necesidades[Necesidades Service]
-
-    Client -->|HTTP REST| API_GW
-    API_GW -->|Enrutamiento| Auth
-    API_GW -->|Orquestacion| Donaciones
-    API_GW -->|Orquestacion| Logistica
-    API_GW -->|Orquestacion| Necesidades
-    
-    Auth -.->|Registro| Eureka
-    Donaciones -.->|Registro| Eureka
-    Logistica -.->|Registro| Eureka
-    Necesidades -.->|Registro| Eureka
-    API_GW -.->|Descubrimiento| Eureka
-
-    Donaciones -->|Publica Evento| RabbitMQ
-    Logistica -->|Suscribe o Publica| RabbitMQ
-    Necesidades -->|Suscribe| RabbitMQ
-```
+<div align="center">
+  <img src="./docs/arquitectura.png" alt="Arquitectura del Sistema Donatón" width="800" />
+</div>
 
 ---
 
