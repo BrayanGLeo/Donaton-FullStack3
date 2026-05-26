@@ -48,4 +48,16 @@ public class DespachoControllerTest {
         assertEquals(1, response.getBody().size());
         assertEquals(1L, response.getBody().get(0).getId());
     }
+
+    @Test
+    void testConfirmarEntrega() {
+        DespachoController controller = new DespachoController(despachoService);
+        Despacho resp = new Despacho();
+        when(despachoService.confirmarEntregaDespacho(1L)).thenReturn(resp);
+
+        ResponseEntity<String> response = controller.confirmarEntrega(1L);
+
+        assertEquals(200, response.getStatusCode().value());
+        assertEquals("Despacho confirmado como Entregada exitosamente", response.getBody());
+    }
 }
