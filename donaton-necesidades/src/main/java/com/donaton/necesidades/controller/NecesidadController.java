@@ -23,4 +23,9 @@ public class NecesidadController {
         Necesidad necesidad = necesidadService.reportarNecesidad(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(necesidad);
     }
+
+    @GetMapping
+    public ResponseEntity<java.util.List<Necesidad>> obtenerNecesidades() {
+        return ResponseEntity.ok(necesidadService.obtenerTodas());
+    }
 }

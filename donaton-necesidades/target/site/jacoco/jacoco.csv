@@ -1,7 +1,0 @@
-GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
-donaton-necesidades,com.donaton.necesidades.exception,GlobalExceptionHandler,0,17,0,0,0,4,0,2,0,2
-donaton-necesidades,com.donaton.necesidades.controller,NecesidadController,0,16,0,0,0,5,0,2,0,2
-donaton-necesidades,com.donaton.necesidades.service,NecesidadService,0,23,0,0,0,9,0,2,0,2
-donaton-necesidades,com.donaton.necesidades.dto,NecesidadRequestDTO,15,21,0,0,8,8,4,4,4,4
-donaton-necesidades,com.donaton.necesidades,DonatonNecesidadesApplication,5,3,0,0,2,1,1,1,1,1
-donaton-necesidades,com.donaton.necesidades.entity,Necesidad,16,37,0,0,8,15,4,8,4,8

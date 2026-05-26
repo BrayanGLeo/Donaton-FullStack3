@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { DonacionForm } from './components/DonacionForm';
 import { DonacionList } from './components/DonacionList';
 import PanelLogistico from './components/PanelLogistico';
+import DashboardCoordinador from './components/DashboardCoordinador';
 
 const App: React.FC = () => {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [currentView, setCurrentView] = useState<'donaciones' | 'logistica'>('donaciones');
+  const [currentView, setCurrentView] = useState<'donaciones' | 'logistica' | 'dashboard'>('donaciones');
 
   const handleDonacionSuccess = () => {
     setRefreshTrigger(prev => prev + 1);
@@ -31,17 +32,23 @@ const App: React.FC = () => {
             >
               Gestión de Despachos
             </button>
+            <button 
+              className={`btn btn-${currentView === 'dashboard' ? 'primary' : 'outline-primary'}`}
+              onClick={() => setCurrentView('dashboard')}
+            >
+              Dashboard Alertas
+            </button>
           </div>
         </header>
         <main>
-          {currentView === 'donaciones' ? (
+          {currentView === 'donaciones' && (
             <>
               <DonacionForm onSuccess={handleDonacionSuccess} />
               <DonacionList refreshTrigger={refreshTrigger} />
             </>
-          ) : (
-            <PanelLogistico />
           )}
+          {currentView === 'logistica' && <PanelLogistico />}
+          {currentView === 'dashboard' && <DashboardCoordinador />}
         </main>
       </div>
     </div>
