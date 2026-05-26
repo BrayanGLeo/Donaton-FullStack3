@@ -4,10 +4,11 @@ import { DonacionList } from './components/DonacionList';
 import PanelLogistico from './components/PanelLogistico';
 import DashboardCoordinador from './components/DashboardCoordinador';
 import ControlIngreso from './components/ControlIngreso';
+import { PanelConductor } from './components/PanelConductor';
 
 const App: React.FC = () => {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [currentView, setCurrentView] = useState<'donaciones' | 'logistica' | 'dashboard' | 'recepcion'>('donaciones');
+  const [currentView, setCurrentView] = useState<'donaciones' | 'logistica' | 'dashboard' | 'recepcion' | 'conductor'>('donaciones');
 
   const handleDonacionSuccess = () => {
     setRefreshTrigger(prev => prev + 1);
@@ -45,6 +46,12 @@ const App: React.FC = () => {
             >
               Recepción Acopio
             </button>
+            <button 
+              className={`btn btn-${currentView === 'conductor' ? 'primary' : 'outline-primary'}`}
+              onClick={() => setCurrentView('conductor')}
+            >
+              Panel Conductor
+            </button>
           </div>
         </header>
         <main>
@@ -57,6 +64,7 @@ const App: React.FC = () => {
           {currentView === 'logistica' && <PanelLogistico />}
           {currentView === 'dashboard' && <DashboardCoordinador />}
           {currentView === 'recepcion' && <ControlIngreso />}
+          {currentView === 'conductor' && <PanelConductor />}
         </main>
       </div>
     </div>
