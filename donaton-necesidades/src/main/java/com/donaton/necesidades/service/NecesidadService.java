@@ -25,4 +25,8 @@ public class NecesidadService {
         );
         return necesidadRepository.save(necesidad);
     }
+
+    public java.util.List<Necesidad> obtenerTodas() {
+        return necesidadRepository.findAll();
+    }
 }
