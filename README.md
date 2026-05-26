@@ -29,25 +29,23 @@ El **Sistema Donatón** implementa una arquitectura de **Microservicios** altame
 
 ```mermaid
 graph TD
-    %% Nodos
-    Client["📱 Cliente React/PWA"]
-    API_GW["🚪 API Gateway / BFF <br> Spring Cloud Gateway"]
-    Eureka["🌐 Eureka Server <br> Service Discovery"]
-    RabbitMQ["📨 RabbitMQ <br> Event Bus"]
+    Client["Cliente React y PWA"]
+    API_GW["API Gateway y BFF"]
+    Eureka["Eureka Server"]
+    RabbitMQ["RabbitMQ Event Bus"]
 
     subgraph Microservicios
-        Auth["🔐 Auth Service"]
-        Donaciones["📦 Donaciones Service"]
-        Logistica["🚚 Logística Service"]
-        Necesidades["🆘 Necesidades Service"]
+        Auth["Auth Service"]
+        Donaciones["Donaciones Service"]
+        Logistica["Logistica Service"]
+        Necesidades["Necesidades Service"]
     end
 
-    %% Relaciones
-    Client -->|HTTP/REST| API_GW
+    Client -->|HTTP REST| API_GW
     API_GW -->|Enrutamiento| Auth
-    API_GW -->|Orquestación| Donaciones
-    API_GW -->|Orquestación| Logistica
-    API_GW -->|Orquestación| Necesidades
+    API_GW -->|Orquestacion| Donaciones
+    API_GW -->|Orquestacion| Logistica
+    API_GW -->|Orquestacion| Necesidades
     
     Auth -.->|Registro| Eureka
     Donaciones -.->|Registro| Eureka
@@ -56,7 +54,7 @@ graph TD
     API_GW -.->|Descubrimiento| Eureka
 
     Donaciones -->|Publica Evento| RabbitMQ
-    Logistica -->|Suscribe/Publica| RabbitMQ
+    Logistica -->|Suscribe o Publica| RabbitMQ
     Necesidades -->|Suscribe| RabbitMQ
 ```
 
