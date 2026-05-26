@@ -40,3 +40,8 @@ export const confirmarIngresoAcopio = async (trackingId: string): Promise<any> =
   const response = await axios.put(`/api/logistica/ingreso/${trackingId}`);
   return response.data;
 };
+
+export const confirmarEntrega = async (id: number): Promise<string> => {
+  const response = await axios.put(`/api/logistica/despachos/${id}/entrega`);
+  return response.data;
+};

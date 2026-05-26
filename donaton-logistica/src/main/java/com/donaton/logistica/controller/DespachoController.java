@@ -27,4 +27,10 @@ public class DespachoController {
     public ResponseEntity<java.util.List<Despacho>> obtenerDespachos() {
         return ResponseEntity.ok(despachoService.obtenerDespachos());
     }
+
+    @PutMapping("/{id}/entrega")
+    public ResponseEntity<String> confirmarEntrega(@PathVariable Long id) {
+        despachoService.confirmarEntregaDespacho(id);
+        return ResponseEntity.ok("Despacho confirmado como Entregada exitosamente");
+    }
 }

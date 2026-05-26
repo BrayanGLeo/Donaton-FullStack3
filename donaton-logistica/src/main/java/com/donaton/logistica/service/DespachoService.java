@@ -61,4 +61,17 @@ public class DespachoService {
     public java.util.List<Despacho> obtenerDespachos() {
         return despachoRepository.findAll();
     }
+
+    @Transactional
+    public Despacho confirmarEntregaDespacho(Long despachoId) {
+        Despacho despacho = despachoRepository.findById(despachoId)
+                .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("Despacho no encontrado"));
+
+        if (!"En tránsito".equals(despacho.getEstado())) {
+            throw new IllegalStateException("El despacho no está en tránsito");
+        }
+
+        despacho.setEstado("Entregada");
+        return despachoRepository.save(despacho);
+    }
 }

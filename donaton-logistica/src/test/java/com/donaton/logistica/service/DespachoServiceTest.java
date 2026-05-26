@@ -98,4 +98,30 @@ class DespachoServiceTest {
         verify(inventarioRepository, never()).save(any(Inventario.class));
         verify(despachoRepository, never()).save(any(Despacho.class));
     }
+
+    @Test
+    void testConfirmarEntregaExito() {
+        Despacho despacho = new Despacho(1L, 50, "Camion A", LocalDateTime.now(), "En tránsito");
+        when(despachoRepository.findById(1L)).thenReturn(Optional.of(despacho));
+        when(despachoRepository.save(any(Despacho.class))).thenReturn(despacho);
+
+        Despacho resultado = despachoService.confirmarEntregaDespacho(1L);
+
+        assertNotNull(resultado);
+        assertEquals("Entregada", resultado.getEstado());
+        verify(despachoRepository, times(1)).save(despacho);
+    }
+
+    @Test
+    void testConfirmarEntregaFallaNoEnTransito() {
+        Despacho despacho = new Despacho(1L, 50, "Camion A", LocalDateTime.now(), "Entregada");
+        when(despachoRepository.findById(1L)).thenReturn(Optional.of(despacho));
+
+        IllegalStateException exception = assertThrows(IllegalStateException.class, () -> {
+            despachoService.confirmarEntregaDespacho(1L);
+        });
+
+        assertEquals("El despacho no está en tránsito", exception.getMessage());
+        verify(despachoRepository, never()).save(any(Despacho.class));
+    }
 }
