@@ -49,7 +49,7 @@ El dominio de la aplicación ha sido cuidadosamente particionado utilizando prin
 
 ---
 
-## 🚀 Características Core (Business Logic)
+## 🚀 Características Core
 
 Nuestra plataforma está diseñada para resolver desafíos críticos de logística en el menor tiempo posible:
 
