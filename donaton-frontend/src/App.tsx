@@ -3,10 +3,11 @@ import { DonacionForm } from './components/DonacionForm';
 import { DonacionList } from './components/DonacionList';
 import PanelLogistico from './components/PanelLogistico';
 import DashboardCoordinador from './components/DashboardCoordinador';
+import ControlIngreso from './components/ControlIngreso';
 
 const App: React.FC = () => {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [currentView, setCurrentView] = useState<'donaciones' | 'logistica' | 'dashboard'>('donaciones');
+  const [currentView, setCurrentView] = useState<'donaciones' | 'logistica' | 'dashboard' | 'recepcion'>('donaciones');
 
   const handleDonacionSuccess = () => {
     setRefreshTrigger(prev => prev + 1);
@@ -38,6 +39,12 @@ const App: React.FC = () => {
             >
               Dashboard Alertas
             </button>
+            <button 
+              className={`btn btn-${currentView === 'recepcion' ? 'primary' : 'outline-primary'}`}
+              onClick={() => setCurrentView('recepcion')}
+            >
+              Recepción Acopio
+            </button>
           </div>
         </header>
         <main>
@@ -49,6 +56,7 @@ const App: React.FC = () => {
           )}
           {currentView === 'logistica' && <PanelLogistico />}
           {currentView === 'dashboard' && <DashboardCoordinador />}
+          {currentView === 'recepcion' && <ControlIngreso />}
         </main>
       </div>
     </div>

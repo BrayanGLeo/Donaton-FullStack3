@@ -57,7 +57,8 @@ export const DonacionList: React.FC<Props> = ({ refreshTrigger }) => {
             <Table hover className="align-middle">
               <thead className="table-light">
                 <tr>
-                  <th>ID</th>
+                  <th>ID DB</th>
+                  <th>ID Seguimiento</th>
                   <th>Recurso</th>
                   <th>Cantidad</th>
                   <th>Origen</th>
@@ -68,7 +69,8 @@ export const DonacionList: React.FC<Props> = ({ refreshTrigger }) => {
               <tbody>
                 {donaciones.map((donacion) => (
                   <tr key={donacion.id}>
-                    <td className="fw-bold text-secondary">#{donacion.id}</td>
+                    <td className="text-secondary">#{donacion.id}</td>
+                    <td className="fw-bold font-monospace text-primary">{donacion.trackingId || '-'}</td>
                     <td>{donacion.recurso}</td>
                     <td>{donacion.cantidad}</td>
                     <td>{donacion.origen}</td>

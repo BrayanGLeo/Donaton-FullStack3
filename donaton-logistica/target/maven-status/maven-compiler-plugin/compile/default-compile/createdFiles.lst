@@ -1,12 +1,16 @@
 com\donaton\logistica\service\LogisticaService.class
+com\donaton\logistica\entity\Recepcion.class
 com\donaton\logistica\config\RabbitMQConfig.class
 com\donaton\logistica\service\DespachoService.class
 com\donaton\logistica\repository\InventarioRepository.class
+com\donaton\logistica\repository\RecepcionRepository.class
 com\donaton\logistica\controller\DespachoController.class
 com\donaton\logistica\dto\DespachoRequestDTO.class
 com\donaton\logistica\repository\DespachoRepository.class
 com\donaton\logistica\DonatonLogisticaApplication.class
+com\donaton\logistica\controller\IngresoController.class
 com\donaton\logistica\dto\DonacionEventDTO.class
+com\donaton\logistica\controller\GlobalExceptionHandler.class
 com\donaton\logistica\controller\InventarioController.class
 com\donaton\logistica\entity\Despacho.class
 com\donaton\logistica\entity\Inventario.class

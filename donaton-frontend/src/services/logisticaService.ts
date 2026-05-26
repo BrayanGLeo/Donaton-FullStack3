@@ -35,3 +35,8 @@ export const asignarTransporte = async (request: DespachoRequest): Promise<Despa
   const response = await axios.post('/api/logistica/despachos', request);
   return response.data;
 };
+
+export const confirmarIngresoAcopio = async (trackingId: string): Promise<any> => {
+  const response = await axios.put(`/api/logistica/ingreso/${trackingId}`);
+  return response.data;
+};
