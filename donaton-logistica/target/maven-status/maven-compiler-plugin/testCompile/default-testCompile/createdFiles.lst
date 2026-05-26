@@ -1,2 +1,7 @@
-com\donaton\logistica\service\LogisticaServiceTest.class
 com\donaton\logistica\service\DespachoServiceTest.class
+com\donaton\logistica\controller\InventarioControllerTest.class
+com\donaton\logistica\controller\DespachoControllerTest.class
+com\donaton\logistica\controller\IngresoControllerTest.class
+com\donaton\logistica\config\RabbitMQConfigTest.class
+com\donaton\logistica\entity\RecepcionTest.class
+com\donaton\logistica\service\LogisticaServiceTest.class

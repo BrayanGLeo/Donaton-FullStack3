@@ -18,17 +18,19 @@ public class Donacion {
     private Integer cantidad;
     private String origen;
     private String estado;
+    private String trackingId;
     private LocalDateTime fechaRegistro;
 
     public Donacion() {
     }
 
-    public Donacion(Long id, String recurso, Integer cantidad, String origen, String estado, LocalDateTime fechaRegistro) {
+    public Donacion(Long id, String recurso, Integer cantidad, String origen, String estado, String trackingId, LocalDateTime fechaRegistro) {
         this.id = id;
         this.recurso = recurso;
         this.cantidad = cantidad;
         this.origen = origen;
         this.estado = estado;
+        this.trackingId = trackingId;
         this.fechaRegistro = fechaRegistro;
     }
 
@@ -78,5 +80,13 @@ public class Donacion {
 
     public void setFechaRegistro(LocalDateTime fechaRegistro) {
         this.fechaRegistro = fechaRegistro;
+    }
+
+    public String getTrackingId() {
+        return trackingId;
+    }
+
+    public void setTrackingId(String trackingId) {
+        this.trackingId = trackingId;
     }
 }

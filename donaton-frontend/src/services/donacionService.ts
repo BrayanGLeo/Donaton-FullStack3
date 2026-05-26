@@ -9,6 +9,7 @@ export interface DonacionPayload {
 export interface DonacionResponse extends DonacionPayload {
   id: number;
   estado: string;
+  trackingId?: string;
   fechaRegistro: string;
 }
 

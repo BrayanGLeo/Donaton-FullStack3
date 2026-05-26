@@ -22,6 +22,7 @@ public class DonacionService {
     public Donacion registrarDonacion(Donacion donacion) {
         donacion.setEstado("Pendiente");
         donacion.setFechaRegistro(LocalDateTime.now());
+        donacion.setTrackingId("DON-" + java.util.UUID.randomUUID().toString().substring(0, 8).toUpperCase());
         
         Donacion donacionGuardada = repository.save(donacion);
         rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.ROUTING_KEY, donacionGuardada);

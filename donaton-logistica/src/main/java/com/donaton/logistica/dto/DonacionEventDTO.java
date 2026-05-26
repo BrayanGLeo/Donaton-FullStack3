@@ -8,6 +8,8 @@ public class DonacionEventDTO {
     private String origen;
     private String estado;
 
+    private String trackingId;
+
     public DonacionEventDTO() {
     }
 
@@ -49,5 +51,13 @@ public class DonacionEventDTO {
 
     public void setEstado(String estado) {
         this.estado = estado;
+    }
+
+    public String getTrackingId() {
+        return trackingId;
+    }
+
+    public void setTrackingId(String trackingId) {
+        this.trackingId = trackingId;
     }
 }

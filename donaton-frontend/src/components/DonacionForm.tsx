@@ -17,6 +17,7 @@ export const DonacionForm: React.FC<Props> = ({ onSuccess }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [createdId, setCreatedId] = useState<number | null>(null);
+  const [trackingId, setTrackingId] = useState<string | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -58,6 +59,7 @@ export const DonacionForm: React.FC<Props> = ({ onSuccess }) => {
     try {
       const response = await registrarDonacion(formData);
       setCreatedId(response.id);
+      setTrackingId(response.trackingId || null);
       setShowModal(true);
       if (onSuccess) {
         onSuccess();
@@ -72,6 +74,7 @@ export const DonacionForm: React.FC<Props> = ({ onSuccess }) => {
   const handleCloseModal = () => {
     setShowModal(false);
     setCreatedId(null);
+    setTrackingId(null);
     setFormData({ recurso: '', cantidad: 0, origen: '' });
   };
 
@@ -160,9 +163,16 @@ export const DonacionForm: React.FC<Props> = ({ onSuccess }) => {
         <Modal.Header className="bg-success text-white border-0 justify-content-center">
           <Modal.Title className="fs-3 fw-bold">¡Donación Registrada!</Modal.Title>
         </Modal.Header>
-        <Modal.Body className="text-center py-5">
-          <h5 className="text-muted mb-2 text-uppercase tracking-wider">ID Generado</h5>
-          <h1 className="display-1 fw-bolder text-success mb-0">{createdId}</h1>
+        <Modal.Body className="text-center py-4">
+          <div className="mb-4">
+            <h5 className="text-muted mb-2 text-uppercase tracking-wider">ID de Base de Datos</h5>
+            <h3 className="fw-bolder text-secondary mb-0">{createdId}</h3>
+          </div>
+          <div className="p-3 bg-light rounded-3 border">
+            <h5 className="text-primary mb-2 text-uppercase tracking-wider fw-bold">ID de Seguimiento</h5>
+            <h2 className="display-5 fw-bolder text-primary mb-0 font-monospace">{trackingId}</h2>
+            <p className="text-muted mt-2 mb-0 small">Guarda este ID para consultar el estado de tu donación</p>
+          </div>
         </Modal.Body>
         <Modal.Footer className="border-0 pb-4 px-4">
           <Button variant="success" onClick={handleCloseModal} className="w-100 py-3 fw-bold rounded-3 fs-5">
