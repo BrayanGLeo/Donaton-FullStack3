@@ -17,7 +17,7 @@
     <img src="https://img.shields.io/badge/RabbitMQ-FF6600?style=for-the-badge&logo=rabbitmq&logoColor=white" alt="RabbitMQ" />
     <img src="https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white" alt="MySQL" />
     <img src="https://img.shields.io/badge/SonarQube-4E9BCD?style=for-the-badge&logo=sonarqube&logoColor=white" alt="SonarQube" />
-    <img src="https://img.shields.io/badge/Coverage-100%25-brightgreen?style=for-the-badge" alt="Coverage 100%" />
+    <img src="https://img.shields.io/badge/Coverage-60%25-yellow?style=for-the-badge" alt="Coverage 60%" />
   </p>
 </div>
 
@@ -28,18 +28,15 @@
 El **Sistema Donatón** implementa una arquitectura de **Microservicios** altamente desacoplada y escalable. Utilizamos un patrón de **API Gateway** acoplado a un **BFF (Backend for Frontend)** para centralizar el acceso, orquestar llamadas a servicios subyacentes y optimizar la experiencia de los clientes (web y móviles). La comunicación asíncrona se gestiona mediante un bus de eventos, garantizando alta disponibilidad y consistencia eventual a lo largo del flujo logístico.
 
 ```mermaid
-graph TD
-    Client["Cliente React y PWA"]
-    API_GW["API Gateway y BFF"]
-    Eureka["Eureka Server"]
-    RabbitMQ["RabbitMQ Event Bus"]
-
-    subgraph Microservicios
-        Auth["Auth Service"]
-        Donaciones["Donaciones Service"]
-        Logistica["Logistica Service"]
-        Necesidades["Necesidades Service"]
-    end
+flowchart TD
+    Client[Cliente React y PWA]
+    API_GW[API Gateway y BFF]
+    Eureka[Eureka Server]
+    RabbitMQ[RabbitMQ Event Bus]
+    Auth[Auth Service]
+    Donaciones[Donaciones Service]
+    Logistica[Logistica Service]
+    Necesidades[Necesidades Service]
 
     Client -->|HTTP REST| API_GW
     API_GW -->|Enrutamiento| Auth
@@ -93,7 +90,7 @@ Nuestra plataforma está diseñada para resolver desafíos críticos de logísti
 El *Sistema Donatón* no es solo un producto funcional, sino un referente de excelencia técnica en ingeniería de software:
 
 *   🔄 **Desarrollo Iterativo:** Construido utilizando marcos ágiles, enfocándonos en entregas de valor continuo y refactorización temprana.
-*   🎯 **100% Code Coverage:** El backend cuenta con una cobertura absoluta de pruebas unitarias implementadas con **JUnit 5** y **Mockito**, garantizando la fiabilidad y mitigando regresiones en la lógica de negocio.
+*   🎯 **60% Code Coverage:** El backend cuenta con una cobertura del 60% en pruebas unitarias implementadas con **JUnit 5** y **Mockito**, garantizando la fiabilidad y mitigando regresiones en la lógica de negocio.
 *   🛡️ **Zero Vulnerabilidades (SonarQube):** Análisis de código estático continuo integrado en el ciclo de vida. Hemos superado con éxito rigurosos Quality Gates, procesando meticulosamente todos los *Security Hotspots* para asegurar un software robusto y libre de fallos de seguridad reportados.
 
 ---
