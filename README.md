@@ -37,16 +37,16 @@ graph TD
     classDef message fill:#FF6600,stroke:#fff,stroke-width:2px,color:#fff
 
     %% Nodos
-    Client[📱 Cliente React/PWA]:::client
-    API_GW[🚪 API Gateway / BFF<br/>Spring Cloud Gateway]:::gateway
-    Eureka[🌐 Eureka Server<br/>Service Discovery]:::infra
-    RabbitMQ[📨 RabbitMQ<br/>Event Bus]:::message
+    Client["📱 Cliente React/PWA"]:::client
+    API_GW["🚪 API Gateway / BFF <br> Spring Cloud Gateway"]:::gateway
+    Eureka["🌐 Eureka Server <br> Service Discovery"]:::infra
+    RabbitMQ["📨 RabbitMQ <br> Event Bus"]:::message
 
     subgraph Microservicios
-        Auth[🔐 Auth Service]:::service
-        Donaciones[📦 Donaciones Service]:::service
-        Logistica[🚚 Logística Service]:::service
-        Necesidades[🆘 Necesidades Service]:::service
+        Auth["🔐 Auth Service"]:::service
+        Donaciones["📦 Donaciones Service"]:::service
+        Logistica["🚚 Logística Service"]:::service
+        Necesidades["🆘 Necesidades Service"]:::service
     end
 
     %% Relaciones
