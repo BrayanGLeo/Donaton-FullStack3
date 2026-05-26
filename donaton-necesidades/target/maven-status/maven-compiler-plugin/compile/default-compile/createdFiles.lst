@@ -1,7 +1,0 @@
-com\donaton\necesidades\repository\NecesidadRepository.class
-com\donaton\necesidades\entity\Necesidad.class
-com\donaton\necesidades\exception\GlobalExceptionHandler.class
-com\donaton\necesidades\DonatonNecesidadesApplication.class
-com\donaton\necesidades\dto\NecesidadRequestDTO.class
-com\donaton\necesidades\service\NecesidadService.class
-com\donaton\necesidades\controller\NecesidadController.class
