@@ -6,7 +6,7 @@
   <!-- Badges -->
   <p>
     <img src="https://img.shields.io/badge/Java-17-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white" alt="Java 17" />
-    <img src="https://img.shields.io/badge/Spring_Boot-3-6DB33F?style=for-the-badge&logo=spring-boot&logoColor=white" alt="Spring Boot 3" />
+    <img src="https://img.shields.io/badge/Spring_Boot-4-6DB33F?style=for-the-badge&logo=spring-boot&logoColor=white" alt="Spring Boot 4" />
     <img src="https://img.shields.io/badge/Spring_Cloud-6DB33F?style=for-the-badge&logo=spring&logoColor=white" alt="Spring Cloud" />
     <img src="https://img.shields.io/badge/Spring_Security-6DB33F?style=for-the-badge&logo=spring-security&logoColor=white" alt="Spring Security" />
     <img src="https://img.shields.io/badge/JWT-black?style=for-the-badge&logo=JSON%20web%20tokens" alt="JWT" />
@@ -29,24 +29,17 @@ El **Sistema Donatón** implementa una arquitectura de **Microservicios** altame
 
 ```mermaid
 graph TD
-    %% Estilos
-    classDef client fill:#20232A,stroke:#61DAFB,stroke-width:2px,color:#61DAFB
-    classDef gateway fill:#6DB33F,stroke:#fff,stroke-width:2px,color:#fff
-    classDef service fill:#ED8B00,stroke:#fff,stroke-width:2px,color:#fff
-    classDef infra fill:#2496ED,stroke:#fff,stroke-width:2px,color:#fff
-    classDef message fill:#FF6600,stroke:#fff,stroke-width:2px,color:#fff
-
     %% Nodos
-    Client["📱 Cliente React/PWA"]:::client
-    API_GW["🚪 API Gateway / BFF <br> Spring Cloud Gateway"]:::gateway
-    Eureka["🌐 Eureka Server <br> Service Discovery"]:::infra
-    RabbitMQ["📨 RabbitMQ <br> Event Bus"]:::message
+    Client["📱 Cliente React/PWA"]
+    API_GW["🚪 API Gateway / BFF <br> Spring Cloud Gateway"]
+    Eureka["🌐 Eureka Server <br> Service Discovery"]
+    RabbitMQ["📨 RabbitMQ <br> Event Bus"]
 
     subgraph Microservicios
-        Auth["🔐 Auth Service"]:::service
-        Donaciones["📦 Donaciones Service"]:::service
-        Logistica["🚚 Logística Service"]:::service
-        Necesidades["🆘 Necesidades Service"]:::service
+        Auth["🔐 Auth Service"]
+        Donaciones["📦 Donaciones Service"]
+        Logistica["🚚 Logística Service"]
+        Necesidades["🆘 Necesidades Service"]
     end
 
     %% Relaciones
@@ -62,9 +55,9 @@ graph TD
     Necesidades -.->|Registro| Eureka
     API_GW -.->|Descubrimiento| Eureka
 
-    Donaciones ==>|Publica Evento| RabbitMQ
-    Logistica ==>|Suscribe/Publica| RabbitMQ
-    Necesidades ==>|Suscribe| RabbitMQ
+    Donaciones -->|Publica Evento| RabbitMQ
+    Logistica -->|Suscribe/Publica| RabbitMQ
+    Necesidades -->|Suscribe| RabbitMQ
 ```
 
 ---
