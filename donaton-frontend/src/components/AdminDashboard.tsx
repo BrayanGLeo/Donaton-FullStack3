@@ -76,6 +76,53 @@ interface UsuarioExtended extends Usuario {
   longitud?: number;
 }
 
+const validateUserForm = (data: any) => {
+  const newErrors: Record<string, string> = {};
+
+  if (!data.nuevoUserEmail) newErrors.email = 'El correo es requerido.';
+  else if (!validarEmailDominio(data.nuevoUserEmail)) newErrors.email = 'Por favor ingresa un correo válido (ej: usuario@gmail.com).';
+
+  if (!data.nuevoUserPass) newErrors.pass = 'La contraseña es requerida.';
+  else if (!validarPassword(data.nuevoUserPass)) newErrors.pass = 'La contraseña debe incluir al menos 3 letras y 3 números.';
+
+  if (!data.nuevoUserRol) newErrors.rol = 'El rol es requerido.';
+  
+  if (data.nuevoUserRol === 'LOGISTICA' && !data.nuevoUserSubRol) {
+    newErrors.subRol = 'Debes seleccionar el tipo de personal.';
+  }
+
+  if (data.nuevoUserRol === 'COORDINADOR' || (data.nuevoUserRol === 'LOGISTICA' && data.nuevoUserSubRol)) {
+    if (!data.nuevoUserNombre) newErrors.nombre = 'El nombre es requerido.';
+    else if (!validarNombreCompleto(data.nuevoUserNombre)) newErrors.nombre = 'El nombre debe contener al menos 2 nombres y 2 apellidos.';
+
+    if (!data.nuevoUserRut) newErrors.rut = 'El RUT es requerido.';
+    else if (!validarRutChileno(data.nuevoUserRut)) newErrors.rut = 'El RUT ingresado no es válido. (Ej: 12345678-9)';
+
+    if (!data.nuevoUserTelefono) newErrors.telefono = 'El teléfono es requerido.';
+    else if (!validarTelefono(data.nuevoUserTelefono)) newErrors.telefono = 'El teléfono debe tener entre 9 y 12 dígitos.';
+
+    if (!data.nuevoUserRegion || !data.nuevoUserComuna || !COMUNAS_POR_REGION[data.nuevoUserRegion]?.includes(data.nuevoUserComuna)) {
+      newErrors.regionComuna = 'Debes seleccionar una región y comuna válida.';
+    }
+
+    if (!data.nuevoUserDireccion || data.nuevoUserDireccion.trim().length < 5) {
+      newErrors.direccion = 'Debes ingresar una dirección válida.';
+    }
+    
+    if (data.nuevoUserRol === 'LOGISTICA') {
+      if (data.nuevoUserSubRol === 'CONDUCTOR') {
+        if (!data.nuevoUserTipoVehiculo) newErrors.tipoVehiculo = 'Selecciona el tipo de vehículo.';
+        if (!data.nuevoUserMatricula) newErrors.matricula = 'Ingresa la matrícula del vehículo.';
+      } else if (data.nuevoUserSubRol === 'RECEPCIONISTA') {
+        if (!data.nuevoUserRegionAcopio) newErrors.regionAcopio = 'Selecciona la región del centro de acopio.';
+        if (!data.nuevoUserCentroAcopioId) newErrors.centroAcopioId = 'Selecciona un centro de acopio.';
+      }
+    }
+  }
+
+  return newErrors;
+};
+
 const AdminDashboard: React.FC = () => {
   const [activeSection, setActiveSection] = useState<AdminSection>('donaciones');
 
@@ -158,44 +205,15 @@ const AdminDashboard: React.FC = () => {
 
   const handleCreateUser = async (e: React.SyntheticEvent) => {
     e.preventDefault();
-    const newErrors: Record<string, string> = {};
-    let hasError = false;
-
-    if (!nuevoUserEmail) { newErrors.email = 'El correo es requerido.'; hasError = true; }
-    else if (!validarEmailDominio(nuevoUserEmail)) { newErrors.email = 'Por favor ingresa un correo válido (ej: usuario@gmail.com).'; hasError = true; }
-
-    if (!nuevoUserPass) { newErrors.pass = 'La contraseña es requerida.'; hasError = true; }
-    else if (!validarPassword(nuevoUserPass)) { newErrors.pass = 'La contraseña debe incluir al menos 3 letras y 3 números.'; hasError = true; }
-
-    if (!nuevoUserRol) { newErrors.rol = 'El rol es requerido.'; hasError = true; }
     
-    if (nuevoUserRol === 'LOGISTICA' && !nuevoUserSubRol) {
-      newErrors.subRol = 'Debes seleccionar el tipo de personal.';
-      hasError = true;
-    }
+    const newErrors = validateUserForm({
+      nuevoUserEmail, nuevoUserPass, nuevoUserRol, nuevoUserSubRol,
+      nuevoUserNombre, nuevoUserRut, nuevoUserTelefono, nuevoUserRegion,
+      nuevoUserComuna, nuevoUserDireccion, nuevoUserTipoVehiculo,
+      nuevoUserMatricula, nuevoUserRegionAcopio, nuevoUserCentroAcopioId
+    });
 
-    if (nuevoUserRol === 'COORDINADOR' || (nuevoUserRol === 'LOGISTICA' && nuevoUserSubRol)) {
-      if (!nuevoUserNombre) { newErrors.nombre = 'El nombre es requerido.'; hasError = true; }
-      else if (!validarNombreCompleto(nuevoUserNombre)) { newErrors.nombre = 'El nombre debe contener al menos 2 nombres y 2 apellidos.'; hasError = true; }
-
-      if (!nuevoUserRut) { newErrors.rut = 'El RUT es requerido.'; hasError = true; }
-      else if (!validarRutChileno(nuevoUserRut)) { newErrors.rut = 'El RUT ingresado no es válido. (Ej: 12345678-9)'; hasError = true; }
-
-      if (!nuevoUserTelefono) { newErrors.telefono = 'El teléfono es requerido.'; hasError = true; }
-      else if (!validarTelefono(nuevoUserTelefono)) { newErrors.telefono = 'El teléfono debe tener entre 9 y 12 dígitos.'; hasError = true; }
-
-      if (!nuevoUserRegion || !nuevoUserComuna || !COMUNAS_POR_REGION[nuevoUserRegion]?.includes(nuevoUserComuna)) {
-        newErrors.regionComuna = 'Debes seleccionar una región y comuna válida.';
-        hasError = true;
-      }
-
-      if (!nuevoUserDireccion || nuevoUserDireccion.trim().length < 5) {
-        newErrors.direccion = 'Debes ingresar una dirección válida.';
-        hasError = true;
-      }
-    }
-
-    if (hasError) {
+    if (Object.keys(newErrors).length > 0) {
       setFormErrors(newErrors);
       setUserMsg({ type: 'danger', text: 'Por favor, corrige los errores en el formulario.' });
       return;
@@ -242,7 +260,6 @@ const AdminDashboard: React.FC = () => {
       setNuevoUserMatricula('');
       setNuevoUserRegionAcopio('');
       setNuevoUserCentroAcopioId('');
-      // Recargar lista
       const data = await obtenerUsuarios();
       setUsuarios(data);
     } catch (err) {
@@ -253,7 +270,6 @@ const AdminDashboard: React.FC = () => {
 
   const usuariosConCoordenadas = usuarios.filter(u => u.latitud && u.longitud);
 
-  // ─── Sección: Donaciones ─────────────────────────────────
   const renderDonaciones = () => (
     <div>
       <div className="d-flex justify-content-between align-items-center mb-4">
@@ -534,7 +550,7 @@ const AdminDashboard: React.FC = () => {
                   </Form.Group>
 
                   {nuevoUserRol && (
-                    <div style={{ maxHeight: '400px', overflowY: 'auto', overflowX: 'hidden', paddingRight: '10px' }} className="mb-3 custom-scrollbar">
+                    <div style={{ maxHeight: '450px', overflowY: 'auto', overflowX: 'hidden', paddingRight: '10px' }} className="mb-3 custom-scrollbar">
                       
                       {nuevoUserRol === 'LOGISTICA' && (
                         <Form.Group className="mb-3">
@@ -613,52 +629,60 @@ const AdminDashboard: React.FC = () => {
 
                           {/* Campos Específicos para Conductor */}
                           {nuevoUserSubRol === 'CONDUCTOR' && (
-                            <>
+                            <div className="p-3 my-3" style={{ backgroundColor: 'rgba(0,0,0,0.15)', borderRadius: '10px' }}>
+                              <h6 className="text-info fw-bold mb-3" style={{ fontSize: '0.85rem' }}><i className="bi bi-truck me-2"></i>Datos del Vehículo</h6>
                               <Form.Group className="mb-2">
                                 <Form.Label className="text-white-50 small mb-0">Tipo de Vehículo</Form.Label>
-                                <Form.Select size="sm" value={nuevoUserTipoVehiculo} onChange={e => setNuevoUserTipoVehiculo(e.target.value)}>
+                                <Form.Select size="sm" value={nuevoUserTipoVehiculo} onChange={e => { setNuevoUserTipoVehiculo(e.target.value); setFormErrors(prev => ({...prev, tipoVehiculo: ''})); }} isInvalid={!!formErrors.tipoVehiculo}>
                                   <option value="">Seleccione...</option>
                                   <option value="auto">Auto</option>
                                   <option value="camioneta">Camioneta</option>
                                   <option value="camion">Camión</option>
                                 </Form.Select>
+                                <Form.Control.Feedback type="invalid">{formErrors.tipoVehiculo}</Form.Control.Feedback>
                               </Form.Group>
-                              <Form.Group className="mb-2">
+                              <Form.Group className="mb-0">
                                 <Form.Label className="text-white-50 small mb-0">Matrícula</Form.Label>
-                                <Form.Control type="text" size="sm" value={nuevoUserMatricula} onChange={e => setNuevoUserMatricula(e.target.value)} placeholder="Ej: ABCD-12" />
+                                <Form.Control type="text" size="sm" value={nuevoUserMatricula} onChange={e => { setNuevoUserMatricula(e.target.value); setFormErrors(prev => ({...prev, matricula: ''})); }} placeholder="Ej: ABCD-12" isInvalid={!!formErrors.matricula} />
+                                <Form.Control.Feedback type="invalid">{formErrors.matricula}</Form.Control.Feedback>
                               </Form.Group>
-                            </>
+                            </div>
                           )}
 
                           {/* Campos Específicos para Recepcionista */}
                           {nuevoUserSubRol === 'RECEPCIONISTA' && (
-                            <>
-                              <Form.Group className="mb-2 mt-3">
-                                <Form.Label className="text-warning small mb-0 fw-bold">Región del Acopio (Trabajo)</Form.Label>
-                                <Form.Select size="sm" value={nuevoUserRegionAcopio} onChange={e => setNuevoUserRegionAcopio(e.target.value)}>
-                                  <option value="">Seleccione la región del acopio...</option>
+                            <div className="p-3 my-3" style={{ backgroundColor: 'rgba(0,0,0,0.15)', borderRadius: '10px' }}>
+                              <h6 className="text-warning fw-bold mb-3" style={{ fontSize: '0.85rem' }}><i className="bi bi-building me-2"></i>Asignación de Centro de Acopio</h6>
+                              <Form.Group className="mb-2">
+                                <Form.Label className="text-white-50 small mb-0">Región del Acopio</Form.Label>
+                                <Form.Select size="sm" value={nuevoUserRegionAcopio} onChange={e => { setNuevoUserRegionAcopio(e.target.value); setFormErrors(prev => ({...prev, regionAcopio: '', centroAcopioId: ''})); }} isInvalid={!!formErrors.regionAcopio}>
+                                  <option value="">Seleccione la región...</option>
                                   {REGIONES_CHILE.map(r => (
                                     <option key={r} value={r}>{r}</option>
                                   ))}
                                 </Form.Select>
+                                <Form.Control.Feedback type="invalid">{formErrors.regionAcopio}</Form.Control.Feedback>
                               </Form.Group>
-                              <Form.Group className="mb-2">
-                                <Form.Label className="text-warning small mb-0 fw-bold">Centro de Acopio Asignado</Form.Label>
-                                <Form.Select size="sm" value={nuevoUserCentroAcopioId} onChange={e => setNuevoUserCentroAcopioId(e.target.value ? Number(e.target.value) : '')}>
+                              <Form.Group className="mb-0">
+                                <Form.Label className="text-white-50 small mb-0">Centro de Acopio</Form.Label>
+                                <Form.Select size="sm" value={nuevoUserCentroAcopioId} onChange={e => { setNuevoUserCentroAcopioId(e.target.value ? Number(e.target.value) : ''); setFormErrors(prev => ({...prev, centroAcopioId: ''})); }} disabled={!nuevoUserRegionAcopio} isInvalid={!!formErrors.centroAcopioId}>
                                   <option value="">Seleccione un centro...</option>
                                   {centrosAcopio.map(c => (
                                     <option key={c.id} value={c.id}>{c.nombre} ({c.comuna})</option>
                                   ))}
                                 </Form.Select>
+                                <Form.Control.Feedback type="invalid">{formErrors.centroAcopioId}</Form.Control.Feedback>
                                 {!nuevoUserRegionAcopio && <Form.Text className="text-white-50" style={{ fontSize: '0.7rem' }}>Ingrese la región del acopio primero.</Form.Text>}
                               </Form.Group>
-                            </>
+                            </div>
                           )}
 
                           <hr style={{ borderColor: 'rgba(255,255,255,0.2)' }} />
 
+                          <h6 className="text-success fw-bold mb-3 mt-3" style={{ fontSize: '0.85rem' }}><i className="bi bi-shield-lock me-2"></i>Credenciales de Acceso</h6>
+
                           <Form.Group className="mb-2">
-                            <Form.Label className="text-white-50 small mb-0">Correo Electrónico de Acceso</Form.Label>
+                            <Form.Label className="text-white-50 small mb-0">Correo Electrónico</Form.Label>
                             <Form.Control type="email" size="sm" value={nuevoUserEmail} onChange={e => { setNuevoUserEmail(e.target.value); setFormErrors(prev => ({...prev, email: ''})); }} placeholder="usuario@ejemplo.com" isInvalid={!!formErrors.email} />
                             <Form.Control.Feedback type="invalid">{formErrors.email}</Form.Control.Feedback>
                           </Form.Group>
@@ -675,7 +699,7 @@ const AdminDashboard: React.FC = () => {
                   <Button
                     type="submit"
                     className="w-100 fw-bold py-2 mt-2"
-                    disabled={!nuevoUserRol}
+                    disabled={!nuevoUserRol || (nuevoUserRol === 'LOGISTICA' && !nuevoUserSubRol)}
                     style={{ borderRadius: '10px', backgroundColor: 'rgba(255,255,255,0.2)', border: '2px solid rgba(255,255,255,0.4)', color: '#fff' }}
                   >
                     Registrar Usuario

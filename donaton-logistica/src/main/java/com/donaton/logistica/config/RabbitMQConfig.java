@@ -16,6 +16,11 @@ public class RabbitMQConfig {
     }
 
     @Bean
+    public Queue donacionRecibidaQueue() {
+        return new Queue("donacion_recibida_queue", true);
+    }
+
+    @Bean
     public MessageConverter jsonMessageConverter() {
         return new Jackson2JsonMessageConverter();
     }

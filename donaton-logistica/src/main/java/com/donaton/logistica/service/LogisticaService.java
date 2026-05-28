@@ -19,29 +19,54 @@ public class LogisticaService {
     private final InventarioRepository inventarioRepository;
     private final com.donaton.logistica.repository.RecepcionRepository recepcionRepository;
 
-    public LogisticaService(InventarioRepository inventarioRepository, com.donaton.logistica.repository.RecepcionRepository recepcionRepository) {
+    public LogisticaService(InventarioRepository inventarioRepository,
+            com.donaton.logistica.repository.RecepcionRepository recepcionRepository) {
         this.inventarioRepository = inventarioRepository;
         this.recepcionRepository = recepcionRepository;
     }
 
     @RabbitListener(queues = "donacion_creada_queue")
+    @org.springframework.transaction.annotation.Transactional
     public void procesarDonacion(DonacionEventDTO evento) {
         String trackingId = evento.getTrackingId() != null ? evento.getTrackingId() : "TRK-DON-" + evento.getId();
         com.donaton.logistica.entity.Recepcion recepcion = new com.donaton.logistica.entity.Recepcion(
                 trackingId,
                 evento.getRecurso(),
                 evento.getCantidad(),
-                "Pendiente de recepción"
-        );
+                "Pendiente de recepción");
         recepcionRepository.save(recepcion);
-        logger.info("Donación registrada para recepción: TrackingId={}, Recurso={}", trackingId, recepcion.getRecurso());
+        logger.info("Donación registrada para recepción: TrackingId={}, Recurso={}", trackingId,
+                recepcion.getRecurso());
+    }
+
+    @RabbitListener(queues = "donacion_recibida_queue")
+    @org.springframework.transaction.annotation.Transactional
+    public void procesarDonacionRecibida(DonacionEventDTO evento) {
+        String trackingId = evento.getTrackingId() != null ? evento.getTrackingId() : "TRK-DON-" + evento.getId();
+        try {
+            doConfirmarIngreso(trackingId);
+            logger.info("Donación recibida confirmada en inventario: TrackingId={}", trackingId);
+        } catch (Exception e) {
+            logger.error("Error al confirmar ingreso de donación: TrackingId={}, Error={}", trackingId, e.getMessage());
+            com.donaton.logistica.entity.Recepcion recepcion = new com.donaton.logistica.entity.Recepcion(
+                    trackingId,
+                    evento.getRecurso(),
+                    evento.getCantidad(),
+                    "Pendiente de recepción");
+            recepcionRepository.save(recepcion);
+            doConfirmarIngreso(trackingId);
+        }
     }
 
     @org.springframework.transaction.annotation.Transactional
     public com.donaton.logistica.entity.Recepcion confirmarIngreso(String trackingId) {
+        return doConfirmarIngreso(trackingId);
+    }
+
+    private com.donaton.logistica.entity.Recepcion doConfirmarIngreso(String trackingId) {
         com.donaton.logistica.entity.Recepcion recepcion = recepcionRepository.findByTrackingId(trackingId)
                 .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("Donación no encontrada"));
-        
+
         if ("Disponible".equals(recepcion.getEstado())) {
             return recepcion;
         }
@@ -58,7 +83,7 @@ public class LogisticaService {
             inventario = new Inventario(recepcion.getRecurso(), recepcion.getCantidad());
         }
         inventarioRepository.save(inventario);
-        
+
         return recepcion;
     }
 }

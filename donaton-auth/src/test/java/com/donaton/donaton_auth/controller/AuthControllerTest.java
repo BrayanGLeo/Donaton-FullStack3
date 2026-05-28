@@ -52,8 +52,10 @@ class AuthControllerTest {
         loginRequest.setPassword("123456");
 
         usuario = new Usuario();
+        usuario.setId(1L);
         usuario.setEmail("test@donaton.cl");
         usuario.setRol("ADMIN");
+        usuario.setNombreCompleto("Test Admin");
     }
 
     @Test
@@ -61,7 +63,7 @@ class AuthControllerTest {
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenReturn(null);
         when(usuarioRepository.findByEmail("test@donaton.cl")).thenReturn(Optional.of(usuario));
-        when(jwtUtil.generateToken("test@donaton.cl", "ADMIN")).thenReturn("tokenFalso123");
+        when(jwtUtil.generateToken("test@donaton.cl", "ADMIN", 1L)).thenReturn("tokenFalso123");
 
         ResponseEntity<?> response = authController.login(loginRequest);
 
@@ -70,6 +72,7 @@ class AuthControllerTest {
         AuthResponse authResponse = (AuthResponse) response.getBody();
         assertEquals("tokenFalso123", authResponse.getToken());
         assertEquals("test@donaton.cl", authResponse.getEmail());
+        assertEquals(1L, authResponse.getId());
     }
 
     @Test

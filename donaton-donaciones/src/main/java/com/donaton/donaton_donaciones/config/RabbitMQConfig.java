@@ -14,12 +14,19 @@ import org.springframework.context.annotation.Configuration;
 public class RabbitMQConfig {
 
     public static final String QUEUE = "donacion_creada_queue";
+    public static final String QUEUE_RECIBIDA = "donacion_recibida_queue";
     public static final String EXCHANGE = "donaton_exchange";
     public static final String ROUTING_KEY = "donacion.routing.key";
+    public static final String ROUTING_KEY_RECIBIDA = "donacion.recibida.routing.key";
 
     @Bean
     public Queue donacionQueue() {
         return new Queue(QUEUE, true);
+    }
+
+    @Bean
+    public Queue donacionRecibidaQueue() {
+        return new Queue(QUEUE_RECIBIDA, true);
     }
 
     @Bean
@@ -28,8 +35,13 @@ public class RabbitMQConfig {
     }
 
     @Bean
-    public Binding binding(Queue queue, TopicExchange exchange) {
-        return BindingBuilder.bind(queue).to(exchange).with(ROUTING_KEY);
+    public Binding binding(Queue donacionQueue, TopicExchange donacionExchange) {
+        return BindingBuilder.bind(donacionQueue).to(donacionExchange).with(ROUTING_KEY);
+    }
+
+    @Bean
+    public Binding bindingRecibida(Queue donacionRecibidaQueue, TopicExchange donacionExchange) {
+        return BindingBuilder.bind(donacionRecibidaQueue).to(donacionExchange).with(ROUTING_KEY_RECIBIDA);
     }
 
     @Bean

@@ -83,4 +83,37 @@ class DonacionServiceTest {
         
         verify(repository).findAll();
     }
+
+    @Test
+    void testActualizarEstadoNoRecibido() {
+        when(repository.findById(1L)).thenReturn(java.util.Optional.of(donacionGuardada));
+        when(repository.save(any(Donacion.class))).thenReturn(donacionGuardada);
+
+        Donacion resultado = donacionService.actualizarEstado(1L, "EN TRANSITO");
+
+        assertEquals("EN TRANSITO", resultado.getEstado());
+        verify(repository).save(donacionGuardada);
+        // Verificar que no se envía mensaje para estados diferentes a RECIBIDO
+        verify(rabbitTemplate, org.mockito.Mockito.never()).convertAndSend(
+                org.mockito.ArgumentMatchers.eq(RabbitMQConfig.EXCHANGE),
+                org.mockito.ArgumentMatchers.eq(RabbitMQConfig.ROUTING_KEY_RECIBIDA),
+                any(Donacion.class)
+        );
+    }
+
+    @Test
+    void testActualizarEstadoRecibido() {
+        when(repository.findById(1L)).thenReturn(java.util.Optional.of(donacionGuardada));
+        when(repository.save(any(Donacion.class))).thenReturn(donacionGuardada);
+
+        Donacion resultado = donacionService.actualizarEstado(1L, "RECIBIDO");
+
+        assertEquals("RECIBIDO", resultado.getEstado());
+        verify(repository).save(donacionGuardada);
+        verify(rabbitTemplate).convertAndSend(
+                RabbitMQConfig.EXCHANGE,
+                RabbitMQConfig.ROUTING_KEY_RECIBIDA,
+                donacionGuardada
+        );
+    }
 }

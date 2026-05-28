@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Card, Form, Button, Container, Row, Col, Alert, InputGroup, Dropdown, Spinner, ListGroup } from 'react-bootstrap';
+import { Card, Form, Button, Container, Row, Col, Alert, InputGroup, Dropdown, Spinner, ListGroup, Modal } from 'react-bootstrap';
 import { useNavigate, Link } from 'react-router-dom';
 import { registrarDonante } from '../services/usuarioService';
 import { validarRutChileno, validarNombreCompleto, validarTelefono, validarPassword, validarEmailDominio, validarNumeroCasa } from '../utils/validators';
@@ -31,7 +31,8 @@ const Registro: React.FC = () => {
   const [sitioWeb, setSitioWeb] = useState('');
 
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const navigate = useNavigate();
 
   const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
@@ -78,37 +79,49 @@ const Registro: React.FC = () => {
     setCoordenadas({ lat: Number.parseFloat(suggestion.lat), lng: Number.parseFloat(suggestion.lon) });
   };
 
-  const validarCamposRequeridos = (): string | null => {
-    if (tipoUsuario === 'NATURAL') {
-      const faltanCampos = !nombreCompleto || !rut || !email || !password || !telefono || !region || !comuna || !direccion || !direccionNumero;
-      return faltanCampos ? 'Por favor completa todos los campos requeridos.' : null;
-    }
-    const faltanCamposEmpresa = !razonSocial || !rut || !giro || !nombreContacto || !email || !password || !telefono || !direccion || !direccionNumero;
-    return faltanCamposEmpresa ? 'Por favor completa todos los campos requeridos de la empresa.' : null;
+  const validateCommonFields = (errs: Record<string, string>) => {
+    if (!validarEmailDominio(email)) errs.email = 'Por favor ingresa un correo con un dominio válido y confiable (ej. gmail.com, outlook.com).';
+    if (!validarPassword(password)) errs.password = 'La contraseña no puede contener espacios, y debe incluir al menos 3 letras y 3 números.';
+    if (password !== confirmPassword) errs.confirmPassword = 'Las contraseñas no coinciden.';
+    if (password.length < 6) errs.password = 'La contraseña debe tener al menos 6 caracteres.';
+    if (!validarRutChileno(rut)) errs.rut = 'El RUT ingresado no es válido. Debe tener el formato 12345678-9';
+    if (!validarTelefono(telefono)) errs.telefono = 'El número de teléfono debe tener entre 9 y 12 dígitos.';
   };
 
-  const validateForm = (): string | null => {
-    if (!validarEmailDominio(email)) return 'Por favor ingresa un correo con un dominio válido y confiable (ej. gmail.com, outlook.com).';
-    if (!validarPassword(password)) return 'La contraseña no puede contener espacios, y debe incluir al menos 3 letras y 3 números.';
-    if (password !== confirmPassword) return 'Las contraseñas no coinciden.';
-    if (password.length < 6) return 'La contraseña debe tener al menos 6 caracteres.';
-    if (!validarRutChileno(rut)) return 'El RUT ingresado no es válido. Debe tener el formato 12345678-9';
-    if (tipoUsuario === 'NATURAL' && !validarNombreCompleto(nombreCompleto)) return 'El nombre debe contener 2 nombres y 2 apellidos (mínimo 4 palabras).';
-    if (tipoUsuario === 'JURIDICA' && (!razonSocial.trim() || !nombreContacto.trim())) return 'La razón social y el nombre de contacto no pueden estar vacíos.';
-    if (!validarTelefono(telefono)) return 'El número de teléfono debe tener entre 9 y 12 dígitos.';
-    if (!region || !comuna || !COMUNAS_POR_REGION[region]?.includes(comuna)) return 'Debes seleccionar una región y una comuna válida de la lista.';
-    if (!validarNumeroCasa(direccionNumero)) return 'El número de la dirección debe contener al menos 2 números (ej. 12).';
-    return validarCamposRequeridos();
+  const validateAddressFields = (errs: Record<string, string>) => {
+    if (!region) errs.region = 'Debes seleccionar una región.';
+    if (!comuna || !COMUNAS_POR_REGION[region]?.includes(comuna)) errs.comuna = 'Debes seleccionar una comuna válida de la lista.';
+    if (!direccion?.trim()) errs.direccion = 'La dirección (calle) es requerida.';
+    if (!validarNumeroCasa(direccionNumero)) errs.direccionNumero = 'El número de la dirección debe contener al menos 2 números (ej. 12).';
+  };
+
+  const validateUserSpecificFields = (errs: Record<string, string>) => {
+    if (tipoUsuario === 'NATURAL') {
+      if (!validarNombreCompleto(nombreCompleto)) errs.nombreCompleto = 'El nombre debe contener 2 nombres y 2 apellidos (mínimo 4 palabras).';
+    } else if (tipoUsuario === 'JURIDICA') {
+      if (!razonSocial.trim()) errs.razonSocial = 'La razón social es requerida.';
+      if (!nombreContacto.trim()) errs.nombreContacto = 'El nombre de contacto es requerido.';
+      if (!giro.trim()) errs.giro = 'El giro o rubro es requerido.';
+    }
+  };
+
+  const validateForm = (): Record<string, string> => {
+    const newErrors: Record<string, string> = {};
+    validateCommonFields(newErrors);
+    validateAddressFields(newErrors);
+    validateUserSpecificFields(newErrors);
+    return newErrors;
   };
 
   const handleRegister = async (e: React.SyntheticEvent) => {
     e.preventDefault();
     setError('');
-    setSuccess('');
+    setErrors({});
 
-    const validationError = validateForm();
-    if (validationError) {
-      setError(validationError);
+    const validationErrors = validateForm();
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      setError('Por favor corrige los campos marcados en rojo.');
       return;
     }
 
@@ -132,10 +145,11 @@ const Registro: React.FC = () => {
 
     try {
       await registrarDonante(payload);
-      setSuccess('¡Registro exitoso! Redirigiendo al login...');
+      setShowSuccessModal(true);
       setTimeout(() => {
+        setShowSuccessModal(false);
         navigate('/login');
-      }, 2000);
+      }, 1500);
     } catch (err: any) {
       setError(err.response?.data || 'Ocurrió un error al registrarse. Verifica si el correo ya está en uso.');
     }
@@ -147,7 +161,8 @@ const Registro: React.FC = () => {
         <Col md={12}>
           <Form.Group className="mb-3">
             <Form.Label className="fw-semibold">Nombres y Apellidos *</Form.Label>
-            <Form.Control type="text" placeholder="Ej. Juan Pérez" value={nombreCompleto} onChange={(e) => setNombreCompleto(e.target.value)} />
+            <Form.Control type="text" placeholder="Ej. Juan Pérez" value={nombreCompleto} onChange={(e) => { setNombreCompleto(e.target.value); if(errors.nombreCompleto) setErrors({...errors, nombreCompleto: ''}); }} isInvalid={!!errors.nombreCompleto} />
+            <Form.Control.Feedback type="invalid">{errors.nombreCompleto}</Form.Control.Feedback>
           </Form.Group>
         </Col>
       </Row>
@@ -155,7 +170,8 @@ const Registro: React.FC = () => {
         <Col md={6}>
           <Form.Group className="mb-3">
             <Form.Label className="fw-semibold">RUT / DNI *</Form.Label>
-            <Form.Control type="text" placeholder="Ej. 12345678-9" value={rut} onChange={(e) => setRut(e.target.value)} />
+            <Form.Control type="text" placeholder="Ej. 12345678-9" value={rut} onChange={(e) => { setRut(e.target.value); if(errors.rut) setErrors({...errors, rut: ''}); }} isInvalid={!!errors.rut} />
+            <Form.Control.Feedback type="invalid">{errors.rut}</Form.Control.Feedback>
           </Form.Group>
         </Col>
         <Col md={6}>
@@ -178,8 +194,10 @@ const Registro: React.FC = () => {
                 type="text" 
                 placeholder="Ej. 912345678" 
                 value={telefono} 
-                onChange={(e) => setTelefono(e.target.value)} 
+                onChange={(e) => { setTelefono(e.target.value); if(errors.telefono) setErrors({...errors, telefono: ''}); }} 
+                isInvalid={!!errors.telefono}
               />
+              <Form.Control.Feedback type="invalid">{errors.telefono}</Form.Control.Feedback>
             </InputGroup>
           </Form.Group>
         </Col>
@@ -243,9 +261,11 @@ const Registro: React.FC = () => {
               type="text" 
               placeholder="Escribe tu calle para buscar..." 
               value={direccion} 
-              onChange={handleAddressChange} 
+              onChange={(e: any) => { handleAddressChange(e); if(errors.direccion) setErrors({...errors, direccion: ''}); }} 
               autoComplete="off"
+              isInvalid={!!errors.direccion}
             />
+            <Form.Control.Feedback type="invalid">{errors.direccion}</Form.Control.Feedback>
             {isSearchingAddress && (
               <div style={{ position: 'absolute', right: '10px', top: '38px' }}>
                 <Spinner animation="border" size="sm" variant="primary" />
@@ -274,8 +294,10 @@ const Registro: React.FC = () => {
               type="text" 
               placeholder="Ej. 1234" 
               value={direccionNumero} 
-              onChange={(e) => setDireccionNumero(e.target.value)} 
+              onChange={(e) => { setDireccionNumero(e.target.value); if(errors.direccionNumero) setErrors({...errors, direccionNumero: ''}); }} 
+              isInvalid={!!errors.direccionNumero}
             />
+            <Form.Control.Feedback type="invalid">{errors.direccionNumero}</Form.Control.Feedback>
           </Form.Group>
         </Col>
       </Row>
@@ -288,13 +310,15 @@ const Registro: React.FC = () => {
         <Col md={6}>
           <Form.Group className="mb-3">
             <Form.Label className="fw-semibold">Razón Social *</Form.Label>
-            <Form.Control type="text" placeholder="Ej. Empresa SpA" value={razonSocial} onChange={(e) => setRazonSocial(e.target.value)} />
+            <Form.Control type="text" placeholder="Ej. Empresa SpA" value={razonSocial} onChange={(e) => { setRazonSocial(e.target.value); if(errors.razonSocial) setErrors({...errors, razonSocial: ''}); }} isInvalid={!!errors.razonSocial} />
+            <Form.Control.Feedback type="invalid">{errors.razonSocial}</Form.Control.Feedback>
           </Form.Group>
         </Col>
         <Col md={6}>
           <Form.Group className="mb-3">
             <Form.Label className="fw-semibold">RUT Empresa *</Form.Label>
-            <Form.Control type="text" placeholder="Ej. 76543210-K" value={rut} onChange={(e) => setRut(e.target.value)} />
+            <Form.Control type="text" placeholder="Ej. 76543210-K" value={rut} onChange={(e) => { setRut(e.target.value); if(errors.rut) setErrors({...errors, rut: ''}); }} isInvalid={!!errors.rut} />
+            <Form.Control.Feedback type="invalid">{errors.rut}</Form.Control.Feedback>
           </Form.Group>
         </Col>
       </Row>
@@ -302,13 +326,15 @@ const Registro: React.FC = () => {
         <Col md={6}>
           <Form.Group className="mb-3">
             <Form.Label className="fw-semibold">Giro / Rubro *</Form.Label>
-            <Form.Control type="text" placeholder="Ej. Alimentos" value={giro} onChange={(e) => setGiro(e.target.value)} />
+            <Form.Control type="text" placeholder="Ej. Alimentos" value={giro} onChange={(e) => { setGiro(e.target.value); if(errors.giro) setErrors({...errors, giro: ''}); }} isInvalid={!!errors.giro} />
+            <Form.Control.Feedback type="invalid">{errors.giro}</Form.Control.Feedback>
           </Form.Group>
         </Col>
         <Col md={6}>
           <Form.Group className="mb-3">
             <Form.Label className="fw-semibold">Nombre de Contacto *</Form.Label>
-            <Form.Control type="text" placeholder="Ej. Jefe RSE" value={nombreContacto} onChange={(e) => setNombreContacto(e.target.value)} />
+            <Form.Control type="text" placeholder="Ej. Jefe RSE" value={nombreContacto} onChange={(e) => { setNombreContacto(e.target.value); if(errors.nombreContacto) setErrors({...errors, nombreContacto: ''}); }} isInvalid={!!errors.nombreContacto} />
+            <Form.Control.Feedback type="invalid">{errors.nombreContacto}</Form.Control.Feedback>
           </Form.Group>
         </Col>
       </Row>
@@ -320,9 +346,11 @@ const Registro: React.FC = () => {
               type="text" 
               placeholder="Ej. Avenida Principal" 
               value={direccion} 
-              onChange={handleAddressChange} 
+              onChange={(e: any) => { handleAddressChange(e); if(errors.direccion) setErrors({...errors, direccion: ''}); }} 
               autoComplete="off"
+              isInvalid={!!errors.direccion}
             />
+            <Form.Control.Feedback type="invalid">{errors.direccion}</Form.Control.Feedback>
             {isSearchingAddress && (
               <div style={{ position: 'absolute', right: '10px', top: '38px' }}>
                 <Spinner animation="border" size="sm" variant="primary" />
@@ -351,8 +379,10 @@ const Registro: React.FC = () => {
               type="text" 
               placeholder="Ej. 1234, Bodega B" 
               value={direccionNumero} 
-              onChange={(e) => setDireccionNumero(e.target.value)} 
+              onChange={(e) => { setDireccionNumero(e.target.value); if(errors.direccionNumero) setErrors({...errors, direccionNumero: ''}); }} 
+              isInvalid={!!errors.direccionNumero}
             />
+            <Form.Control.Feedback type="invalid">{errors.direccionNumero}</Form.Control.Feedback>
           </Form.Group>
         </Col>
       </Row>
@@ -363,7 +393,7 @@ const Registro: React.FC = () => {
             <Dropdown className="d-grid">
               <Dropdown.Toggle 
                 variant="white" 
-                className="text-start border d-flex justify-content-between align-items-center" 
+                className={`text-start border d-flex justify-content-between align-items-center ${errors.region ? 'border-danger' : ''}`} 
                 style={{ backgroundColor: '#fff' }}
               >
                 {region || 'Selecciona una región'}
@@ -382,6 +412,7 @@ const Registro: React.FC = () => {
                 ))}
               </Dropdown.Menu>
             </Dropdown>
+            {errors.region && <div className="invalid-feedback d-block mt-1">{errors.region}</div>}
           </Form.Group>
         </Col>
         <Col md={6}>
@@ -390,7 +421,7 @@ const Registro: React.FC = () => {
             <Dropdown className="d-grid">
               <Dropdown.Toggle 
                 variant="white" 
-                className="text-start border d-flex justify-content-between align-items-center" 
+                className={`text-start border d-flex justify-content-between align-items-center ${errors.comuna ? 'border-danger' : ''}`} 
                 disabled={!region}
                 style={{ backgroundColor: '#fff' }}
               >
@@ -404,6 +435,7 @@ const Registro: React.FC = () => {
                 ))}
               </Dropdown.Menu>
             </Dropdown>
+            {errors.comuna && <div className="invalid-feedback d-block mt-1">{errors.comuna}</div>}
           </Form.Group>
         </Col>
       </Row>
@@ -428,8 +460,10 @@ const Registro: React.FC = () => {
                 type="text" 
                 placeholder="Ej. 922345678" 
                 value={telefono} 
-                onChange={(e) => setTelefono(e.target.value)} 
+                onChange={(e) => { setTelefono(e.target.value); if(errors.telefono) setErrors({...errors, telefono: ''}); }} 
+                isInvalid={!!errors.telefono}
               />
+              <Form.Control.Feedback type="invalid">{errors.telefono}</Form.Control.Feedback>
             </InputGroup>
           </Form.Group>
         </Col>
@@ -491,7 +525,6 @@ const Registro: React.FC = () => {
                     </div>
 
                     {error && <Alert variant="danger">{error}</Alert>}
-                    {success && <Alert variant="success">{success}</Alert>}
 
                     <Form onSubmit={handleRegister}>
                       {/* Campos Específicos según tipo */}
@@ -504,7 +537,8 @@ const Registro: React.FC = () => {
                         <Col md={12}>
                           <Form.Group className="mb-3">
                             <Form.Label className="fw-semibold">Correo Electrónico *</Form.Label>
-                            <Form.Control type="email" placeholder="ejemplo@correo.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+                            <Form.Control type="email" placeholder="ejemplo@correo.com" value={email} onChange={(e) => { setEmail(e.target.value); if(errors.email) setErrors({...errors, email: ''}); }} isInvalid={!!errors.email} />
+                            <Form.Control.Feedback type="invalid">{errors.email}</Form.Control.Feedback>
                           </Form.Group>
                         </Col>
                       </Row>
@@ -512,13 +546,15 @@ const Registro: React.FC = () => {
                         <Col md={6}>
                           <Form.Group className="mb-3">
                             <Form.Label className="fw-semibold">Contraseña *</Form.Label>
-                            <Form.Control type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} />
+                            <Form.Control type="password" placeholder="••••••••" value={password} onChange={(e) => { setPassword(e.target.value); if(errors.password) setErrors({...errors, password: ''}); }} isInvalid={!!errors.password} />
+                            <Form.Control.Feedback type="invalid">{errors.password}</Form.Control.Feedback>
                           </Form.Group>
                         </Col>
                         <Col md={6}>
                           <Form.Group className="mb-4">
                             <Form.Label className="fw-semibold">Confirmar Contraseña *</Form.Label>
-                            <Form.Control type="password" placeholder="••••••••" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+                            <Form.Control type="password" placeholder="••••••••" value={confirmPassword} onChange={(e) => { setConfirmPassword(e.target.value); if(errors.confirmPassword) setErrors({...errors, confirmPassword: ''}); }} isInvalid={!!errors.confirmPassword} />
+                            <Form.Control.Feedback type="invalid">{errors.confirmPassword}</Form.Control.Feedback>
                           </Form.Group>
                         </Col>
                       </Row>
@@ -541,6 +577,20 @@ const Registro: React.FC = () => {
           </Container>
         </div>
       )}
+
+      {/* Pop-up de Éxito */}
+      <Modal show={showSuccessModal} centered backdrop="static" keyboard={false}>
+        <Modal.Body className="text-center p-5">
+          <div className="mb-4">
+            <i className="bi bi-check-circle-fill text-success" style={{ fontSize: '4rem' }}></i>
+          </div>
+          <h3 className="fw-bold mb-3">¡Registro Exitoso!</h3>
+          <p className="text-muted mb-4">
+            Tu cuenta ha sido creada correctamente. Serás redirigido al inicio de sesión en unos segundos...
+          </p>
+          <Spinner animation="border" variant="primary" />
+        </Modal.Body>
+      </Modal>
     </>
   );
 };

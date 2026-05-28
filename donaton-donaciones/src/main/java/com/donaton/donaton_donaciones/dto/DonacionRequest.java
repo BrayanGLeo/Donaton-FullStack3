@@ -5,6 +5,22 @@ public class DonacionRequest {
     private Integer cantidad;
     private String origen;
     private String estado;
+
+    private String categoria;
+    private String descripcion;
+    private String estadoArticulo;
+    private String fechaVencimiento;
+    private String unidadMedida;
+    private Double pesoAproximado;
+    private String fotoBase64;
+    private String modalidadEntrega;
+    private Long centroAcopioDestinoId;
+    private String direccionRetiro;
+    private String disponibilidadHoraria;
+    private Boolean transporteEspecial;
+    private String regionRetiro;
+    private String comunaRetiro;
+    private Long donanteId;
     
     public DonacionRequest() {
         // Constructor vacío para serialización JSON
@@ -21,4 +37,49 @@ public class DonacionRequest {
 
     public String getEstado() { return estado; }
     public void setEstado(String estado) { this.estado = estado; }
+
+    public String getCategoria() { return categoria; }
+    public void setCategoria(String categoria) { this.categoria = categoria; }
+
+    public String getDescripcion() { return descripcion; }
+    public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
+
+    public String getEstadoArticulo() { return estadoArticulo; }
+    public void setEstadoArticulo(String estadoArticulo) { this.estadoArticulo = estadoArticulo; }
+
+    public String getFechaVencimiento() { return fechaVencimiento; }
+    public void setFechaVencimiento(String fechaVencimiento) { this.fechaVencimiento = fechaVencimiento; }
+
+    public String getUnidadMedida() { return unidadMedida; }
+    public void setUnidadMedida(String unidadMedida) { this.unidadMedida = unidadMedida; }
+
+    public Double getPesoAproximado() { return pesoAproximado; }
+    public void setPesoAproximado(Double pesoAproximado) { this.pesoAproximado = pesoAproximado; }
+
+    public String getFotoBase64() { return fotoBase64; }
+    public void setFotoBase64(String fotoBase64) { this.fotoBase64 = fotoBase64; }
+
+    public String getModalidadEntrega() { return modalidadEntrega; }
+    public void setModalidadEntrega(String modalidadEntrega) { this.modalidadEntrega = modalidadEntrega; }
+
+    public Long getCentroAcopioDestinoId() { return centroAcopioDestinoId; }
+    public void setCentroAcopioDestinoId(Long centroAcopioDestinoId) { this.centroAcopioDestinoId = centroAcopioDestinoId; }
+
+    public String getDireccionRetiro() { return direccionRetiro; }
+    public void setDireccionRetiro(String direccionRetiro) { this.direccionRetiro = direccionRetiro; }
+
+    public String getDisponibilidadHoraria() { return disponibilidadHoraria; }
+    public void setDisponibilidadHoraria(String disponibilidadHoraria) { this.disponibilidadHoraria = disponibilidadHoraria; }
+
+    public Boolean getTransporteEspecial() { return transporteEspecial; }
+    public void setTransporteEspecial(Boolean transporteEspecial) { this.transporteEspecial = transporteEspecial; }
+
+    public String getRegionRetiro() { return regionRetiro; }
+    public void setRegionRetiro(String regionRetiro) { this.regionRetiro = regionRetiro; }
+
+    public String getComunaRetiro() { return comunaRetiro; }
+    public void setComunaRetiro(String comunaRetiro) { this.comunaRetiro = comunaRetiro; }
+
+    public Long getDonanteId() { return donanteId; }
+    public void setDonanteId(Long donanteId) { this.donanteId = donanteId; }
 }

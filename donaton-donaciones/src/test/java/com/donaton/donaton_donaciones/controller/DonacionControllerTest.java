@@ -34,6 +34,9 @@ class DonacionControllerTest {
     @Mock
     private DonacionService donacionService;
 
+    @Mock
+    private com.donaton.donaton_donaciones.security.JwtUtil jwtUtil;
+
     @InjectMocks
     private DonacionController donacionController;
 
