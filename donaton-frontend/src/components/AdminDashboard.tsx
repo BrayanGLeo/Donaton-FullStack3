@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Table, Badge, Button, Tabs, Tab, Form, Alert, Spinner } from 'react-bootstrap';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -6,9 +6,8 @@ import L from 'leaflet';
 import { obtenerUsuarios, registrarUsuarioAdmin } from '../services/usuarioService';
 import { listarDonaciones, type DonacionResponse } from '../services/donacionService';
 import { obtenerNecesidades, type Necesidad } from '../services/bffService';
-import { Usuario } from '../context/AuthContext';
+import type { Usuario } from '../context/AuthContext';
 
-// Fix for default leaflet icons not showing in React-Leaflet correctly
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
@@ -16,7 +15,6 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
 });
 
-// Component to programmatically move the map
 const MapUpdater = ({ center }: { center: [number, number] }) => {
   const map = useMap();
   useEffect(() => {
@@ -28,21 +26,17 @@ const MapUpdater = ({ center }: { center: [number, number] }) => {
 const AdminDashboard: React.FC = () => {
   const [key, setKey] = useState<string>('donaciones');
 
-  // Donaciones State
   const [donaciones, setDonaciones] = useState<DonacionResponse[]>([]);
   
-  // Necesidades State
   const [necesidades, setNecesidades] = useState<Necesidad[]>([]);
   const [mapCenter, setMapCenter] = useState<[number, number]>([-33.448, -70.669]);
   
-  // Usuarios State
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [nuevoUserEmail, setNuevoUserEmail] = useState('');
   const [nuevoUserPass, setNuevoUserPass] = useState('');
   const [nuevoUserRol, setNuevoUserRol] = useState('');
   const [userMsg, setUserMsg] = useState<{ type: 'success' | 'danger', text: string } | null>(null);
 
-  // Loaders
   const [loadingDonaciones, setLoadingDonaciones] = useState(false);
   const [loadingNecesidades, setLoadingNecesidades] = useState(false);
   const [loadingUsuarios, setLoadingUsuarios] = useState(false);

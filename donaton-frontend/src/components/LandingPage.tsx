@@ -14,7 +14,6 @@ const LandingPage: React.FC = () => {
 
   return (
     <div className="landing-page">
-      {/* Hero Section */}
       <div 
         className="hero-section text-white text-center d-flex flex-column justify-content-center align-items-center"
         style={{
@@ -57,7 +56,6 @@ const LandingPage: React.FC = () => {
         </Container>
       </div>
 
-      {/* Features Section */}
       <Container className="py-5 my-5">
         <Row className="text-center mb-5">
           <Col>

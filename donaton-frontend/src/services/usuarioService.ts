@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Usuario } from '../context/AuthContext';
+import type { Usuario } from '../context/AuthContext';
 
 export const obtenerUsuarios = async (): Promise<Usuario[]> => {
   try {
