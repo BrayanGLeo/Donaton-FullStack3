@@ -7,7 +7,7 @@ import org.springframework.amqp.support.converter.MessageConverter;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-public class RabbitMQConfigTest {
+class RabbitMQConfigTest {
 
     @Test
     void testRabbitMQConfigBeans() {

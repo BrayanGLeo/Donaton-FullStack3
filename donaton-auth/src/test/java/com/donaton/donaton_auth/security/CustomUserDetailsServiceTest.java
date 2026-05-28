@@ -37,7 +37,6 @@ class CustomUserDetailsServiceTest {
 
     @Test
     void testLoadUserByUsername_UserExists() {
-        // Simular que el repositorio encuentra al usuario
         when(usuarioRepository.findByEmail("test@donaton.cl")).thenReturn(Optional.of(usuarioPrueba));
 
         UserDetails userDetails = customUserDetailsService.loadUserByUsername("test@donaton.cl");
@@ -49,7 +48,6 @@ class CustomUserDetailsServiceTest {
 
     @Test
     void testLoadUserByUsername_UserNotFound_ThrowsException() {
-        // Simular que el repositorio NO encuentra al usuario
         when(usuarioRepository.findByEmail("noexiste@donaton.cl")).thenReturn(Optional.empty());
 
         assertThrows(UsernameNotFoundException.class, () -> {

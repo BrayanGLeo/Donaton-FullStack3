@@ -24,6 +24,7 @@ public class Necesidad {
     private LocalDateTime fechaReporte;
 
     public Necesidad() {
+        // Constructor vacío requerido por JPA
     }
 
     public Necesidad(String recursos, Double latitud, Double longitud, LocalDateTime fechaReporte) {

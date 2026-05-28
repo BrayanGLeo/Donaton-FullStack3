@@ -5,11 +5,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class NecesidadesClientService {
 
     private final RestTemplate restTemplate;
+    private static final Logger logger = LoggerFactory.getLogger(NecesidadesClientService.class);
 
     public NecesidadesClientService(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
@@ -22,6 +25,7 @@ public class NecesidadesClientService {
     }
 
     public ResponseEntity<String> fallbackObtenerNecesidades(Exception e) {
+        logger.error("Fallback activado debido a: {}", e.getMessage());
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("Servicio degradado");
     }
 }

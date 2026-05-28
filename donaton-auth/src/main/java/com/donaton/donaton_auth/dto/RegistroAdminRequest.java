@@ -1,10 +1,11 @@
 package com.donaton.donaton_auth.dto;
 
-public class LoginRequest {
+public class RegistroAdminRequest {
     private String email;
     private String password;
+    private String rol;
 
-    public LoginRequest() {
+    public RegistroAdminRequest() {
         // Constructor vacío para serialización JSON
     }
 
@@ -13,4 +14,7 @@ public class LoginRequest {
 
     public String getPassword() { return password; }
     public void setPassword(String password) { this.password = password; }
+
+    public String getRol() { return rol; }
+    public void setRol(String rol) { this.rol = rol; }
 }

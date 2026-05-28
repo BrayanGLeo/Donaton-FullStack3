@@ -21,6 +21,7 @@ public class Recepcion {
     private String estado;
 
     public Recepcion() {
+        // Constructor vacío requerido por JPA
     }
 
     public Recepcion(String trackingId, String recurso, Integer cantidad, String estado) {

@@ -10,6 +10,7 @@ public class DespachoRequestDTO {
     private LocalDateTime horario;
 
     public DespachoRequestDTO() {
+        // Constructor vacío para serialización JSON
     }
 
     public DespachoRequestDTO(Long inventarioId, Integer cantidad, String vehiculo, LocalDateTime horario) {

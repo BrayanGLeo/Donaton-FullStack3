@@ -1,5 +1,6 @@
 package com.donaton.donaton_donaciones.controller;
 
+import com.donaton.donaton_donaciones.dto.DonacionRequest;
 import com.donaton.donaton_donaciones.entity.Donacion;
 import com.donaton.donaton_donaciones.service.DonacionService;
 import org.springframework.http.HttpStatus;
@@ -19,7 +20,12 @@ public class DonacionController {
     }
 
     @PostMapping
-    public ResponseEntity<Donacion> registrarDonacion(@RequestBody Donacion donacion) {
+    public ResponseEntity<Donacion> registrarDonacion(@RequestBody DonacionRequest donacionReq) {
+        Donacion donacion = new Donacion();
+        donacion.setRecurso(donacionReq.getRecurso());
+        donacion.setCantidad(donacionReq.getCantidad());
+        donacion.setOrigen(donacionReq.getOrigen());
+        donacion.setEstado(donacionReq.getEstado());
         Donacion nuevaDonacion = service.registrarDonacion(donacion);
         return ResponseEntity.status(HttpStatus.CREATED).body(nuevaDonacion);
     }

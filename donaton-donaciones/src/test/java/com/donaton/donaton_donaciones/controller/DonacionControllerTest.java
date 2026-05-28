@@ -5,11 +5,13 @@ import com.donaton.donaton_donaciones.service.DonacionService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.MediaType;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.http.MediaType;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -21,38 +23,44 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(DonacionController.class)
+@ExtendWith(MockitoExtension.class)
 class DonacionControllerTest {
+    
+    private static final String RECURSO_MANTAS = "Mantas";
+    private static final String ESTADO_PENDIENTE = "Pendiente";
 
-    @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @Mock
     private DonacionService donacionService;
 
-    @Autowired
+    @InjectMocks
+    private DonacionController donacionController;
+
     private ObjectMapper objectMapper;
 
     private Donacion donacionMock;
 
     @BeforeEach
     void setUp() {
-        donacionMock = new Donacion(
-                1L,
-                "Mantas",
-                50,
-                "Concepción",
-                "Pendiente",
-                LocalDateTime.now()
-        );
+        mockMvc = MockMvcBuilders.standaloneSetup(donacionController).build();
+        objectMapper = new ObjectMapper();
+        
+        donacionMock = new Donacion();
+        donacionMock.setId(1L);
+        donacionMock.setRecurso(RECURSO_MANTAS);
+        donacionMock.setCantidad(50);
+        donacionMock.setOrigen("Concepción");
+        donacionMock.setEstado(ESTADO_PENDIENTE);
+        donacionMock.setFechaRegistro(LocalDateTime.now());
     }
 
     @Test
     void testRegistrarDonacionEndpoint() throws Exception {
         when(donacionService.registrarDonacion(any(Donacion.class))).thenReturn(donacionMock);
 
-        Donacion peticionNueva = new Donacion();
-        peticionNueva.setRecurso("Mantas");
+        com.donaton.donaton_donaciones.dto.DonacionRequest peticionNueva = new com.donaton.donaton_donaciones.dto.DonacionRequest();
+        peticionNueva.setRecurso(RECURSO_MANTAS);
         peticionNueva.setCantidad(50);
         peticionNueva.setOrigen("Concepción");
 
@@ -61,8 +69,8 @@ class DonacionControllerTest {
                 .content(objectMapper.writeValueAsString(peticionNueva)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.recurso").value("Mantas"))
-                .andExpect(jsonPath("$.estado").value("Pendiente"));
+                .andExpect(jsonPath("$.recurso").value(RECURSO_MANTAS))
+                .andExpect(jsonPath("$.estado").value(ESTADO_PENDIENTE));
     }
 
     @Test
@@ -75,7 +83,7 @@ class DonacionControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$[0].id").value(1))
-                .andExpect(jsonPath("$[0].recurso").value("Mantas"))
-                .andExpect(jsonPath("$[0].estado").value("Pendiente"));
+                .andExpect(jsonPath("$[0].recurso").value(RECURSO_MANTAS))
+                .andExpect(jsonPath("$[0].estado").value(ESTADO_PENDIENTE));
     }
 }

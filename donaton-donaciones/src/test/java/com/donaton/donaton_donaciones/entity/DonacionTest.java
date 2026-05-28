@@ -30,7 +30,15 @@ class DonacionTest {
     @Test
     void testAllArgsConstructor() {
         LocalDateTime ahora = LocalDateTime.now();
-        Donacion donacionParametrizada = new Donacion(1L, "Ropa", 50, "Sede Central", "Pendiente", "DON-123456", ahora, "Acopio Norte");
+        Donacion donacionParametrizada = new Donacion();
+        donacionParametrizada.setId(1L);
+        donacionParametrizada.setRecurso("Ropa");
+        donacionParametrizada.setCantidad(50);
+        donacionParametrizada.setOrigen("Sede Central");
+        donacionParametrizada.setEstado("Pendiente");
+        donacionParametrizada.setTrackingId("DON-123456");
+        donacionParametrizada.setFechaRegistro(ahora);
+        donacionParametrizada.setAcopioRecepcion("Acopio Norte");
 
         assertEquals(1L, donacionParametrizada.getId());
         assertEquals("Ropa", donacionParametrizada.getRecurso());

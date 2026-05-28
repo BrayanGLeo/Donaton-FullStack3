@@ -26,6 +26,7 @@ public class Despacho {
     private String estado;
 
     public Despacho() {
+        // Constructor vacío requerido por JPA
     }
 
     public Despacho(Long inventarioId, Integer cantidadDespachada, String vehiculo, LocalDateTime horario, String estado) {

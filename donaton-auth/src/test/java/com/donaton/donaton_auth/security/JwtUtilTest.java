@@ -11,17 +11,14 @@ class JwtUtilTest {
 
     @Test
     void testGenerateToken() {
-        // Arrange
         String email = "test@donaton.cl";
         String rol = "ADMIN";
+        org.springframework.test.util.ReflectionTestUtils.setField(jwtUtil, "secretKey", "donaton_secreto_super_seguro_nueva_clave_2026_muy_largo_para_hs256");
 
-        // Act
         String token = jwtUtil.generateToken(email, rol);
 
-        // Assert
         assertNotNull(token);
         assertFalse(token.isEmpty());
-        // Un JWT válido tiene 3 partes separadas por puntos
         assertEquals(3, token.split("\\.").length); 
     }
 }
