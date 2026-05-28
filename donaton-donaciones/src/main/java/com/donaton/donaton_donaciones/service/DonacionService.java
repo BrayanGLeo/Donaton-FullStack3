@@ -33,4 +33,11 @@ public class DonacionService {
     public List<Donacion> obtenerTodas() {
         return repository.findAll();
     }
+
+    public Donacion actualizarEstado(Long id, String nuevoEstado) {
+        Donacion donacion = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Donación no encontrada con ID: " + id));
+        donacion.setEstado(nuevoEstado);
+        return repository.save(donacion);
+    }
 }

@@ -20,7 +20,7 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/login", "/api/auth/registro").permitAll()
+                .requestMatchers("/api/auth/login", "/api/auth/registro", "/api/auth/admin/registro", "/api/auth/usuarios", "/error").permitAll()
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));

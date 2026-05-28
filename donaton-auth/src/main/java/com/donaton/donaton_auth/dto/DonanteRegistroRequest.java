@@ -1,21 +1,26 @@
 package com.donaton.donaton_auth.dto;
 
-public class RegistroAdminRequest {
+public class DonanteRegistroRequest {
+
     private String email;
     private String password;
-    private String rol;
+    
+    // Campos extendidos
+    private String tipoPersona; // "NATURAL" o "JURIDICA"
     private String nombreCompleto;
+    private String razonSocial;
     private String rut;
+    private String giro;
+    private String nombreContacto;
     private String telefono;
     private String region;
     private String comuna;
     private String direccion;
-    private String subRol;
-    private String tipoVehiculo;
-    private String matricula;
-    private Long centroAcopioId;
+    private String sitioWeb;
+    private Double latitud;
+    private Double longitud;
 
-    public RegistroAdminRequest() {
+    public DonanteRegistroRequest() {
         // Constructor vacío para serialización JSON
     }
 
@@ -25,14 +30,23 @@ public class RegistroAdminRequest {
     public String getPassword() { return password; }
     public void setPassword(String password) { this.password = password; }
 
-    public String getRol() { return rol; }
-    public void setRol(String rol) { this.rol = rol; }
+    public String getTipoPersona() { return tipoPersona; }
+    public void setTipoPersona(String tipoPersona) { this.tipoPersona = tipoPersona; }
 
     public String getNombreCompleto() { return nombreCompleto; }
     public void setNombreCompleto(String nombreCompleto) { this.nombreCompleto = nombreCompleto; }
 
+    public String getRazonSocial() { return razonSocial; }
+    public void setRazonSocial(String razonSocial) { this.razonSocial = razonSocial; }
+
     public String getRut() { return rut; }
     public void setRut(String rut) { this.rut = rut; }
+
+    public String getGiro() { return giro; }
+    public void setGiro(String giro) { this.giro = giro; }
+
+    public String getNombreContacto() { return nombreContacto; }
+    public void setNombreContacto(String nombreContacto) { this.nombreContacto = nombreContacto; }
 
     public String getTelefono() { return telefono; }
     public void setTelefono(String telefono) { this.telefono = telefono; }
@@ -46,15 +60,12 @@ public class RegistroAdminRequest {
     public String getDireccion() { return direccion; }
     public void setDireccion(String direccion) { this.direccion = direccion; }
 
-    public String getSubRol() { return subRol; }
-    public void setSubRol(String subRol) { this.subRol = subRol; }
+    public String getSitioWeb() { return sitioWeb; }
+    public void setSitioWeb(String sitioWeb) { this.sitioWeb = sitioWeb; }
 
-    public String getTipoVehiculo() { return tipoVehiculo; }
-    public void setTipoVehiculo(String tipoVehiculo) { this.tipoVehiculo = tipoVehiculo; }
+    public Double getLatitud() { return latitud; }
+    public void setLatitud(Double latitud) { this.latitud = latitud; }
 
-    public String getMatricula() { return matricula; }
-    public void setMatricula(String matricula) { this.matricula = matricula; }
-
-    public Long getCentroAcopioId() { return centroAcopioId; }
-    public void setCentroAcopioId(Long centroAcopioId) { this.centroAcopioId = centroAcopioId; }
+    public Double getLongitud() { return longitud; }
+    public void setLongitud(Double longitud) { this.longitud = longitud; }
 }

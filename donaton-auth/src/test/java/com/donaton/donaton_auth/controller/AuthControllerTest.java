@@ -36,6 +36,9 @@ class AuthControllerTest {
     @Mock
     private UsuarioRepository usuarioRepository;
 
+    @Mock
+    private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+
     @InjectMocks
     private AuthController authController;
 
@@ -78,5 +81,22 @@ class AuthControllerTest {
 
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
         assertEquals("Credenciales inválidas", response.getBody());
+    }
+
+    @Test
+    void testRegistrarDonante_Success() {
+        com.donaton.donaton_auth.dto.DonanteRegistroRequest request = new com.donaton.donaton_auth.dto.DonanteRegistroRequest();
+        request.setEmail("nuevo@donaton.cl");
+        request.setPassword("123456");
+        request.setLatitud(-33.4);
+        request.setLongitud(-70.6);
+
+        when(usuarioRepository.findByEmail("nuevo@donaton.cl")).thenReturn(Optional.empty());
+        when(passwordEncoder.encode("123456")).thenReturn("encoded_pass");
+
+        ResponseEntity<String> response = authController.registrarDonante(request);
+
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+        assertEquals("Usuario registrado con éxito", response.getBody());
     }
 }

@@ -32,3 +32,13 @@ export const listarDonaciones = async (): Promise<DonacionResponse[]> => {
     throw error;
   }
 };
+
+export const actualizarEstadoDonacion = async (id: number, estado: string): Promise<DonacionResponse> => {
+  try {
+    const response = await axios.put<DonacionResponse>(`/api/donaciones/${id}/estado`, { estado });
+    return response.data;
+  } catch (error) {
+    console.error('Error al actualizar el estado de la donación:', error);
+    throw error;
+  }
+};
