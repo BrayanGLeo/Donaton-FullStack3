@@ -21,7 +21,6 @@ public class DespachoService {
 
     @Transactional
     public Despacho asignarTransporte(DespachoRequestDTO request) {
-        // Regla 1 (Stock)
         Long inventarioId = request.getInventarioId();
         if (inventarioId == null) {
             throw new IllegalArgumentException("Stock insuficiente o no validado");
@@ -33,12 +32,10 @@ public class DespachoService {
             throw new IllegalArgumentException("Stock insuficiente o no validado");
         }
 
-        // Regla 2 (Bloqueo de Vehículo)
         if (despachoRepository.existsByVehiculoAndHorario(request.getVehiculo(), request.getHorario())) {
             throw new IllegalStateException("Vehículo ya asignado en este horario");
         }
 
-        // Regla 3 (Éxito)
         inventario.setCantidadTotal(inventario.getCantidadTotal() - request.getCantidad());
         inventarioRepository.save(inventario);
 

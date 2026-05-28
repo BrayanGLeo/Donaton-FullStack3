@@ -54,12 +54,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem('donaton_user');
   };
 
+  const contextValue = React.useMemo(() => ({ token, usuario, login, logout, isAuthenticated: !!token }), [token, usuario]);
+
   if (!isReady) {
-    return null; // Espera a que se hidrate el estado local
+    return null;
   }
 
   return (
-    <AuthContext.Provider value={{ token, usuario, login, logout, isAuthenticated: !!token }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

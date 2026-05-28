@@ -25,6 +25,7 @@ public class Usuario {
     private String rol;
 
     public Usuario() {
+        // Constructor vacío requerido por JPA
     }
 
     public Long getId() {

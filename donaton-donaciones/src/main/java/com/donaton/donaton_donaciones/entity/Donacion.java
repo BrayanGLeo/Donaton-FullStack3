@@ -23,17 +23,7 @@ public class Donacion {
     private String acopioRecepcion;
 
     public Donacion() {
-    }
-
-    public Donacion(Long id, String recurso, Integer cantidad, String origen, String estado, String trackingId, LocalDateTime fechaRegistro, String acopioRecepcion) {
-        this.id = id;
-        this.recurso = recurso;
-        this.cantidad = cantidad;
-        this.origen = origen;
-        this.estado = estado;
-        this.trackingId = trackingId;
-        this.fechaRegistro = fechaRegistro;
-        this.acopioRecepcion = acopioRecepcion;
+        // Constructor vacío requerido por JPA
     }
 
     public Long getId() {

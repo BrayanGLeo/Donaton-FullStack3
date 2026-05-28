@@ -56,9 +56,7 @@ const Navigation: React.FC = () => {
             )}
 
             {isAuthenticated && usuario?.rol === 'ADMIN' && (
-              <>
-                <Nav.Link as={Link as any} to="/admin">Panel de Administrador</Nav.Link>
-              </>
+              <Nav.Link as={Link as any} to="/admin">Panel de Administrador</Nav.Link>
             )}
           </Nav>
           

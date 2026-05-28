@@ -56,7 +56,7 @@ class AuthControllerTest {
     @Test
     void testLogin_Success() {
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                .thenReturn(null); // No importa el retorno si no lanza excepción
+                .thenReturn(null);
         when(usuarioRepository.findByEmail("test@donaton.cl")).thenReturn(Optional.of(usuario));
         when(jwtUtil.generateToken("test@donaton.cl", "ADMIN")).thenReturn("tokenFalso123");
 

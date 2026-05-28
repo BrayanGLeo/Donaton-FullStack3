@@ -11,6 +11,7 @@ public class DonacionEventDTO {
     private String trackingId;
 
     public DonacionEventDTO() {
+        // Constructor vacío para serialización JSON
     }
 
     public Long getId() {

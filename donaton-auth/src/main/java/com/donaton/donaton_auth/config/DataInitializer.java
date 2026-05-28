@@ -2,7 +2,6 @@ package com.donaton.donaton_auth.config;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,17 +15,14 @@ public class DataInitializer {
 
     private static final Logger logger = LoggerFactory.getLogger(DataInitializer.class);
 
-    @Value("${donaton.admin.password}")
-    private String adminPassword;
-
     @Bean
-    CommandLineRunner initDatabase(UsuarioRepository repository, PasswordEncoder passwordEncoder) {
+    CommandLineRunner initDatabase(UsuarioRepository repository, PasswordEncoder passwordEncoder, DonatonAdminProperties adminProps) {
         return args -> {
             if (repository.count() == 0) {
                 Usuario testUser = new Usuario();
                 testUser.setEmail("admin@donaton.cl");
 
-                testUser.setPassword(passwordEncoder.encode(adminPassword));
+                testUser.setPassword(passwordEncoder.encode(adminProps.getPassword()));
                 testUser.setRol("ADMIN");
 
                 repository.save(testUser);

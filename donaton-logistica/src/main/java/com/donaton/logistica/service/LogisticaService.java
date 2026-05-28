@@ -8,8 +8,13 @@ import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @Service
 public class LogisticaService {
+
+    private static final Logger logger = LoggerFactory.getLogger(LogisticaService.class);
 
     private final InventarioRepository inventarioRepository;
     private final com.donaton.logistica.repository.RecepcionRepository recepcionRepository;
@@ -29,7 +34,7 @@ public class LogisticaService {
                 "Pendiente de recepción"
         );
         recepcionRepository.save(recepcion);
-        System.out.println("Donación registrada para recepción: TrackingId=" + trackingId + ", Recurso=" + recepcion.getRecurso());
+        logger.info("Donación registrada para recepción: TrackingId={}, Recurso={}", trackingId, recepcion.getRecurso());
     }
 
     @org.springframework.transaction.annotation.Transactional
@@ -38,7 +43,7 @@ public class LogisticaService {
                 .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("Donación no encontrada"));
         
         if ("Disponible".equals(recepcion.getEstado())) {
-            return recepcion; // Ya fue confirmada
+            return recepcion;
         }
 
         recepcion.setEstado("Disponible");

@@ -21,6 +21,7 @@ public class NecesidadRequestDTO {
     private Double longitud;
 
     public NecesidadRequestDTO() {
+        // Constructor vacío para serialización JSON
     }
 
     public NecesidadRequestDTO(String recursos, Double latitud, Double longitud) {

@@ -23,6 +23,19 @@ const MapUpdater = ({ center }: { center: [number, number] }) => {
   return null;
 };
 
+const getEstadoBadgeColor = (estado: string) => {
+  if (estado === 'RECIBIDO') return 'success';
+  if (estado === 'EN TRANSITO') return 'primary';
+  return 'warning';
+};
+
+const getRolBadgeColor = (rol: string) => {
+  if (rol === 'ADMIN') return 'dark';
+  if (rol === 'COORDINADOR') return 'danger';
+  if (rol === 'LOGISTICA') return 'primary';
+  return 'success';
+};
+
 const AdminDashboard: React.FC = () => {
   const [key, setKey] = useState<string>('donaciones');
 
@@ -96,6 +109,7 @@ const AdminDashboard: React.FC = () => {
       setNuevoUserPass('');
       setNuevoUserRol('');
     } catch (err) {
+      console.error(err);
       setUserMsg({ type: 'danger', text: 'Error al crear usuario' });
     }
   };
@@ -138,7 +152,7 @@ const AdminDashboard: React.FC = () => {
                           <td className="fw-semibold">{d.cantidad}x {d.recurso}</td>
                           <td>{d.origen}</td>
                           <td>
-                            <Badge bg={d.estado === 'RECIBIDO' ? 'success' : d.estado === 'EN TRANSITO' ? 'primary' : 'warning'}>
+                            <Badge bg={getEstadoBadgeColor(d.estado)}>
                               {d.estado}
                             </Badge>
                           </td>
@@ -224,7 +238,7 @@ const AdminDashboard: React.FC = () => {
                             <tr key={u.id}>
                               <td className="fw-semibold">{u.email}</td>
                               <td>
-                                <Badge bg={u.rol === 'ADMIN' ? 'dark' : u.rol === 'COORDINADOR' ? 'danger' : u.rol === 'LOGISTICA' ? 'primary' : 'success'}>
+                                <Badge bg={getRolBadgeColor(u.rol)}>
                                   {u.rol}
                                 </Badge>
                               </td>

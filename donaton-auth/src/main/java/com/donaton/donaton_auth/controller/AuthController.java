@@ -14,6 +14,7 @@ import java.util.List;
 
 import com.donaton.donaton_auth.dto.AuthResponse;
 import com.donaton.donaton_auth.dto.LoginRequest;
+import com.donaton.donaton_auth.dto.RegistroAdminRequest;
 import com.donaton.donaton_auth.entity.Usuario;
 import com.donaton.donaton_auth.repository.UsuarioRepository;
 import com.donaton.donaton_auth.security.JwtUtil;
@@ -35,7 +36,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<Object> login(@RequestBody LoginRequest loginRequest) {
         try {
             // 1. Validar correo y contraseña
             authenticationManager.authenticate(
@@ -58,7 +59,7 @@ public class AuthController {
     }
 
     @PostMapping("/registro")
-    public ResponseEntity<?> registrarDonante(@RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<String> registrarDonante(@RequestBody LoginRequest loginRequest) {
         if (usuarioRepository.findByEmail(loginRequest.getEmail()).isPresent()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("El correo ya está registrado");
         }
@@ -71,15 +72,18 @@ public class AuthController {
     }
 
     @PostMapping("/admin/registro")
-    public ResponseEntity<?> registrarUsuarioAdmin(@RequestBody Usuario nuevoUsuario) {
+    public ResponseEntity<String> registrarUsuarioAdmin(@RequestBody RegistroAdminRequest nuevoUsuario) {
         if (usuarioRepository.findByEmail(nuevoUsuario.getEmail()).isPresent()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("El correo ya está registrado");
         }
         if (!"LOGISTICA".equals(nuevoUsuario.getRol()) && !"COORDINADOR".equals(nuevoUsuario.getRol())) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Rol inválido. Solo LOGISTICA o COORDINADOR");
         }
-        nuevoUsuario.setPassword(passwordEncoder.encode(nuevoUsuario.getPassword()));
-        usuarioRepository.save(nuevoUsuario);
+        Usuario usuario = new Usuario();
+        usuario.setEmail(nuevoUsuario.getEmail());
+        usuario.setPassword(passwordEncoder.encode(nuevoUsuario.getPassword()));
+        usuario.setRol(nuevoUsuario.getRol());
+        usuarioRepository.save(usuario);
         return ResponseEntity.status(HttpStatus.CREATED).body("Usuario registrado con éxito");
     }
 

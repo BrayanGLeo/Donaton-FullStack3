@@ -30,14 +30,11 @@ class NecesidadesClientServiceTest {
         String url = "http://donaton-necesidades/api/necesidades";
         String expectedResponse = "[{\"id\":1, \"descripcion\":\"Alimentos\"}]";
 
-        // Simulamos un comportamiento exitoso del RestTemplate
         when(restTemplate.getForEntity(url, String.class))
                 .thenReturn(new ResponseEntity<>(expectedResponse, HttpStatus.OK));
 
-        // Ejecutamos el método
         ResponseEntity<String> response = necesidadesClientService.obtenerNecesidades();
 
-        // Verificamos que se devuelva un 200 OK con los datos
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(expectedResponse, response.getBody());
     }
@@ -46,15 +43,11 @@ class NecesidadesClientServiceTest {
     void testFallbackActivado() {
         String url = "http://donaton-necesidades/api/necesidades";
         
-        // Simulamos que el microservicio está caído lanzando una excepción
         when(restTemplate.getForEntity(url, String.class))
                 .thenThrow(new RestClientException("Timeout simulado: El servicio no responde"));
 
-        // Ejecutamos el método, el cual gracias a @SpringBootTest pasará por el proxy AOP
-        // El @CircuitBreaker interceptará la excepción y llamará al fallback automáticamente
         ResponseEntity<String> response = necesidadesClientService.obtenerNecesidades();
 
-        // Verificamos que la respuesta es exactamente la del fallback
         assertEquals(HttpStatus.SERVICE_UNAVAILABLE, response.getStatusCode());
         assertEquals("Servicio degradado", response.getBody());
     }

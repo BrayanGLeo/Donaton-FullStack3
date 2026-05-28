@@ -17,6 +17,7 @@ public class Inventario {
     private Integer cantidadTotal;
 
     public Inventario() {
+        // Constructor vacío requerido por JPA
     }
 
     public Inventario(String recurso, Integer cantidadTotal) {
