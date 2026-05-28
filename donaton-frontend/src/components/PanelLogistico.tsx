@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { Tabs, Tab, Table, Button, Modal, Form, Alert } from 'react-bootstrap';
+import React, { useState, useEffect } from "react";
+import { Tabs, Tab, Table, Button, Modal, Form, Alert } from "react-bootstrap";
 import {
   type InventarioItem,
   type DespachoItem,
   type DespachoRequest,
   obtenerInventario,
   obtenerDespachos,
-  asignarTransporte
-} from '../services/logisticaService';
+  asignarTransporte,
+} from "../services/logisticaService";
 
 const PanelLogistico: React.FC = () => {
   const [inventario, setInventario] = useState<InventarioItem[]>([]);
@@ -18,17 +18,22 @@ const PanelLogistico: React.FC = () => {
   const [showModal, setShowModal] = useState<boolean>(false);
   const [selectedItem, setSelectedItem] = useState<InventarioItem | null>(null);
 
-  const [cantidad, setCantidad] = useState<number | string>('');
-  const [vehiculo, setVehiculo] = useState<string>('');
+  const [cantidad, setCantidad] = useState<number | string>("");
+  const [vehiculo, setVehiculo] = useState<string>("");
 
   const cargarDatos = async () => {
     setError(null);
     try {
-      const [inv, desp] = await Promise.all([obtenerInventario(), obtenerDespachos()]);
+      const [inv, desp] = await Promise.all([
+        obtenerInventario(),
+        obtenerDespachos(),
+      ]);
       setInventario(inv);
       setDespachos(desp);
     } catch (err) {
-      setError('Error al cargar los datos de logística. Por favor, intente nuevamente.');
+      setError(
+        "Error al cargar los datos de logística. Por favor, intente nuevamente.",
+      );
       console.error(err);
     } finally {
       setLoading(false);
@@ -41,8 +46,8 @@ const PanelLogistico: React.FC = () => {
 
   const handleOpenModal = (item: InventarioItem) => {
     setSelectedItem(item);
-    setCantidad('');
-    setVehiculo('');
+    setCantidad("");
+    setVehiculo("");
     setShowModal(true);
   };
 
@@ -51,7 +56,7 @@ const PanelLogistico: React.FC = () => {
     setSelectedItem(null);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault();
     if (!selectedItem || !cantidad || !vehiculo) return;
 
@@ -59,55 +64,59 @@ const PanelLogistico: React.FC = () => {
       inventarioId: selectedItem.id,
       cantidad: Number(cantidad),
       vehiculo,
-      horario: new Date().toISOString()
+      horario: new Date().toISOString(),
     };
 
-    // Guardar estado previo para posible reversión (rollback)
     const prevInventario = [...inventario];
     const prevDespachos = [...despachos];
 
-    // Actualización Optimista de la UI
     const cantidadNum = Number(cantidad);
-    setInventario(prev => prev.map(item => {
-      if (item.id === selectedItem.id) {
-        return { ...item, cantidadTotal: item.cantidadTotal - cantidadNum };
-      }
-      return item;
-    }).filter(item => item.cantidadTotal > 0)); // Ocultar si la cantidad llega a 0
+    setInventario((prev) =>
+      prev
+        .map((item) => {
+          if (item.id === selectedItem.id) {
+            return { ...item, cantidadTotal: item.cantidadTotal - cantidadNum };
+          }
+          return item;
+        })
+        .filter((item) => item.cantidadTotal > 0),
+    );
 
     const tempDespacho: DespachoItem = {
-      id: Date.now(), // Usamos timestamp numérico para evitar errores de tipo
+      id: Date.now(),
       inventarioId: selectedItem.id,
       cantidadDespachada: cantidadNum,
       vehiculo,
-      estado: 'Asignando...'
+      estado: "Asignando...",
     };
-    setDespachos(prev => [...prev, tempDespacho]);
+    setDespachos((prev) => [...prev, tempDespacho]);
 
-    // Cerrar modal inmediatamente
     handleCloseModal();
     setError(null);
 
     try {
-      // Llamada real a la API
       await asignarTransporte(request);
-      await cargarDatos(); // Recargar los datos verdaderos tras éxito
+      await cargarDatos();
     } catch (err) {
       console.error(err);
 
-      // Reversión visual en caso de error
       setInventario(prevInventario);
       setDespachos(prevDespachos);
 
-      // Mostrar mensaje de error (desde el backend o genérico)
       const errorObj = err as { response?: { data?: { message?: string } } };
-      const apiError = errorObj.response?.data?.message || 'Error al asignar el transporte. La acción no pudo completarse.';
+      const apiError =
+        errorObj.response?.data?.message ||
+        "Error al asignar el transporte. La acción no pudo completarse.";
       setError(apiError);
     }
   };
 
   if (loading) {
-    return <div className="container mt-4"><p>Cargando datos...</p></div>;
+    return (
+      <div className="container mt-4">
+        <p>Cargando datos...</p>
+      </div>
+    );
   }
 
   return (

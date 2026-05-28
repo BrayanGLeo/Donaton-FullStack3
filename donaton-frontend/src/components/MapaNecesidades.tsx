@@ -6,7 +6,6 @@ import 'leaflet/dist/leaflet.css';
 import { obtenerNecesidades } from '../services/bffService';
 import type { Necesidad } from '../services/bffService';
 
-// Fix for default Leaflet icons in React
 import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png';
 import iconUrl from 'leaflet/dist/images/marker-icon.png';
 import shadowUrl from 'leaflet/dist/images/marker-shadow.png';
@@ -18,7 +17,6 @@ L.Icon.Default.mergeOptions({
   shadowUrl,
 });
 
-// Custom icon for a specific type of emergency to satisfy the visual difference requirement
 const redIcon = new L.Icon({
   iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
@@ -37,7 +35,6 @@ const MapaNecesidades: React.FC = () => {
   const [errorGral, setErrorGral] = useState<string | null>(null);
 
   useEffect(() => {
-    // 1. Fetch data
     const fetchData = async () => {
       try {
         const data = await obtenerNecesidades();
@@ -51,22 +48,19 @@ const MapaNecesidades: React.FC = () => {
 
     fetchData();
 
-    // 2. Check geolocation
-    if (!navigator.geolocation) {
-      setMostrarAlternativaTabular(true);
-      setCargando(false);
-    } else {
+    if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         () => {
-          // Permiso concedido
           setCargando(false);
         },
         () => {
-          // Permiso denegado o error
           setMostrarAlternativaTabular(true);
           setCargando(false);
         }
       );
+    } else {
+      setMostrarAlternativaTabular(true);
+      setCargando(false);
     }
   }, []);
 
@@ -124,7 +118,6 @@ const MapaNecesidades: React.FC = () => {
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           {necesidades.map(n => {
-            // Diferencia visual: emergencias severas en rojo
             const esGrave = n.tipoEmergencia?.toLowerCase().includes('incendio') || 
                             n.tipoEmergencia?.toLowerCase().includes('inundacion') || 
                             n.tipoEmergencia?.toLowerCase().includes('terremoto');

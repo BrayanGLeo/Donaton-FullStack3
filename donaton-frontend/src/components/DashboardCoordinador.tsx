@@ -3,7 +3,7 @@ import MapaNecesidades from './MapaNecesidades';
 import { Container, Card, Alert, Form } from 'react-bootstrap';
 
 const DashboardCoordinador: React.FC = () => {
-  const [rol, setRol] = useState<string>('Coordinador'); // Por defecto 'Coordinador' para probar
+  const [rol, setRol] = useState<string>('Coordinador');
 
   return (
     <Container className="my-4 p-0">
