@@ -99,6 +99,21 @@ npm run dev
 
 La plataforma estará lista y accesible desde tu navegador en `http://localhost:5173`.
 
+### Paso 3: Ejecución de Pruebas y Análisis en SonarQube
+
+Para ejecutar las pruebas unitarias y enviar el reporte de cobertura y calidad de código a SonarQube (que corre localmente en `http://localhost:9000`), puedes utilizar Maven desde la raíz de cada microservicio.
+
+Primero asegúrate de que el contenedor de SonarQube esté en ejecución (viene incluido en el `docker-compose.yml`). Luego, en la terminal, ingresa a la carpeta de cualquier microservicio (por ejemplo, `donaton-logistica`) y ejecuta:
+
+```bash
+# Ejecutar los tests
+./mvnw test
+
+# Ejecutar el análisis y enviarlo a SonarQube
+./mvnw sonar:sonar -Dsonar.projectKey=donaton-logistica -Dsonar.projectName='donaton-logistica' -Dsonar.host.url=http://localhost:9000 -Dsonar.token=tu_token_generado_aqui
+```
+*(Nota: Debes generar un token en el panel de SonarQube local e ingresarlo en el comando).*
+
 ---
 <div align="center">
   <i>Construido con resiliencia y código limpio para quienes más lo necesitan. 🌍🤝</i>

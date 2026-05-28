@@ -15,6 +15,7 @@ import { PanelConductor } from './components/PanelConductor';
 import HistorialAcopio from './components/HistorialAcopio';
 import IngresarNecesidad from './components/IngresarNecesidad';
 import AdminDashboard from './components/AdminDashboard';
+import DashboardRecepcionista from './components/DashboardRecepcionista';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './index.css';
 
@@ -88,6 +89,11 @@ const App: React.FC = () => {
                 <div className="container py-5">
                   <ControlIngreso />
                 </div>
+              </ProtectedRoute>
+            } />
+            <Route path="/recepcionista" element={
+              <ProtectedRoute rolesPermitidos={['LOGISTICA']}>
+                <DashboardRecepcionista />
               </ProtectedRoute>
             } />
             <Route path="/conductor" element={

@@ -38,6 +38,12 @@ public class DonacionService {
         Donacion donacion = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Donación no encontrada con ID: " + id));
         donacion.setEstado(nuevoEstado);
-        return repository.save(donacion);
+        Donacion donacionActualizada = repository.save(donacion);
+        
+        if ("RECIBIDO".equalsIgnoreCase(nuevoEstado)) {
+            rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.ROUTING_KEY_RECIBIDA, donacionActualizada);
+        }
+        
+        return donacionActualizada;
     }
 }

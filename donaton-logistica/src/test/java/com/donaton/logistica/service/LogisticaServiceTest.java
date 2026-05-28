@@ -46,10 +46,8 @@ class LogisticaServiceTest {
 
     @Test
     void testProcesarDonacion() {
-        // Act
         logisticaService.procesarDonacion(donacionEventDTO);
 
-        // Assert
         ArgumentCaptor<Recepcion> recepcionCaptor = ArgumentCaptor.forClass(Recepcion.class);
         verify(recepcionRepository, times(1)).save(recepcionCaptor.capture());
         
@@ -62,15 +60,12 @@ class LogisticaServiceTest {
 
     @Test
     void testConfirmarIngresoExitoso() {
-        // Arrange
         Recepcion recepcion = new Recepcion("TRK-DON-1", "Agua", 50, "Pendiente de recepción");
         when(recepcionRepository.findByTrackingId("TRK-DON-1")).thenReturn(Optional.of(recepcion));
         when(inventarioRepository.findByRecurso("Agua")).thenReturn(Optional.empty());
 
-        // Act
         Recepcion result = logisticaService.confirmarIngreso("TRK-DON-1");
 
-        // Assert
         assertEquals("Disponible", result.getEstado());
         verify(recepcionRepository, times(1)).save(recepcion);
         
@@ -82,16 +77,13 @@ class LogisticaServiceTest {
 
     @Test
     void testConfirmarIngresoExitosoInventarioExistente() {
-        // Arrange
         Recepcion recepcion = new Recepcion("TRK-DON-1", "Agua", 50, "Pendiente de recepción");
         Inventario inventarioExistente = new Inventario("Agua", 100);
         when(recepcionRepository.findByTrackingId("TRK-DON-1")).thenReturn(Optional.of(recepcion));
         when(inventarioRepository.findByRecurso("Agua")).thenReturn(Optional.of(inventarioExistente));
 
-        // Act
         Recepcion result = logisticaService.confirmarIngreso("TRK-DON-1");
 
-        // Assert
         assertEquals("Disponible", result.getEstado());
         verify(recepcionRepository, times(1)).save(recepcion);
         
@@ -103,14 +95,11 @@ class LogisticaServiceTest {
 
     @Test
     void testConfirmarIngresoYaConfirmado() {
-        // Arrange
         Recepcion recepcion = new Recepcion("TRK-DON-1", "Agua", 50, "Disponible");
         when(recepcionRepository.findByTrackingId("TRK-DON-1")).thenReturn(Optional.of(recepcion));
 
-        // Act
         Recepcion result = logisticaService.confirmarIngreso("TRK-DON-1");
 
-        // Assert
         assertEquals("Disponible", result.getEstado());
         verify(recepcionRepository, never()).save(any(Recepcion.class));
         verify(inventarioRepository, never()).save(any(Inventario.class));
@@ -118,10 +107,8 @@ class LogisticaServiceTest {
 
     @Test
     void testConfirmarIngresoFallaDonacionNoEncontrada() {
-        // Arrange
         when(recepcionRepository.findByTrackingId("INVALID")).thenReturn(Optional.empty());
 
-        // Act & Assert
         EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> {
             logisticaService.confirmarIngreso("INVALID");
         });
@@ -129,5 +116,35 @@ class LogisticaServiceTest {
         assertEquals("Donación no encontrada", exception.getMessage());
         verify(recepcionRepository, never()).save(any(Recepcion.class));
         verify(inventarioRepository, never()).save(any(Inventario.class));
+    }
+
+    @Test
+    void testProcesarDonacionRecibidaExitoso() {
+        Recepcion recepcion = new Recepcion("TRK-DON-1", "Agua", 50, "Pendiente de recepción");
+        when(recepcionRepository.findByTrackingId("TRK-DON-1")).thenReturn(Optional.of(recepcion));
+        when(inventarioRepository.findByRecurso("Agua")).thenReturn(Optional.empty());
+
+        logisticaService.procesarDonacionRecibida(donacionEventDTO);
+
+        assertEquals("Disponible", recepcion.getEstado());
+        verify(recepcionRepository, times(1)).save(recepcion);
+        verify(inventarioRepository, times(1)).save(any(Inventario.class));
+    }
+
+    @Test
+    void testProcesarDonacionRecibidaConFalloYRecuperacion() {
+        when(recepcionRepository.findByTrackingId("TRK-DON-1"))
+                .thenReturn(Optional.empty())
+                .thenReturn(Optional.of(new Recepcion("TRK-DON-1", "Agua", 50, "Pendiente de recepción")));
+        
+        when(inventarioRepository.findByRecurso("Agua")).thenReturn(Optional.empty());
+
+        logisticaService.procesarDonacionRecibida(donacionEventDTO);
+
+        ArgumentCaptor<Recepcion> recepcionCaptor = ArgumentCaptor.forClass(Recepcion.class);
+        verify(recepcionRepository, times(2)).save(recepcionCaptor.capture());
+        
+        assertEquals("Disponible", recepcionCaptor.getAllValues().get(1).getEstado());
+        verify(inventarioRepository, times(1)).save(any(Inventario.class));
     }
 }

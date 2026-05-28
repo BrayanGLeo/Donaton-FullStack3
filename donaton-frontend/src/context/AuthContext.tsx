@@ -7,6 +7,9 @@ export interface Usuario {
   nombre: string;
   email?: string;
   rol: Rol;
+  subRol?: string;
+  region?: string;
+  centroAcopioId?: number | null;
 }
 
 interface AuthContextType {
@@ -30,13 +33,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const storedUser = localStorage.getItem('donaton_user');
     
     if (storedToken && storedUser) {
-      setToken(storedToken);
       try {
-        setUsuario(JSON.parse(storedUser));
+        const parsed = JSON.parse(storedUser);
+        // Si el objeto guardado no tiene id, la sesión es antigua → forzar re-login
+        if (parsed.id == null) {
+          console.warn('[Auth] Sesión sin id detectada, limpiando localStorage...');
+          localStorage.removeItem('donaton_token');
+          localStorage.removeItem('donaton_user');
+        } else {
+          setToken(storedToken);
+          setUsuario(parsed);
+        }
       } catch (e) {
         console.error('Error al parsear el usuario almacenado', e);
       }
     }
+
     setIsReady(true);
   }, []);
 

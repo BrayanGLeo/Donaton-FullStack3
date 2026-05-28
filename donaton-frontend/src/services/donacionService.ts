@@ -1,21 +1,38 @@
 import axios from 'axios';
 
 export interface DonacionPayload {
-  recurso: string;
-  cantidad: number;
-  origen: string;
+  recurso?: string;
+  cantidad?: number;
+  origen?: string;
+  estado?: string;
+  categoria?: string;
+  descripcion?: string;
+  estadoArticulo?: string;
+  fechaVencimiento?: string;
+  unidadMedida?: string;
+  pesoAproximado?: number;
+  fotoBase64?: string;
+  modalidadEntrega?: string;
+  centroAcopioDestinoId?: number;
+  direccionRetiro?: string;
+  disponibilidadHoraria?: string;
+  transporteEspecial?: boolean;
+  regionRetiro?: string;
+  comunaRetiro?: string;
+  donanteId?: number;
 }
 
 export interface DonacionResponse extends DonacionPayload {
   id: number;
-  estado: string;
   trackingId?: string;
   fechaRegistro: string;
 }
 
 export const registrarDonacion = async (payload: DonacionPayload): Promise<DonacionResponse> => {
   try {
-    const response = await axios.post<DonacionResponse>('/api/donaciones', payload);
+    const token = localStorage.getItem('donaton_token');
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const response = await axios.post<DonacionResponse>('/api/donaciones', payload, { headers });
     return response.data;
   } catch (error) {
     console.error('Error al registrar la donación:', error);

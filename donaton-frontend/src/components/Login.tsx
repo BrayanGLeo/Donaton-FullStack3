@@ -2,16 +2,29 @@ import React, { useState } from 'react';
 import { Card, Form, Button, Container, Row, Col, Alert } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import axios from 'axios';
 import type { Rol, Usuario } from '../context/AuthContext';
+
+interface AuthResponse {
+  token: string;
+  email: string;
+  rol: Rol;
+  id: number;
+  nombreCompleto: string;
+  subRol?: string;
+  region?: string;
+  centroAcopioId?: number;
+}
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogin = (e: React.SyntheticEvent) => {
+  const handleLogin = async (e: React.SyntheticEvent) => {
     e.preventDefault();
     setError('');
 
@@ -20,38 +33,48 @@ const Login: React.FC = () => {
       return;
     }
 
-    let rolSimulado: Rol = 'DONANTE';
-    let nombreSimulado = 'Juan Donante';
+    setLoading(true);
 
-    if (email.includes('logistica')) {
-      rolSimulado = 'LOGISTICA';
-      nombreSimulado = 'María Logística';
-    } else if (email.includes('coordinador')) {
-      rolSimulado = 'COORDINADOR';
-      nombreSimulado = 'Carlos Coordinador';
-    } else if (email.includes('admin')) {
-      rolSimulado = 'ADMIN';
-      nombreSimulado = 'Administrador Sistema';
-    }
+    try {
+      const response = await axios.post<AuthResponse>('/api/auth/login', { email, password });
+      const data = response.data;
+      
+      const usuarioLogueado: Usuario = {
+        id: data.id,
+        nombre: data.nombreCompleto || data.email,
+        email: data.email,
+        rol: data.rol,
+        subRol: data.subRol,
+        region: data.region,
+        centroAcopioId: data.centroAcopioId
+      };
 
-    const usuarioSimulado: Usuario = {
-      id: Date.now(),
-      nombre: nombreSimulado,
-      rol: rolSimulado
-    };
+      login(data.token, usuarioLogueado);
 
-    const fakeToken = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.simulated_${rolSimulado}_token`;
-    
-    login(fakeToken, usuarioSimulado);
-    
-    if (rolSimulado === 'ADMIN') {
-      navigate('/admin');
-    } else if (rolSimulado === 'COORDINADOR') {
-      navigate('/dashboard');
-    } else if (rolSimulado === 'LOGISTICA') {
-      navigate('/logistica');
-    } else {
-      navigate('/mis-donaciones');
+      if (data.rol === 'ADMIN') {
+        navigate('/admin');
+      } else if (data.rol === 'COORDINADOR') {
+        navigate('/dashboard');
+      } else if (data.rol === 'LOGISTICA') {
+        if (data.subRol === 'RECEPCIONISTA') {
+          navigate('/recepcionista');
+        } else if (data.subRol === 'CONDUCTOR') {
+          navigate('/conductor');
+        } else {
+          navigate('/logistica');
+        }
+      } else {
+        navigate('/mis-donaciones');
+      }
+      
+    } catch (err: any) {
+      if (err.response && err.response.status === 401) {
+        setError('Credenciales inválidas. Por favor, intenta nuevamente.');
+      } else {
+        setError('Ocurrió un error de conexión. Verifica que el servidor esté en línea.');
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -81,10 +104,8 @@ const Login: React.FC = () => {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       className="py-2"
+                      disabled={loading}
                     />
-                    <Form.Text className="text-muted">
-                      💡 Tip: Usa "admin@", "logistica@" o "coordinador@" para cambiar de rol.
-                    </Form.Text>
                   </Form.Group>
 
                   <Form.Group className="mb-4" controlId="formBasicPassword">
@@ -95,11 +116,12 @@ const Login: React.FC = () => {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       className="py-2"
+                      disabled={loading}
                     />
                   </Form.Group>
 
-                  <Button variant="primary" type="submit" className="w-100 py-2 fw-bold shadow-sm mb-3">
-                    Ingresar
+                  <Button variant="primary" type="submit" className="w-100 py-2 fw-bold shadow-sm mb-3" disabled={loading}>
+                    {loading ? 'Iniciando sesión...' : 'Ingresar'}
                   </Button>
                 </Form>
               </Card.Body>

@@ -39,19 +39,24 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<Object> login(@RequestBody LoginRequest loginRequest) {
         try {
-            // 1. Validar correo y contraseña
             authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword())
             );
 
-            // 2. Obtener el usuario de la BD para sacar su rol
             Usuario usuario = usuarioRepository.findByEmail(loginRequest.getEmail()).orElseThrow();
 
-            // 3. Crear el token JWT
-            String token = jwtUtil.generateToken(usuario.getEmail(), usuario.getRol());
+            String token = jwtUtil.generateToken(usuario.getEmail(), usuario.getRol(), usuario.getId());
 
-            // 4. Armar y enviar la respuesta
-            AuthResponse response = new AuthResponse(token, usuario.getEmail(), usuario.getRol());
+            AuthResponse response = new AuthResponse(
+                token, 
+                usuario.getEmail(), 
+                usuario.getRol(),
+                usuario.getId(),
+                usuario.getNombreCompleto(),
+                usuario.getSubRol(),
+                usuario.getRegion(),
+                usuario.getCentroAcopioId()
+            );
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
