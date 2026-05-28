@@ -17,6 +17,10 @@ export default defineConfig({
       '/api/bff': {
         target: 'http://127.0.0.1:8083',
         changeOrigin: true,
+      },
+      '/api/auth': {
+        target: 'http://127.0.0.1:8084',
+        changeOrigin: true,
       }
     }
   }

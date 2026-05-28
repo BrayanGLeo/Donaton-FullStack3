@@ -1,4 +1,4 @@
-import axios from 'axios';
+﻿import axios from 'axios';
 
 export interface Necesidad {
   id: number;
@@ -18,3 +18,14 @@ export const obtenerNecesidades = async (): Promise<Necesidad[]> => {
     throw error;
   }
 };
+
+export const ingresarNecesidad = async (necesidad: Omit<Necesidad, 'id' | 'fechaReporte'>): Promise<Necesidad> => {
+  try {
+    const response = await axios.post<Necesidad>('/api/bff/necesidades', necesidad);
+    return response.data;
+  } catch (error) {
+    console.error('Error al ingresar necesidad:', error);
+    throw error;
+  }
+};
+
