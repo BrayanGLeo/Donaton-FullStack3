@@ -13,6 +13,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.List;
 
 import com.donaton.donaton_auth.dto.AuthResponse;
+import com.donaton.donaton_auth.dto.DonanteRegistroRequest;
 import com.donaton.donaton_auth.dto.LoginRequest;
 import com.donaton.donaton_auth.dto.RegistroAdminRequest;
 import com.donaton.donaton_auth.entity.Usuario;
@@ -59,14 +60,30 @@ public class AuthController {
     }
 
     @PostMapping("/registro")
-    public ResponseEntity<String> registrarDonante(@RequestBody LoginRequest loginRequest) {
-        if (usuarioRepository.findByEmail(loginRequest.getEmail()).isPresent()) {
+    public ResponseEntity<String> registrarDonante(@RequestBody DonanteRegistroRequest request) {
+        if (usuarioRepository.findByEmail(request.getEmail()).isPresent()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("El correo ya está registrado");
         }
         Usuario usuario = new Usuario();
-        usuario.setEmail(loginRequest.getEmail());
-        usuario.setPassword(passwordEncoder.encode(loginRequest.getPassword()));
+        usuario.setEmail(request.getEmail());
+        usuario.setPassword(passwordEncoder.encode(request.getPassword()));
         usuario.setRol("DONANTE");
+        
+        // Mapear campos extendidos
+        usuario.setTipoPersona(request.getTipoPersona());
+        usuario.setNombreCompleto(request.getNombreCompleto());
+        usuario.setRazonSocial(request.getRazonSocial());
+        usuario.setRut(request.getRut());
+        usuario.setGiro(request.getGiro());
+        usuario.setNombreContacto(request.getNombreContacto());
+        usuario.setTelefono(request.getTelefono());
+        usuario.setRegion(request.getRegion());
+        usuario.setComuna(request.getComuna());
+        usuario.setDireccion(request.getDireccion());
+        usuario.setSitioWeb(request.getSitioWeb());
+        usuario.setLatitud(request.getLatitud());
+        usuario.setLongitud(request.getLongitud());
+
         usuarioRepository.save(usuario);
         return ResponseEntity.status(HttpStatus.CREATED).body("Usuario registrado con éxito");
     }
@@ -83,6 +100,26 @@ public class AuthController {
         usuario.setEmail(nuevoUsuario.getEmail());
         usuario.setPassword(passwordEncoder.encode(nuevoUsuario.getPassword()));
         usuario.setRol(nuevoUsuario.getRol());
+        
+        // Mapear campos extendidos
+        usuario.setNombreCompleto(nuevoUsuario.getNombreCompleto());
+        usuario.setRut(nuevoUsuario.getRut());
+        usuario.setTelefono(nuevoUsuario.getTelefono());
+        usuario.setRegion(nuevoUsuario.getRegion());
+        usuario.setComuna(nuevoUsuario.getComuna());
+        usuario.setDireccion(nuevoUsuario.getDireccion());
+        
+        // Mapear campos Logistica
+        if ("LOGISTICA".equals(nuevoUsuario.getRol())) {
+            usuario.setSubRol(nuevoUsuario.getSubRol());
+            if ("CONDUCTOR".equals(nuevoUsuario.getSubRol())) {
+                usuario.setTipoVehiculo(nuevoUsuario.getTipoVehiculo());
+                usuario.setMatricula(nuevoUsuario.getMatricula());
+            } else if ("RECEPCIONISTA".equals(nuevoUsuario.getSubRol())) {
+                usuario.setCentroAcopioId(nuevoUsuario.getCentroAcopioId());
+            }
+        }
+        
         usuarioRepository.save(usuario);
         return ResponseEntity.status(HttpStatus.CREATED).body("Usuario registrado con éxito");
     }

@@ -30,3 +30,22 @@ export const registrarDonante = async (datos: Record<string, unknown>): Promise<
     throw error;
   }
 };
+
+export interface CentroAcopio {
+  id: number;
+  nombre: string;
+  region: string;
+  comuna: string;
+  direccion: string;
+}
+
+export const obtenerCentrosAcopioPorRegion = async (region: string): Promise<CentroAcopio[]> => {
+  if (!region) return [];
+  try {
+    const response = await axios.get<CentroAcopio[]>(`/api/logistica/centros-acopio/region/${region}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error al obtener centros de acopio:', error);
+    return [];
+  }
+};

@@ -34,4 +34,14 @@ public class DonacionController {
     public ResponseEntity<List<Donacion>> listarDonaciones() {
         return ResponseEntity.ok(service.obtenerTodas());
     }
+
+    @PutMapping("/{id}/estado")
+    public ResponseEntity<Donacion> actualizarEstado(@PathVariable Long id, @RequestBody java.util.Map<String, String> body) {
+        String nuevoEstado = body.get("estado");
+        if (nuevoEstado == null || nuevoEstado.isBlank()) {
+            return ResponseEntity.badRequest().build();
+        }
+        Donacion actualizada = service.actualizarEstado(id, nuevoEstado);
+        return ResponseEntity.ok(actualizada);
+    }
 }

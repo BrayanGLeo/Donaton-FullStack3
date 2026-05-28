@@ -86,4 +86,25 @@ class DonacionControllerTest {
                 .andExpect(jsonPath("$[0].recurso").value(RECURSO_MANTAS))
                 .andExpect(jsonPath("$[0].estado").value(ESTADO_PENDIENTE));
     }
+
+    @Test
+    void testActualizarEstadoEndpoint() throws Exception {
+        Donacion donacionActualizada = new Donacion();
+        donacionActualizada.setId(1L);
+        donacionActualizada.setRecurso(RECURSO_MANTAS);
+        donacionActualizada.setEstado("EN TRANSITO");
+
+        when(donacionService.actualizarEstado(1L, "EN TRANSITO")).thenReturn(donacionActualizada);
+
+        java.util.Map<String, String> body = new java.util.HashMap<>();
+        body.put("estado", "EN TRANSITO");
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/donaciones/1/estado")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(body)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.estado").value("EN TRANSITO"));
+    }
+
 }

@@ -117,9 +117,7 @@ const App: React.FC = () => {
             {/* Rutas Protegidas - Solo ADMIN */}
             <Route path="/admin" element={
               <ProtectedRoute rolesPermitidos={['ADMIN']}>
-                <div className="container py-5">
-                  <AdminDashboard />
-                </div>
+                <AdminDashboard />
               </ProtectedRoute>
             } />
 

@@ -20,14 +20,14 @@ public class DataInitializer {
         return args -> {
             if (repository.count() == 0) {
                 Usuario testUser = new Usuario();
-                testUser.setEmail("admin@donaton.cl");
+                testUser.setEmail("admin@gmail.com");
 
                 testUser.setPassword(passwordEncoder.encode(adminProps.getPassword()));
                 testUser.setRol("ADMIN");
 
                 repository.save(testUser);
 
-                logger.info("Usuario de prueba creado: admin@donaton.cl");
+                logger.info("Usuario de prueba creado: admin@gmail.com");
             }
         };
     }
