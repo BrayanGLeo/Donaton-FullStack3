@@ -34,6 +34,7 @@ const Registro: React.FC = () => {
   const [error, setError] = useState('');
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
@@ -145,6 +146,7 @@ const Registro: React.FC = () => {
       longitud: coordenadas?.lng ?? null,
     };
 
+    setIsLoading(true);
     try {
       await registrarDonante(payload);
       setShowSuccessModal(true);
@@ -153,7 +155,16 @@ const Registro: React.FC = () => {
         navigate('/login');
       }, 1500);
     } catch (err: any) {
-      setError(err.response?.data || 'Ocurrió un error al registrarse. Verifica si el correo ya está en uso.');
+      const resData = err.response?.data;
+      let errorMsg = 'Ocurrió un error al registrarse. Verifica si el correo ya está en uso.';
+      if (typeof resData === 'string') {
+        errorMsg = resData;
+      } else if (resData && typeof resData === 'object' && resData.message) {
+        errorMsg = resData.message;
+      }
+      setError(errorMsg);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -568,8 +579,8 @@ const Registro: React.FC = () => {
                         </Col>
                       </Row>
 
-                      <Button variant="primary" type="submit" className="w-100 py-3 fw-bold shadow-sm mb-3 mt-2 rounded-3">
-                        Crear Cuenta de Donante
+                      <Button variant="primary" type="submit" disabled={isLoading} className="w-100 py-3 fw-bold shadow-sm mb-3 mt-2 rounded-3">
+                        {isLoading ? <><Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" className="me-2" /> Registrando...</> : 'Crear Cuenta de Donante'}
                       </Button>
                     </Form>
 

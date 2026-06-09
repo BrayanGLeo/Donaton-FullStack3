@@ -24,12 +24,12 @@ public class AuthProxyController {
     }
 
     @PostMapping("/registro")
-    public ResponseEntity<Object> registrarDonante(@RequestBody Object request) {
+    public ResponseEntity<String> registrarDonante(@RequestBody Object request) {
         return authClient.registrarDonante(request);
     }
 
     @PostMapping("/admin/registro")
-    public ResponseEntity<Object> registrarAdmin(@RequestBody Object request) {
+    public ResponseEntity<String> registrarAdmin(@RequestBody Object request) {
         return authClient.registrarAdmin(request);
     }
 

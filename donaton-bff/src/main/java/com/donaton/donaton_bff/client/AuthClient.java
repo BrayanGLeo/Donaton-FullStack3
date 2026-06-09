@@ -13,10 +13,10 @@ public interface AuthClient {
     ResponseEntity<Object> login(@RequestBody Object request);
 
     @PostMapping("/api/auth/registro")
-    ResponseEntity<Object> registrarDonante(@RequestBody Object request);
+    ResponseEntity<String> registrarDonante(@RequestBody Object request);
 
     @PostMapping("/api/auth/admin/registro")
-    ResponseEntity<Object> registrarAdmin(@RequestBody Object request);
+    ResponseEntity<String> registrarAdmin(@RequestBody Object request);
 
     @GetMapping("/api/auth/usuarios")
     ResponseEntity<Object> obtenerUsuarios();
