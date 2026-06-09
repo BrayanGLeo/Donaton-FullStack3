@@ -1,8 +1,8 @@
-export const validarNombreCompleto = (nombre: string): boolean => {
+export const validarNombres = (nombre: string): boolean => {
   if (!nombre || nombre.trim().length === 0) return false;
   if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(nombre)) return false;
   const palabras = nombre.trim().split(/\s+/);
-  return palabras.length >= 4;
+  return palabras.length >= 1;
 };
 
 export const validarPassword = (password: string): boolean => {

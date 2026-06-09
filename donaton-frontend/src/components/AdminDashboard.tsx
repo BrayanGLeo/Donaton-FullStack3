@@ -9,7 +9,7 @@ import { obtenerNecesidades, type Necesidad } from '../services/bffService';
 import type { Usuario } from '../context/AuthContext';
 import { REGIONES_CHILE, COMUNAS_POR_REGION } from '../utils/chileData';
 import { COUNTRY_CODES } from '../utils/countryCodes';
-import { validarRutChileno, validarNombreCompleto, validarTelefono, validarPassword, validarEmailDominio } from '../utils/validators';
+import { validarRutChileno, validarNombres, validarTelefono, validarPassword, validarEmailDominio } from '../utils/validators';
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -93,7 +93,10 @@ const validateUserForm = (data: any) => {
 
   if (data.nuevoUserRol === 'COORDINADOR' || (data.nuevoUserRol === 'LOGISTICA' && data.nuevoUserSubRol)) {
     if (!data.nuevoUserNombre) newErrors.nombre = 'El nombre es requerido.';
-    else if (!validarNombreCompleto(data.nuevoUserNombre)) newErrors.nombre = 'El nombre debe contener al menos 2 nombres y 2 apellidos.';
+    else if (!validarNombres(data.nuevoUserNombre)) newErrors.nombre = 'El nombre es requerido.';
+
+    if (!data.nuevoUserApellido) newErrors.apellido = 'El apellido es requerido.';
+    else if (!validarNombres(data.nuevoUserApellido)) newErrors.apellido = 'El apellido es requerido.';
 
     if (!data.nuevoUserRut) newErrors.rut = 'El RUT es requerido.';
     else if (!validarRutChileno(data.nuevoUserRut)) newErrors.rut = 'El RUT ingresado no es válido. (Ej: 12345678-9)';
@@ -135,6 +138,7 @@ const AdminDashboard: React.FC = () => {
   const [nuevoUserPass, setNuevoUserPass] = useState('');
   const [nuevoUserRol, setNuevoUserRol] = useState('');
   const [nuevoUserNombre, setNuevoUserNombre] = useState('');
+  const [nuevoUserApellido, setNuevoUserApellido] = useState('');
   const [nuevoUserRut, setNuevoUserRut] = useState('');
   const [nuevoUserTelefono, setNuevoUserTelefono] = useState('');
   const [nuevoUserCodigoPais, setNuevoUserCodigoPais] = useState('+56');
@@ -208,7 +212,7 @@ const AdminDashboard: React.FC = () => {
     
     const newErrors = validateUserForm({
       nuevoUserEmail, nuevoUserPass, nuevoUserRol, nuevoUserSubRol,
-      nuevoUserNombre, nuevoUserRut, nuevoUserTelefono, nuevoUserRegion,
+      nuevoUserNombre, nuevoUserApellido, nuevoUserRut, nuevoUserTelefono, nuevoUserRegion,
       nuevoUserComuna, nuevoUserDireccion, nuevoUserTipoVehiculo,
       nuevoUserMatricula, nuevoUserRegionAcopio, nuevoUserCentroAcopioId
     });
@@ -226,7 +230,7 @@ const AdminDashboard: React.FC = () => {
         email: nuevoUserEmail, 
         password: nuevoUserPass, 
         rol: nuevoUserRol,
-        nombreCompleto: nuevoUserNombre,
+        nombreCompleto: `${nuevoUserNombre.trim()} ${nuevoUserApellido.trim()}`,
         rut: nuevoUserRut,
         telefono: `${nuevoUserCodigoPais}${nuevoUserTelefono}`,
         region: nuevoUserRegion,
@@ -250,6 +254,7 @@ const AdminDashboard: React.FC = () => {
       setNuevoUserPass('');
       setNuevoUserRol('');
       setNuevoUserNombre('');
+      setNuevoUserApellido('');
       setNuevoUserRut('');
       setNuevoUserTelefono('');
       setNuevoUserRegion('');
@@ -571,11 +576,22 @@ const AdminDashboard: React.FC = () => {
 
                       {(nuevoUserRol === 'COORDINADOR' || (nuevoUserRol === 'LOGISTICA' && nuevoUserSubRol !== '')) && (
                         <>
-                          <Form.Group className="mb-2">
-                            <Form.Label className="text-white-50 small mb-0">Nombres y Apellidos</Form.Label>
-                            <Form.Control type="text" size="sm" value={nuevoUserNombre} onChange={e => { setNuevoUserNombre(e.target.value); setFormErrors(prev => ({...prev, nombre: ''})); }} placeholder="Ej: Juan Pérez" isInvalid={!!formErrors.nombre} />
-                            <Form.Control.Feedback type="invalid">{formErrors.nombre}</Form.Control.Feedback>
-                          </Form.Group>
+                          <Row>
+                            <Col md={6}>
+                              <Form.Group className="mb-2">
+                                <Form.Label className="text-white-50 small mb-0">Nombres</Form.Label>
+                                <Form.Control type="text" size="sm" value={nuevoUserNombre} onChange={e => { setNuevoUserNombre(e.target.value); setFormErrors(prev => ({...prev, nombre: ''})); }} placeholder="Ej: Juan" isInvalid={!!formErrors.nombre} />
+                                <Form.Control.Feedback type="invalid">{formErrors.nombre}</Form.Control.Feedback>
+                              </Form.Group>
+                            </Col>
+                            <Col md={6}>
+                              <Form.Group className="mb-2">
+                                <Form.Label className="text-white-50 small mb-0">Apellidos</Form.Label>
+                                <Form.Control type="text" size="sm" value={nuevoUserApellido} onChange={e => { setNuevoUserApellido(e.target.value); setFormErrors(prev => ({...prev, apellido: ''})); }} placeholder="Ej: Pérez" isInvalid={!!formErrors.apellido} />
+                                <Form.Control.Feedback type="invalid">{formErrors.apellido}</Form.Control.Feedback>
+                              </Form.Group>
+                            </Col>
+                          </Row>
                           <Form.Group className="mb-2">
                             <Form.Label className="text-white-50 small mb-0">RUT</Form.Label>
                             <Form.Control type="text" size="sm" value={nuevoUserRut} onChange={e => { setNuevoUserRut(e.target.value); setFormErrors(prev => ({...prev, rut: ''})); }} placeholder="Ej: 12.345.678-9" isInvalid={!!formErrors.rut} />

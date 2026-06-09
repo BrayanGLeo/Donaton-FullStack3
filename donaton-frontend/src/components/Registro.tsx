@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Card, Form, Button, Container, Row, Col, Alert, InputGroup, Dropdown, Spinner, ListGroup, Modal } from 'react-bootstrap';
 import { useNavigate, Link } from 'react-router-dom';
 import { registrarDonante } from '../services/usuarioService';
-import { validarRutChileno, validarNombreCompleto, validarTelefono, validarPassword, validarEmailDominio, validarNumeroCasa } from '../utils/validators';
+import { validarRutChileno, validarNombres, validarTelefono, validarPassword, validarEmailDominio, validarNumeroCasa } from '../utils/validators';
 import { REGIONES_CHILE, COMUNAS_POR_REGION } from '../utils/chileData';
 import { COUNTRY_CODES } from '../utils/countryCodes';
 
@@ -23,7 +23,8 @@ const Registro: React.FC = () => {
   const [direccionNumero, setDireccionNumero] = useState('');
   const [coordenadas, setCoordenadas] = useState<{ lat: number; lng: number } | null>(null);
 
-  const [nombreCompleto, setNombreCompleto] = useState('');
+  const [nombre, setNombre] = useState('');
+  const [apellido, setApellido] = useState('');
 
   const [razonSocial, setRazonSocial] = useState('');
   const [giro, setGiro] = useState('');
@@ -97,7 +98,8 @@ const Registro: React.FC = () => {
 
   const validateUserSpecificFields = (errs: Record<string, string>) => {
     if (tipoUsuario === 'NATURAL') {
-      if (!validarNombreCompleto(nombreCompleto)) errs.nombreCompleto = 'El nombre debe contener 2 nombres y 2 apellidos (mínimo 4 palabras).';
+      if (!validarNombres(nombre)) errs.nombre = 'El nombre es requerido.';
+      if (!validarNombres(apellido)) errs.apellido = 'El apellido es requerido.';
     } else if (tipoUsuario === 'JURIDICA') {
       if (!razonSocial.trim()) errs.razonSocial = 'La razón social es requerida.';
       if (!nombreContacto.trim()) errs.nombreContacto = 'El nombre de contacto es requerido.';
@@ -134,7 +136,7 @@ const Registro: React.FC = () => {
       comuna,
       direccion: `${direccion} #${direccionNumero}`,
       rut,
-      nombreCompleto: tipoUsuario === 'NATURAL' ? nombreCompleto.trim() : null,
+      nombreCompleto: tipoUsuario === 'NATURAL' ? `${nombre.trim()} ${apellido.trim()}` : null,
       razonSocial: tipoUsuario === 'JURIDICA' ? razonSocial.trim() : null,
       giro: tipoUsuario === 'JURIDICA' ? giro.trim() : null,
       nombreContacto: tipoUsuario === 'JURIDICA' ? nombreContacto.trim() : null,
@@ -158,11 +160,18 @@ const Registro: React.FC = () => {
   const renderNaturalForm = () => (
     <>
       <Row>
-        <Col md={12}>
+        <Col md={6}>
           <Form.Group className="mb-3">
-            <Form.Label className="fw-semibold">Nombres y Apellidos *</Form.Label>
-            <Form.Control type="text" placeholder="Ej. Juan Pérez" value={nombreCompleto} onChange={(e) => { setNombreCompleto(e.target.value); if(errors.nombreCompleto) setErrors({...errors, nombreCompleto: ''}); }} isInvalid={!!errors.nombreCompleto} />
-            <Form.Control.Feedback type="invalid">{errors.nombreCompleto}</Form.Control.Feedback>
+            <Form.Label className="fw-semibold">Nombres *</Form.Label>
+            <Form.Control type="text" placeholder="Ej. Juan" value={nombre} onChange={(e) => { setNombre(e.target.value); if(errors.nombre) setErrors({...errors, nombre: ''}); }} isInvalid={!!errors.nombre} />
+            <Form.Control.Feedback type="invalid">{errors.nombre}</Form.Control.Feedback>
+          </Form.Group>
+        </Col>
+        <Col md={6}>
+          <Form.Group className="mb-3">
+            <Form.Label className="fw-semibold">Apellidos *</Form.Label>
+            <Form.Control type="text" placeholder="Ej. Pérez" value={apellido} onChange={(e) => { setApellido(e.target.value); if(errors.apellido) setErrors({...errors, apellido: ''}); }} isInvalid={!!errors.apellido} />
+            <Form.Control.Feedback type="invalid">{errors.apellido}</Form.Control.Feedback>
           </Form.Group>
         </Col>
       </Row>
