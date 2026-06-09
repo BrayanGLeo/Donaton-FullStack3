@@ -147,8 +147,6 @@ services:
       dockerfile: Dockerfile
     container_name: donaton-auth
     restart: always
-    ports:
-      - "8084:8084"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-auth:3306/donaton_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://donaton-eureka-server:8761/eureka/
@@ -166,8 +164,6 @@ services:
       dockerfile: Dockerfile
     container_name: donaton-donaciones
     restart: always
-    ports:
-      - "8085:8085"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-donaciones:3306/donaciones_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       - SPRING_DATASOURCE_USERNAME=root
@@ -190,8 +186,6 @@ services:
       dockerfile: Dockerfile
     container_name: donaton-logistica
     restart: always
-    ports:
-      - "8086:8086"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-logistica:3306/logistica_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       - SPRING_DATASOURCE_USERNAME=root
@@ -212,8 +206,6 @@ services:
       dockerfile: Dockerfile
     container_name: donaton-necesidades
     restart: always
-    ports:
-      - "8087:8087"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-necesidades:3306/necesidades_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       - SPRING_DATASOURCE_USERNAME=root
@@ -233,8 +225,6 @@ services:
       dockerfile: Dockerfile
     container_name: donaton-bff
     restart: always
-    ports:
-      - "8083:8083"
     environment:
       - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://donaton-eureka-server:8761/eureka/
     depends_on:
