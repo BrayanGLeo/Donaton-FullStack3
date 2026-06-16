@@ -5,6 +5,8 @@ import { registrarDonante } from '../services/usuarioService';
 import { validarRutChileno, validarNombres, validarTelefono, validarPassword, validarEmailDominio, validarNumeroCasa } from '../utils/validators';
 import { REGIONES_CHILE, COMUNAS_POR_REGION } from '../utils/chileData';
 import { COUNTRY_CODES } from '../utils/countryCodes';
+import axios from 'axios';
+import { useAuth } from '../context/AuthContext';
 
 const Registro: React.FC = () => {
   const [tipoUsuario, setTipoUsuario] = useState<'NATURAL' | 'JURIDICA' | null>(null);
@@ -36,6 +38,7 @@ const Registro: React.FC = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
   const [isSearchingAddress, setIsSearchingAddress] = useState(false);
@@ -149,11 +152,25 @@ const Registro: React.FC = () => {
     setIsLoading(true);
     try {
       await registrarDonante(payload);
+      
+      try {
+        const response = await axios.post('/api/auth/login', { email, password });
+        const data = response.data;
+        const usuarioLogueado = {
+          id: data.id,
+          nombre: data.nombreCompleto || data.email,
+          email: data.email,
+          rol: data.rol,
+          subRol: data.subRol,
+          region: data.region,
+          centroAcopioId: data.centroAcopioId
+        };
+        login(data.token, usuarioLogueado);
+      } catch (loginErr) {
+        console.error("Auto-login failed after registration:", loginErr);
+      }
+
       setShowSuccessModal(true);
-      setTimeout(() => {
-        setShowSuccessModal(false);
-        navigate('/login');
-      }, 1500);
     } catch (err: any) {
       const resData = err.response?.data;
       let errorMsg = 'Ocurrió un error al registrarse. Verifica si el correo ya está en uso.';
@@ -606,9 +623,11 @@ const Registro: React.FC = () => {
           </div>
           <h3 className="fw-bold mb-3">¡Registro Exitoso!</h3>
           <p className="text-muted mb-4">
-            Tu cuenta ha sido creada correctamente. Serás redirigido al inicio de sesión en unos segundos...
+            Tu cuenta ha sido creada correctamente y tu sesión ha sido iniciada.
           </p>
-          <Spinner animation="border" variant="primary" />
+          <Button variant="primary" size="lg" className="px-5 rounded-pill fw-bold shadow-sm" onClick={() => { setShowSuccessModal(false); navigate('/'); }}>
+            Aceptar y Continuar
+          </Button>
         </Modal.Body>
       </Modal>
     </>

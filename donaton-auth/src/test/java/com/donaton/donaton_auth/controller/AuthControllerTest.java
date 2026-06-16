@@ -97,9 +97,10 @@ class AuthControllerTest {
         when(usuarioRepository.findByEmail("nuevo@donaton.cl")).thenReturn(Optional.empty());
         when(passwordEncoder.encode("123456")).thenReturn("encoded_pass");
 
-        ResponseEntity<String> response = authController.registrarDonante(request);
+        ResponseEntity<Object> response = authController.registrarDonante(request);
 
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
-        assertEquals("Usuario registrado con éxito", response.getBody());
+        java.util.Map<String, String> responseBody = (java.util.Map<String, String>) response.getBody();
+        assertEquals("Usuario registrado con éxito", responseBody.get("message"));
     }
 }

@@ -65,9 +65,9 @@ public class AuthController {
     }
 
     @PostMapping("/registro")
-    public ResponseEntity<String> registrarDonante(@RequestBody DonanteRegistroRequest request) {
+    public ResponseEntity<Object> registrarDonante(@RequestBody DonanteRegistroRequest request) {
         if (usuarioRepository.findByEmail(request.getEmail()).isPresent()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("El correo ya está registrado");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(java.util.Map.of("message", "El correo ya está registrado"));
         }
         Usuario usuario = new Usuario();
         usuario.setEmail(request.getEmail());
@@ -90,16 +90,16 @@ public class AuthController {
         usuario.setLongitud(request.getLongitud());
 
         usuarioRepository.save(usuario);
-        return ResponseEntity.status(HttpStatus.CREATED).body("Usuario registrado con éxito");
+        return ResponseEntity.status(HttpStatus.CREATED).body(java.util.Map.of("message", "Usuario registrado con éxito"));
     }
 
     @PostMapping("/admin/registro")
-    public ResponseEntity<String> registrarUsuarioAdmin(@RequestBody RegistroAdminRequest nuevoUsuario) {
+    public ResponseEntity<Object> registrarUsuarioAdmin(@RequestBody RegistroAdminRequest nuevoUsuario) {
         if (usuarioRepository.findByEmail(nuevoUsuario.getEmail()).isPresent()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("El correo ya está registrado");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(java.util.Map.of("message", "El correo ya está registrado"));
         }
         if (!"LOGISTICA".equals(nuevoUsuario.getRol()) && !"COORDINADOR".equals(nuevoUsuario.getRol())) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Rol inválido. Solo LOGISTICA o COORDINADOR");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(java.util.Map.of("message", "Rol inválido. Solo LOGISTICA o COORDINADOR"));
         }
         Usuario usuario = new Usuario();
         usuario.setEmail(nuevoUsuario.getEmail());
@@ -126,7 +126,7 @@ public class AuthController {
         }
         
         usuarioRepository.save(usuario);
-        return ResponseEntity.status(HttpStatus.CREATED).body("Usuario registrado con éxito");
+        return ResponseEntity.status(HttpStatus.CREATED).body(java.util.Map.of("message", "Usuario registrado con éxito"));
     }
 
     @GetMapping("/usuarios")
