@@ -1,5 +1,46 @@
 import { z } from 'zod';
 
+export const getMaxYearsForSubcategory = (subCategoria?: string): number => {
+  if (!subCategoria) return 5;
+
+  const limites: Record<string, number> = {
+    // Alimentos
+    "Fideos/Pastas": 3,
+    "Legumbres": 3,
+    "Aceite": 2,
+    "Salsa de Tomate": 2,
+    "Atún/Jurel en Conserva": 5,
+    "Leche (Polvo/Caja larga vida)": 2,
+    "Harina": 1,
+    "Azúcar": 5,
+    "Sal": 5,
+    "Té/Café": 2,
+    "Avena/Cereales": 1,
+    // Agua e Hidratación
+    "Agua Embotellada (Bidón)": 2,
+    "Agua Embotellada (Individual)": 2,
+    "Bebidas Isotónicas": 1,
+    "Jugos en Caja": 1,
+    // Insumos Médicos
+    "Mascarillas": 5,
+    "Guantes de Látex/Nitrilo": 5,
+    "Alcohol/Alcohol Gel": 3,
+    "Gasas/Vendas": 5,
+    "Paracetamol/Ibuprofeno": 5,
+    "Suero": 3,
+    "Jeringas": 5,
+    // Alimentos para Mascotas
+    "Comida para Perros (Seca)": 2,
+    "Comida para Perros (Húmeda)": 3,
+    "Comida para Gatos (Seca)": 2,
+    "Comida para Gatos (Húmeda)": 3,
+    "Arena para Gatos": 5,
+  };
+
+  return limites[subCategoria] || 5;
+};
+
+
 export const donacionStep1Schema = z.object({
   nombreArticulo: z.string().min(1, 'El nombre es requerido').max(100, 'Máximo 100 caracteres'),
   categoria: z.string().min(1, 'La categoría es requerida'),
@@ -46,6 +87,17 @@ export const donacionStep1Schema = z.object({
         ctx.addIssue({
           code: "custom",
           message: "La fecha debe ser posterior a hoy",
+          path: ["fechaVencimiento"],
+        });
+      }
+      
+      const maxYears = getMaxYearsForSubcategory(data.subCategoria);
+      const maxDate = new Date();
+      maxDate.setFullYear(maxDate.getFullYear() + maxYears);
+      if (selectedDate > maxDate) {
+        ctx.addIssue({
+          code: "custom",
+          message: `La fecha no puede exceder los ${maxYears} años para esta subcategoría`,
           path: ["fechaVencimiento"],
         });
       }

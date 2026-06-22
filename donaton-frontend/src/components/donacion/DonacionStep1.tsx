@@ -2,6 +2,7 @@ import React from 'react';
 import { Form, Row, Col } from 'react-bootstrap';
 import { useFormContext } from 'react-hook-form';
 import type { DonacionGlobalValues } from './DonacionSchemas';
+import { getMaxYearsForSubcategory } from './DonacionSchemas';
 
 const CATEGORIAS_DONACION = [
   "Alimentos",
@@ -17,15 +18,19 @@ const CATEGORIAS_DONACION = [
   "Otro"
 ];
 
-const UNIDADES_MEDIDA = [
-  "Unidades",
-  "Kilogramos",
-  "Litros",
-  "Cajas",
-  "Paquetes",
-  "Sacos",
-  "Pallets"
-];
+const UNIDADES_POR_CATEGORIA: Record<string, string[]> = {
+  "Alimentos": ["Unidades", "Kilogramos", "Cajas", "Paquetes", "Pallets"],
+  "Alimentos imperecederos": ["Unidades", "Kilogramos", "Cajas", "Paquetes", "Sacos", "Pallets"],
+  "Ropa y Calzado": ["Unidades", "Cajas", "Paquetes", "Sacos"],
+  "Agua e Hidratación": ["Unidades", "Litros", "Cajas", "Pallets"],
+  "Artículos de Higiene Personal": ["Unidades", "Cajas", "Paquetes"],
+  "Insumos Médicos": ["Unidades", "Cajas", "Paquetes"],
+  "Materiales de Construcción": ["Unidades", "Kilogramos", "Sacos", "Pallets"],
+  "Herramientas": ["Unidades", "Cajas"],
+  "Muebles y Enseres": ["Unidades"],
+  "Alimentos para Mascotas": ["Unidades", "Kilogramos", "Sacos", "Cajas", "Pallets"],
+  "Otro": ["Unidades", "Kilogramos", "Litros", "Cajas", "Paquetes", "Sacos", "Pallets"]
+};
 
 const SUBCATEGORIAS: Record<string, string[]> = {
   "Alimentos": [
@@ -127,6 +132,13 @@ export const DonacionStep1: React.FC = () => {
   const watchFoto = watch('fotoBase64');
   const watchDescripcion = watch('descripcion') || "";
   
+  const maxDateStr = React.useMemo(() => {
+    const maxYears = getMaxYearsForSubcategory(watchSubCategoria);
+    const d = new Date();
+    d.setFullYear(d.getFullYear() + maxYears);
+    return d.toISOString().split('T')[0];
+  }, [watchSubCategoria]);
+  
   const requiresDate = ["Alimentos", "Agua e Hidratación", "Insumos Médicos", "Alimentos para Mascotas"].includes(watchCategoria);
   
   const hideEstado = [
@@ -135,11 +147,20 @@ export const DonacionStep1: React.FC = () => {
     "Insumos Médicos"
   ].includes(watchCategoria) || watchCategoria?.toLowerCase().includes("alimento");
 
+  const unidadesDisponibles = watchCategoria ? (UNIDADES_POR_CATEGORIA[watchCategoria] || UNIDADES_POR_CATEGORIA["Otro"]) : [];
+
   React.useEffect(() => {
     if (hideEstado) {
       setValue('estadoArticulo', 'Nuevo', { shouldValidate: true });
     }
-  }, [watchCategoria, hideEstado, setValue]);
+  }, [hideEstado, setValue]);
+
+  React.useEffect(() => {
+    const unidadActual = watch('unidadMedida');
+    if (unidadActual && watchCategoria && !unidadesDisponibles.includes(unidadActual)) {
+      setValue('unidadMedida', '', { shouldValidate: true });
+    }
+  }, [watchCategoria, unidadesDisponibles, setValue, watch]);
 
   React.useEffect(() => {
     if (watchSubCategoria && watchSubCategoria !== 'Otro') {
@@ -244,9 +265,9 @@ export const DonacionStep1: React.FC = () => {
         <Col md={6}>
           <Form.Group className="mb-4">
             <Form.Label className="fw-semibold">Unidad de Medida <span className="text-danger">*</span></Form.Label>
-            <Form.Select {...register('unidadMedida')} isInvalid={!!errors.unidadMedida}>
+            <Form.Select {...register('unidadMedida')} isInvalid={!!errors.unidadMedida} disabled={!watchCategoria}>
               <option value="">Selecciona la unidad</option>
-              {UNIDADES_MEDIDA.map(u => <option key={u} value={u}>{u}</option>)}
+              {unidadesDisponibles.map(u => <option key={u} value={u}>{u}</option>)}
             </Form.Select>
             <Form.Control.Feedback type="invalid">{errors.unidadMedida?.message}</Form.Control.Feedback>
           </Form.Group>
@@ -278,7 +299,7 @@ export const DonacionStep1: React.FC = () => {
           <Col md={6}>
             <Form.Group className="mb-4">
               <Form.Label className="fw-semibold">Fecha de Vencimiento <span className="text-danger">*</span></Form.Label>
-              <Form.Control type="date" {...register('fechaVencimiento')} isInvalid={!!errors.fechaVencimiento} />
+              <Form.Control type="date" max={maxDateStr} {...register('fechaVencimiento')} isInvalid={!!errors.fechaVencimiento} />
               <Form.Control.Feedback type="invalid">{errors.fechaVencimiento?.message}</Form.Control.Feedback>
               <Form.Text className="text-muted">Requerido para alimentos o insumos médicos.</Form.Text>
             </Form.Group>
