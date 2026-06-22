@@ -5,6 +5,9 @@ export type Rol = 'DONANTE' | 'LOGISTICA' | 'COORDINADOR' | 'ADMIN';
 export interface Usuario {
   id: string | number;
   nombre: string;
+  nombreCompleto?: string;
+  razonSocial?: string;
+  tipoPersona?: string;
   email?: string;
   rol: Rol;
   subRol?: string;

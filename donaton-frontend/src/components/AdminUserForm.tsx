@@ -4,7 +4,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import toast from 'react-hot-toast';
 import { Eye, EyeOff, Dices, X } from 'lucide-react';
-import Select from 'react-select';
+import Select, { components } from 'react-select';
 
 import { REGIONES_CHILE, COMUNAS_POR_REGION } from '../utils/chileData';
 import { COUNTRY_CODES } from '../utils/countryCodes';
@@ -20,6 +20,10 @@ import { adminUserSchema, type AdminUserValues } from './registro/RegistroSchema
 interface AdminUserFormProps {
   onUserCreated: () => void;
 }
+
+const CustomInput = (props: any) => (
+  <components.Input {...props} maxLength={50} />
+);
 
 export const AdminUserForm: React.FC<AdminUserFormProps> = ({ onUserCreated }) => {
   const [centrosAcopio, setCentrosAcopio] = useState<CentroAcopio[]>([]);
@@ -76,33 +80,13 @@ export const AdminUserForm: React.FC<AdminUserFormProps> = ({ onUserCreated }) =
     }, 3000);
   };
 
-  const darkSelectStyles = (isInvalid: boolean) => ({
-    control: (base: any, state: any) => {
-      let bColor = 'rgba(255,255,255,0.2)';
-      if (isInvalid) bColor = '#dc3545';
-      else if (state.isFocused) bColor = 'rgba(255,255,255,0.5)';
-
-      return {
-        ...base,
-        backgroundColor: 'rgba(255,255,255,0.1)',
-        borderColor: bColor,
-        color: 'white',
-        minHeight: '31px',
-        boxShadow: 'none',
-        '&:hover': {
-          borderColor: isInvalid ? '#dc3545' : 'rgba(255,255,255,0.5)'
-        }
-      };
-    },
-    singleValue: (base: any) => ({ ...base, color: 'white' }),
-    input: (base: any) => ({ ...base, color: 'white' }),
-    placeholder: (base: any) => ({ ...base, color: 'rgba(255,255,255,0.5)', fontSize: '0.875rem' }),
-    menu: (base: any) => ({ ...base, backgroundColor: '#343a40', zIndex: 9999 }),
-    option: (base: any, state: any) => ({
+  const lightSelectStyles = (isInvalid: boolean) => ({
+    control: (base: any) => ({
       ...base,
-      backgroundColor: state.isFocused ? '#495057' : '#343a40',
-      color: 'white',
-      fontSize: '0.875rem'
+      borderColor: isInvalid ? '#dc3545' : base.borderColor,
+      '&:hover': {
+        borderColor: isInvalid ? '#dc3545' : base.borderColor
+      }
     })
   });
 
@@ -190,21 +174,21 @@ export const AdminUserForm: React.FC<AdminUserFormProps> = ({ onUserCreated }) =
                 <Col md={6}>
                   <Form.Group className="mb-2">
                     <Form.Label className="text-white-50 small mb-0">Nombres</Form.Label>
-                    <Form.Control type="text" size="sm" {...register('nombre')} placeholder="Ej: Juan" onInput={formatNameInput} isInvalid={!!errors.nombre} />
+                    <Form.Control type="text" size="sm" {...register('nombre')} maxLength={50} placeholder="Ej: Juan" onInput={formatNameInput} isInvalid={!!errors.nombre} />
                     <Form.Control.Feedback type="invalid">{errors.nombre?.message}</Form.Control.Feedback>
                   </Form.Group>
                 </Col>
                 <Col md={6}>
                   <Form.Group className="mb-2">
                     <Form.Label className="text-white-50 small mb-0">Apellidos</Form.Label>
-                    <Form.Control type="text" size="sm" {...register('apellido')} placeholder="Ej: Pérez" onInput={formatNameInput} isInvalid={!!errors.apellido} />
+                    <Form.Control type="text" size="sm" {...register('apellido')} maxLength={50} placeholder="Ej: Pérez" onInput={formatNameInput} isInvalid={!!errors.apellido} />
                     <Form.Control.Feedback type="invalid">{errors.apellido?.message}</Form.Control.Feedback>
                   </Form.Group>
                 </Col>
               </Row>
               <Form.Group className="mb-2">
                 <Form.Label className="text-white-50 small mb-0">RUT</Form.Label>
-                <Form.Control type="text" size="sm" {...register('rut')} placeholder="Ej: 12.345.678-9" onInput={formatRutInput} onKeyDown={preventRutKeyDown} isInvalid={!!errors.rut} />
+                <Form.Control type="text" size="sm" {...register('rut')} maxLength={12} placeholder="Ej: 12.345.678-9" onInput={formatRutInput} onKeyDown={preventRutKeyDown} isInvalid={!!errors.rut} />
                 <Form.Control.Feedback type="invalid">{errors.rut?.message}</Form.Control.Feedback>
               </Form.Group>
               <Form.Group className="mb-2">
@@ -222,7 +206,7 @@ export const AdminUserForm: React.FC<AdminUserFormProps> = ({ onUserCreated }) =
                       ))}
                     </Dropdown.Menu>
                   </Dropdown>
-                  <Form.Control type="text" {...register('telefono')} placeholder="Ej: 912345678" onInput={formatPhoneInput} onKeyDown={preventPhoneKeyDown} style={{ backgroundColor: '#fff', color: '#000' }} isInvalid={!!errors.telefono} />
+                  <Form.Control type="text" {...register('telefono')} maxLength={15} placeholder="Ej: 912345678" onInput={formatPhoneInput} onKeyDown={preventPhoneKeyDown} style={{ backgroundColor: '#fff', color: '#000' }} isInvalid={!!errors.telefono} />
                   <Form.Control.Feedback type="invalid">{errors.telefono?.message}</Form.Control.Feedback>
                 </InputGroup>
               </Form.Group>
@@ -236,9 +220,10 @@ export const AdminUserForm: React.FC<AdminUserFormProps> = ({ onUserCreated }) =
                       {...field}
                       options={REGIONES_CHILE.map(r => ({ value: r, label: r }))}
                       placeholder="Seleccione..."
+                      components={{ Input: CustomInput }}
                       value={field.value ? { value: field.value, label: field.value } : null}
                       onChange={(option) => field.onChange(option?.value || '')}
-                      styles={darkSelectStyles(!!errors.region)}
+                      styles={lightSelectStyles(!!errors.region)}
                     />
                   )}
                 />
@@ -256,9 +241,10 @@ export const AdminUserForm: React.FC<AdminUserFormProps> = ({ onUserCreated }) =
                       options={region ? COMUNAS_POR_REGION[region]?.map((c: string) => ({ value: c, label: c })) : []}
                       placeholder="Seleccione..."
                       isDisabled={!region}
+                      components={{ Input: CustomInput }}
                       value={field.value ? { value: field.value, label: field.value } : null}
                       onChange={(option) => field.onChange(option?.value || '')}
-                      styles={darkSelectStyles(!!errors.comuna)}
+                      styles={lightSelectStyles(!!errors.comuna)}
                       noOptionsMessage={() => region ? "No hay comunas" : "Seleccione región"}
                     />
                   )}
@@ -268,7 +254,7 @@ export const AdminUserForm: React.FC<AdminUserFormProps> = ({ onUserCreated }) =
 
               <Form.Group className="mb-2">
                 <Form.Label className="text-white-50 small mb-0">Dirección de Residencia</Form.Label>
-                <Form.Control type="text" size="sm" {...register('direccion')} placeholder="Ej: Alameda 123" isInvalid={!!errors.direccion} />
+                <Form.Control type="text" size="sm" {...register('direccion')} maxLength={100} placeholder="Ej: Alameda 123" isInvalid={!!errors.direccion} />
                 <Form.Control.Feedback type="invalid">{errors.direccion?.message}</Form.Control.Feedback>
               </Form.Group>
 
@@ -288,7 +274,7 @@ export const AdminUserForm: React.FC<AdminUserFormProps> = ({ onUserCreated }) =
                   </Form.Group>
                   <Form.Group className="mb-0">
                     <Form.Label className="text-white-50 small mb-0">Matrícula</Form.Label>
-                    <Form.Control type="text" size="sm" {...register('matricula')} placeholder="Ej: ABCD-12" isInvalid={!!errors.matricula} />
+                    <Form.Control type="text" size="sm" {...register('matricula')} maxLength={8} placeholder="Ej: ABCD-12" isInvalid={!!errors.matricula} />
                     <Form.Control.Feedback type="invalid">{errors.matricula?.message}</Form.Control.Feedback>
                   </Form.Group>
                 </div>
@@ -308,9 +294,10 @@ export const AdminUserForm: React.FC<AdminUserFormProps> = ({ onUserCreated }) =
                           {...field}
                           options={REGIONES_CHILE.map(r => ({ value: r, label: r }))}
                           placeholder="Seleccione..."
+                          components={{ Input: CustomInput }}
                           value={field.value ? { value: field.value, label: field.value } : null}
                           onChange={(option) => field.onChange(option?.value || '')}
-                          styles={darkSelectStyles(!!errors.regionAcopio)}
+                          styles={lightSelectStyles(!!errors.regionAcopio)}
                         />
                       )}
                     />
@@ -327,9 +314,10 @@ export const AdminUserForm: React.FC<AdminUserFormProps> = ({ onUserCreated }) =
                           options={centrosAcopio.map(c => ({ value: c.id.toString(), label: `${c.nombre} (${c.comuna})` }))}
                           placeholder="Seleccione..."
                           isDisabled={!regionAcopio}
+                          components={{ Input: CustomInput }}
                           value={field.value ? { value: field.value, label: centrosAcopio.find(c => c.id.toString() === field.value)?.nombre + ' (' + centrosAcopio.find(c => c.id.toString() === field.value)?.comuna + ')' } : null}
                           onChange={(option) => field.onChange(option?.value || '')}
-                          styles={darkSelectStyles(!!errors.centroAcopioId)}
+                          styles={lightSelectStyles(!!errors.centroAcopioId)}
                           noOptionsMessage={() => regionAcopio ? "No hay centros" : "Seleccione región"}
                         />
                       )}
@@ -351,6 +339,7 @@ export const AdminUserForm: React.FC<AdminUserFormProps> = ({ onUserCreated }) =
                     type="email" 
                     size="sm" 
                     {...register('email')} 
+                    maxLength={100}
                     onInput={formatNoSpaceInput} 
                     onKeyDown={preventSpaceKeyDown} 
                     placeholder="usuario@ejemplo.com" 
@@ -377,7 +366,7 @@ export const AdminUserForm: React.FC<AdminUserFormProps> = ({ onUserCreated }) =
               <Form.Group className="mb-1">
                 <Form.Label className="text-white-50 small mb-0">Contraseña Provisional</Form.Label>
                 <InputGroup size="sm" hasValidation>
-                  <Form.Control type={showPassword ? "text" : "password"} {...register('password')} onInput={formatNoSpaceInput} onKeyDown={preventSpaceKeyDown} placeholder="••••••••" isInvalid={!!errors.password} className="border-end-0" />
+                  <Form.Control type={showPassword ? "text" : "password"} {...register('password')} maxLength={50} onInput={formatNoSpaceInput} onKeyDown={preventSpaceKeyDown} placeholder="••••••••" isInvalid={!!errors.password} className="border-end-0" />
                   <Button variant="outline-light" onClick={() => setShowPassword(!showPassword)} style={{ borderColor: '#dee2e6' }} title="Ver contraseña">
                     {showPassword ? <EyeOff size={14} className="text-dark" /> : <Eye size={14} className="text-dark" />}
                   </Button>

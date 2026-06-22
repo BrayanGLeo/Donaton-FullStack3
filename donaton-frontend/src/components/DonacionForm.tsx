@@ -60,7 +60,18 @@ export const DonacionForm: React.FC<Props> = ({ onSuccess }) => {
 
     try {
       setError('');
-      await registrarDonacion({ ...data, donanteId: Number(usuario.id) });
+      
+      const payload: any = { 
+        ...data, 
+        donanteId: Number(usuario.id),
+        recurso: data.subCategoria,
+      };
+
+      if (data.modalidadEntrega === 'Retiro' && data.direccionRetiroCalle && data.direccionRetiroNumero) {
+        payload.direccionRetiro = `${data.direccionRetiroCalle} #${data.direccionRetiroNumero}`.trim();
+      }
+
+      await registrarDonacion(payload);
       setShowSuccessModal(true);
       if (onSuccess) onSuccess();
     } catch (err: any) {

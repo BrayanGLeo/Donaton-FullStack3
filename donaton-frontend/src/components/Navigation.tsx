@@ -27,6 +27,7 @@ const Navigation: React.FC = () => {
             {!isAuthenticated && (
               <>
                 <Nav.Link as={Link as any} to="/">Inicio</Nav.Link>
+                <Nav.Link as={Link as any} to="/historial-acopio">Donaciones</Nav.Link>
                 <Nav.Link as={Link as any} to="/login">Iniciar Sesión</Nav.Link>
                 <Nav.Link as={Link as any} to="/registro">Registrarse</Nav.Link>
               </>
@@ -34,9 +35,10 @@ const Navigation: React.FC = () => {
 
             {isAuthenticated && usuario?.rol === 'DONANTE' && (
               <>
+                <Nav.Link as={Link as any} to="/">Inicio</Nav.Link>
+                <Nav.Link as={Link as any} to="/historial-acopio">Donaciones</Nav.Link>
                 <Nav.Link as={Link as any} to="/donar">Realizar Donación</Nav.Link>
                 <Nav.Link as={Link as any} to="/mis-donaciones">Mis Donaciones</Nav.Link>
-                <Nav.Link as={Link as any} to="/historial-acopio">Historial Acopio</Nav.Link>
               </>
             )}
 

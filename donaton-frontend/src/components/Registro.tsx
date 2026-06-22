@@ -25,7 +25,7 @@ const Registro: React.FC = () => {
     setIsLoading(true);
 
     const payload = {
-      tipoDonante: 'NATURAL',
+      tipoPersona: 'NATURAL',
       email: data.email,
       password: data.password,
       codigoPais: data.codigoPais,
@@ -37,8 +37,7 @@ const Registro: React.FC = () => {
       direccionNumero: data.direccionNumero,
       latitud: data.latitud,
       longitud: data.longitud,
-      nombre: data.nombre,
-      apellido: data.apellido
+      nombreCompleto: `${data.nombre} ${data.apellido}`.trim()
     };
 
     try {
@@ -74,7 +73,7 @@ const Registro: React.FC = () => {
     setIsLoading(true);
 
     const payload = {
-      tipoDonante: 'JURIDICA',
+      tipoPersona: 'JURIDICA',
       email: data.email,
       password: data.password,
       codigoPais: data.codigoPais,

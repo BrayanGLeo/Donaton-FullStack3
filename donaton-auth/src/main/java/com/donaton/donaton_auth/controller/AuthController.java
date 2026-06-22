@@ -61,12 +61,17 @@ public class AuthController {
             boolean rememberMe = loginRequest.getRememberMe() != null && loginRequest.getRememberMe();
             String token = jwtUtil.generateToken(usuario.getEmail(), usuario.getRol(), usuario.getId(), rememberMe);
 
+            String displayName = usuario.getNombreCompleto();
+            if (displayName == null || displayName.trim().isEmpty()) {
+                displayName = usuario.getRazonSocial();
+            }
+
             AuthResponse response = new AuthResponse(
                 token, 
                 usuario.getEmail(), 
                 usuario.getRol(),
                 usuario.getId(),
-                usuario.getNombreCompleto(),
+                displayName,
                 usuario.getSubRol(),
                 usuario.getRegion(),
                 usuario.getCentroAcopioId()

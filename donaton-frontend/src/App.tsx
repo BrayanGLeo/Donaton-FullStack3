@@ -56,6 +56,11 @@ const App: React.FC = () => {
             <Route path="/login" element={<Login />} />
             <Route path="/registro" element={<Registro />} />
             <Route path="/recuperar-password" element={<RecuperarPassword />} />
+            <Route path="/historial-acopio" element={
+              <div className="container-fluid py-5 px-xl-5">
+                <HistorialAcopio />
+              </div>
+            } />
             
             {/* Rutas Protegidas - Solo DONANTE */}
             <Route path="/donar" element={
@@ -69,13 +74,6 @@ const App: React.FC = () => {
               <ProtectedRoute rolesPermitidos={['DONANTE']}>
                 <div className="container py-5">
                   <DonacionList refreshTrigger={refreshTrigger} />
-                </div>
-              </ProtectedRoute>
-            } />
-            <Route path="/historial-acopio" element={
-              <ProtectedRoute rolesPermitidos={['DONANTE']}>
-                <div className="container py-5">
-                  <HistorialAcopio />
                 </div>
               </ProtectedRoute>
             } />

@@ -25,6 +25,7 @@
     "react-leaflet": "^5.0.0",
     "react-router-dom": "^7.15.1",
     "react-select": "^5.10.2",
+    "recharts": "^3.8.1",
     "zod": "^4.4.3"
   },
   "devDependencies": {
