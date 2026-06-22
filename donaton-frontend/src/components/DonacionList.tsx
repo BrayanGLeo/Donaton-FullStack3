@@ -15,13 +15,33 @@ const getEstadoBadge = (estado?: string) => {
   return 'warning';
 };
 
+// Roles que siempre pueden ver el ID de seguimiento
+const ROLES_VER_TRACKING = new Set(['ADMIN', 'LOGISTICA', 'COORDINADOR']);
+
+const canSeeTracking = (usuario: any, donacion: DonacionResponse): boolean => {
+  if (!usuario) return false;
+  if (ROLES_VER_TRACKING.has(usuario.rol)) return true;
+  // El donante solo puede ver el tracking de SUS propias donaciones
+  if (usuario.rol === 'DONANTE' && donacion.donanteId === Number(usuario.id)) return true;
+  return false;
+};
+
+const canSeeDonor = (usuario: any): boolean => {
+  if (!usuario) return false;
+  return ROLES_VER_TRACKING.has(usuario.rol);
+};
+
+const formatDetailValue = (value: string | number | boolean): string => {
+  if (typeof value === 'boolean') return value ? 'Sí' : 'No';
+  return String(value);
+};
+
 const DetailRow = ({ label, value }: { label: string; value?: string | number | boolean | null }) => {
   if (value === null || value === undefined || value === '' || value === 0) return null;
-  const displayValue = typeof value === 'boolean' ? (value ? 'Sí' : 'No') : String(value);
   return (
     <Row className="mb-2 py-2 border-bottom">
       <Col xs={5} className="text-muted fw-semibold small">{label}</Col>
-      <Col xs={7} className="fw-bold small text-break">{displayValue}</Col>
+      <Col xs={7} className="fw-bold small text-break">{formatDetailValue(value)}</Col>
     </Row>
   );
 };
@@ -101,7 +121,9 @@ export const DonacionList: React.FC<Props> = ({ refreshTrigger }) => {
                   {donaciones.map((donacion) => (
                     <tr key={donacion.id}>
                       <td className="text-secondary">#{donacion.id}</td>
-                      <td className="fw-bold font-monospace text-primary">{donacion.trackingId || '-'}</td>
+                      <td className="fw-bold font-monospace text-primary">
+                        {canSeeTracking(usuario, donacion) ? (donacion.trackingId || '-') : <span className="text-muted fst-italic">No disponible</span>}
+                      </td>
                       <td>{donacion.recurso}</td>
                       <td>{donacion.cantidad} {donacion.unidadMedida || ''}</td>
                       <td>
@@ -154,14 +176,26 @@ export const DonacionList: React.FC<Props> = ({ refreshTrigger }) => {
               <div className="mb-3 p-3 rounded-3" style={{ backgroundColor: '#f8f9ff', border: '1px solid #e0e7ff' }}>
                 <h6 className="text-primary fw-bold mb-3"><i className="bi bi-fingerprint me-2"></i>Identificación</h6>
                 <DetailRow label="ID de Registro" value={`#${selectedDonacion.id}`} />
-                <DetailRow label="ID de Seguimiento" value={selectedDonacion.trackingId} />
+                {canSeeTracking(usuario, selectedDonacion) && (
+                  <DetailRow label="ID de Seguimiento" value={selectedDonacion.trackingId} />
+                )}
+                {!canSeeTracking(usuario, selectedDonacion) && (
+                  <Row className="mb-2 py-2 border-bottom">
+                    <Col xs={5} className="text-muted fw-semibold small">ID de Seguimiento</Col>
+                    <Col xs={7} className="text-muted fst-italic small">🔒 Solo visible para el donante y el equipo de logística</Col>
+                  </Row>
+                )}
                 <DetailRow label="Estado" value={selectedDonacion.estado || 'REGISTRADA'} />
+                <DetailRow label="Visibilidad" value={selectedDonacion.visibilidad === 'Privada' ? '🔒 Anónima' : '🌍 Pública'} />
                 <DetailRow label="Fecha de Registro" value={selectedDonacion.fechaRegistro ? new Date(selectedDonacion.fechaRegistro).toLocaleString('es-CL') : 'Reciente'} />
               </div>
 
               {/* Descripción del artículo */}
               <div className="mb-3 p-3 rounded-3" style={{ backgroundColor: '#f8fff8', border: '1px solid #d1fae5' }}>
                 <h6 className="text-success fw-bold mb-3"><i className="bi bi-tags me-2"></i>Descripción del Artículo</h6>
+                {canSeeDonor(usuario) && selectedDonacion.nombreDonante && (
+                  <DetailRow label="Donante" value={selectedDonacion.visibilidad === 'Privada' ? `${selectedDonacion.nombreDonante} (Anónimo en público)` : selectedDonacion.nombreDonante} />
+                )}
                 <DetailRow label="Categoría" value={selectedDonacion.categoria} />
                 <DetailRow label="Descripción" value={selectedDonacion.descripcion} />
                 <DetailRow label="Estado del Artículo" value={selectedDonacion.estadoArticulo} />

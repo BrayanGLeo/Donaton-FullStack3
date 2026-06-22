@@ -1,13 +1,14 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import { Form, Row, Col } from 'react-bootstrap';
 import { useFormContext } from 'react-hook-form';
 import type { DonacionGlobalValues } from './DonacionSchemas';
 
 const CATEGORIAS_DONACION = [
-  "Alimentos no perecibles",
-  "Agua e Hidratación",
+  "Alimentos",
+  "Alimentos imperecederos",
   "Ropa y Calzado",
-  "Artículos de Aseo e Higiene",
+  "Agua e Hidratación",
+  "Artículos de Higiene Personal",
   "Insumos Médicos",
   "Materiales de Construcción",
   "Herramientas",
@@ -26,14 +27,130 @@ const UNIDADES_MEDIDA = [
   "Pallets"
 ];
 
+const SUBCATEGORIAS: Record<string, string[]> = {
+  "Alimentos": [
+    "Frutas y Verduras",
+    "Comida Preparada",
+    "Lácteos/Refrigerados",
+    "Panadería/Pastelería"
+  ],
+  "Alimentos imperecederos": [
+    "Arroz",
+    "Fideos/Pastas",
+    "Legumbres",
+    "Aceite",
+    "Salsa de Tomate",
+    "Atún/Jurel en Conserva",
+    "Leche (Polvo/Caja larga vida)",
+    "Harina",
+    "Azúcar",
+    "Sal",
+    "Té/Café",
+    "Avena/Cereales"
+  ],
+  "Ropa y Calzado": [
+    "Poleras/Camisas",
+    "Pantalones/Jeans",
+    "Chaquetas/Abrigos",
+    "Ropa Interior (Nueva)",
+    "Zapatos/Zapatillas",
+    "Ropa de Bebé/Niño",
+    "Ropa de Cama"
+  ],
+  "Agua e Hidratación": [
+    "Agua Embotellada (Bidón)",
+    "Agua Embotellada (Individual)",
+    "Bebidas Isotónicas",
+    "Jugos en Caja"
+  ],
+  "Artículos de Higiene Personal": [
+    "Jabón/Gel de Ducha",
+    "Shampoo/Acondicionador",
+    "Pasta y Cepillo Dental",
+    "Papel Higiénico",
+    "Toallas Higiénicas",
+    "Pañales (Bebé/Adulto)",
+    "Desodorante"
+  ],
+  "Insumos Médicos": [
+    "Mascarillas",
+    "Guantes de Látex/Nitrilo",
+    "Alcohol/Alcohol Gel",
+    "Gasas/Vendas",
+    "Paracetamol/Ibuprofeno",
+    "Suero",
+    "Jeringas"
+  ],
+  "Materiales de Construcción": [
+    "Madera/Tablas",
+    "Clavos/Tornillos",
+    "Cemento",
+    "Zinc/Calaminas",
+    "Pintura",
+    "Cables Eléctricos"
+  ],
+  "Herramientas": [
+    "Martillo/Serrucho",
+    "Palas/Picos",
+    "Taladro",
+    "Destornilladores/Alicates"
+  ],
+  "Muebles y Enseres": [
+    "Camas/Colchones",
+    "Mesas/Sillas",
+    "Cocina/Estufa",
+    "Refrigerador",
+    "Muebles de Guardado"
+  ],
+  "Alimentos para Mascotas": [
+    "Comida para Perros (Seca)",
+    "Comida para Perros (Húmeda)",
+    "Comida para Gatos (Seca)",
+    "Comida para Gatos (Húmeda)",
+    "Arena para Gatos"
+  ],
+  "Otro": []
+};
+
 export const DonacionStep1: React.FC = () => {
   const { register, watch, setValue, formState: { errors } } = useFormContext<DonacionGlobalValues>();
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const blockInvalidNumberKeys = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (['e', 'E', '+', '-'].includes(e.key)) {
+      e.preventDefault();
+    }
+  };
 
   const watchCategoria = watch('categoria');
+  const watchSubCategoria = watch('subCategoria');
   const watchFoto = watch('fotoBase64');
+  const watchDescripcion = watch('descripcion') || "";
   
-  const requiresDate = ["Alimentos no perecibles", "Agua e Hidratación", "Insumos Médicos"].includes(watchCategoria);
+  const requiresDate = ["Alimentos", "Agua e Hidratación", "Insumos Médicos", "Alimentos para Mascotas"].includes(watchCategoria);
+  
+  const hideEstado = [
+    "Agua e Hidratación",
+    "Artículos de Higiene Personal",
+    "Insumos Médicos"
+  ].includes(watchCategoria) || watchCategoria?.toLowerCase().includes("alimento");
+
+  React.useEffect(() => {
+    if (hideEstado) {
+      setValue('estadoArticulo', 'Nuevo', { shouldValidate: true });
+    }
+  }, [watchCategoria, hideEstado, setValue]);
+
+  React.useEffect(() => {
+    if (watchSubCategoria && watchSubCategoria !== 'Otro') {
+      setValue('nombreArticulo', watchSubCategoria, { shouldValidate: true });
+    } else if (watchSubCategoria === 'Otro') {
+      setValue('nombreArticulo', '', { shouldValidate: true });
+    }
+  }, [watchSubCategoria, setValue]);
+
+  const opcionesSubCategoria = watchCategoria ? [...(SUBCATEGORIAS[watchCategoria] || []), "Otro"] : [];
+  const showNombreInput = watchSubCategoria === 'Otro' || watchCategoria === 'Otro';
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -58,12 +175,19 @@ export const DonacionStep1: React.FC = () => {
   return (
     <div>
       <h4 className="fw-bold text-primary mb-4 border-bottom pb-2">Detalles del Artículo</h4>
-      
+
       <Row>
         <Col md={6}>
           <Form.Group className="mb-4">
             <Form.Label className="fw-semibold">Categoría <span className="text-danger">*</span></Form.Label>
-            <Form.Select {...register('categoria')} isInvalid={!!errors.categoria}>
+            <Form.Select 
+              {...register('categoria')} 
+              isInvalid={!!errors.categoria}
+              onChange={(e) => {
+                setValue('categoria', e.target.value, { shouldValidate: true });
+                setValue('subCategoria', '', { shouldValidate: true });
+              }}
+            >
               <option value="">Selecciona una categoría</option>
               {CATEGORIAS_DONACION.map(c => <option key={c} value={c}>{c}</option>)}
             </Form.Select>
@@ -71,18 +195,49 @@ export const DonacionStep1: React.FC = () => {
           </Form.Group>
         </Col>
 
-        <Col md={6}>
-          <Form.Group className="mb-4">
-            <Form.Label className="fw-semibold">Estado del Artículo <span className="text-danger">*</span></Form.Label>
-            <Form.Select {...register('estadoArticulo')} isInvalid={!!errors.estadoArticulo}>
-              <option value="">Selecciona el estado</option>
-              <option value="Nuevo">Nuevo (Sin abrir/Sin uso)</option>
-              <option value="Buen Estado">Buen Estado (Usado pero funcional)</option>
-              <option value="Para Reparar">Para Reparar (Requiere arreglos menores)</option>
-            </Form.Select>
-            <Form.Control.Feedback type="invalid">{errors.estadoArticulo?.message}</Form.Control.Feedback>
-          </Form.Group>
-        </Col>
+        {watchCategoria && (
+          <Col md={6}>
+            <Form.Group className="mb-4">
+              <Form.Label className="fw-semibold">Subcategoría (Tipo de Artículo) <span className="text-danger">*</span></Form.Label>
+              <Form.Select {...register('subCategoria')} isInvalid={!!errors.subCategoria}>
+                <option value="">Selecciona una opción</option>
+                {opcionesSubCategoria.map(a => <option key={a} value={a}>{a}</option>)}
+              </Form.Select>
+              <Form.Control.Feedback type="invalid">{errors.subCategoria?.message}</Form.Control.Feedback>
+            </Form.Group>
+          </Col>
+        )}
+
+        {showNombreInput && (
+          <Col md={12}>
+            <Form.Group className="mb-4">
+              <Form.Label className="fw-semibold">Especifique el Nombre del Artículo <span className="text-danger">*</span></Form.Label>
+              <Form.Control 
+                type="text" 
+                placeholder="Ej. Paracetamol 500mg, Fideos Carozzi 400g, etc." 
+                maxLength={100}
+                {...register('nombreArticulo')} 
+                isInvalid={!!errors.nombreArticulo} 
+              />
+              <Form.Control.Feedback type="invalid">{errors.nombreArticulo?.message}</Form.Control.Feedback>
+            </Form.Group>
+          </Col>
+        )}
+
+        {!hideEstado && (
+          <Col md={6}>
+            <Form.Group className="mb-4">
+              <Form.Label className="fw-semibold">Estado del Artículo <span className="text-danger">*</span></Form.Label>
+              <Form.Select {...register('estadoArticulo')} isInvalid={!!errors.estadoArticulo}>
+                <option value="">Selecciona el estado</option>
+                <option value="Nuevo">Nuevo (Sin abrir/Sin uso)</option>
+                <option value="Buen Estado">Buen Estado (Usado pero funcional)</option>
+                <option value="Para Reparar">Para Reparar (Requiere arreglos menores)</option>
+              </Form.Select>
+              <Form.Control.Feedback type="invalid">{errors.estadoArticulo?.message}</Form.Control.Feedback>
+            </Form.Group>
+          </Col>
+        )}
       </Row>
 
       <Row>
@@ -99,7 +254,20 @@ export const DonacionStep1: React.FC = () => {
         <Col md={6}>
           <Form.Group className="mb-4">
             <Form.Label className="fw-semibold">Cantidad <span className="text-danger">*</span></Form.Label>
-            <Form.Control type="number" min="1" {...register('cantidad', { valueAsNumber: true })} isInvalid={!!errors.cantidad} />
+            <Form.Control 
+              type="number" 
+              step="any" 
+              min="0.01" 
+              max="999999"
+              onKeyDown={blockInvalidNumberKeys}
+              onInput={(e) => {
+                if (Number(e.currentTarget.value) > 999999) {
+                  e.currentTarget.value = '999999';
+                }
+              }}
+              {...register('cantidad', { valueAsNumber: true })} 
+              isInvalid={!!errors.cantidad} 
+            />
             <Form.Control.Feedback type="invalid">{errors.cantidad?.message}</Form.Control.Feedback>
           </Form.Group>
         </Col>
@@ -119,7 +287,20 @@ export const DonacionStep1: React.FC = () => {
         <Col md={requiresDate ? 6 : 12}>
           <Form.Group className="mb-4">
             <Form.Label className="fw-semibold">Peso Aproximado (kg) <span className="text-muted">(Opcional)</span></Form.Label>
-            <Form.Control type="number" step="0.1" min="0" {...register('pesoAproximado', { valueAsNumber: true })} isInvalid={!!errors.pesoAproximado} />
+            <Form.Control 
+              type="number" 
+              step="any" 
+              min="0.01" 
+              max="99999"
+              onKeyDown={blockInvalidNumberKeys}
+              onInput={(e) => {
+                if (Number(e.currentTarget.value) > 99999) {
+                  e.currentTarget.value = '99999';
+                }
+              }}
+              {...register('pesoAproximado', { valueAsNumber: true })} 
+              isInvalid={!!errors.pesoAproximado} 
+            />
             <Form.Control.Feedback type="invalid">{errors.pesoAproximado?.message}</Form.Control.Feedback>
           </Form.Group>
         </Col>
@@ -127,8 +308,22 @@ export const DonacionStep1: React.FC = () => {
 
       <Form.Group className="mb-4">
         <Form.Label className="fw-semibold">Descripción <span className="text-danger">*</span></Form.Label>
-        <Form.Control as="textarea" rows={3} placeholder="Describe el artículo, marca, modelo, características..." {...register('descripcion')} isInvalid={!!errors.descripcion} />
-        <Form.Control.Feedback type="invalid">{errors.descripcion?.message}</Form.Control.Feedback>
+        <Form.Control 
+          as="textarea" 
+          rows={3} 
+          maxLength={3000}
+          placeholder="Describe el artículo, marca, modelo, características..." 
+          {...register('descripcion')} 
+          isInvalid={!!errors.descripcion} 
+        />
+        <div className="d-flex justify-content-between mt-1">
+          <Form.Control.Feedback type="invalid" className="d-block m-0">
+            {errors.descripcion?.message}
+          </Form.Control.Feedback>
+          <small className="text-muted ms-auto">
+            {watchDescripcion.length}/3000 caracteres
+          </small>
+        </div>
       </Form.Group>
 
       <Form.Group className="mb-4">
@@ -142,6 +337,43 @@ export const DonacionStep1: React.FC = () => {
           <Form.Control type="file" accept="image/*" onChange={handleImageUpload} ref={fileInputRef} />
         )}
       </Form.Group>
+
+      <div className="p-4 bg-light rounded-3 border mb-4">
+        <h5 className="fw-semibold mb-3">Visibilidad de la Donación</h5>
+        <div className="d-flex flex-column gap-3">
+          <Form.Check 
+            type="radio" 
+            id="visibilidad-publica"
+            label={
+              <div>
+                <strong>Pública</strong>
+                <p className="text-muted small mb-0">Tu donación y tu nombre aparecerán en el Muro Solidario para motivar a otros.</p>
+              </div>
+            }
+            value="Publica"
+            isInvalid={!!errors.visibilidad}
+            {...register('visibilidad')}
+          />
+          <Form.Check 
+            type="radio" 
+            id="visibilidad-privada"
+            label={
+              <div>
+                <strong>Anónima / Privada</strong>
+                <p className="text-muted small mb-0">Solo los centros de acopio y organizaciones verán los detalles. Tu nombre no será público.</p>
+              </div>
+            }
+            value="Privada"
+            isInvalid={!!errors.visibilidad}
+            {...register('visibilidad')}
+          />
+        </div>
+        {errors.visibilidad && (
+          <div className="text-danger small mt-2">
+            {errors.visibilidad.message}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

@@ -1,8 +1,8 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Form, ListGroup, InputGroup, Button, Spinner } from 'react-bootstrap';
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
-import { Search } from 'lucide-react';
+import { Search, Navigation } from 'lucide-react';
 
 import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png';
 import iconUrl from 'leaflet/dist/images/marker-icon.png';
@@ -12,13 +12,21 @@ delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({ iconRetinaUrl, iconUrl, shadowUrl });
 
 interface MapLocationPickerProps {
-  onLocationSelect: (location: { lat: number, lng: number, addressDetails?: any }) => void;
+  onLocationSelect: (location: { lat: number, lng: number, addressDetails?: any, displayName?: string }) => void;
   initialLocation?: { lat: number, lng: number };
   error?: string;
   disabled?: boolean;
 }
 
 const LocationMarker = ({ position, setPosition, onLocationSelect }: any) => {
+  const map = useMap();
+
+  useEffect(() => {
+    if (position) {
+      map.flyTo(position, map.getZoom() > 14 ? map.getZoom() : 15);
+    }
+  }, [position, map]);
+
   useMapEvents({
     click(e) {
       setPosition(e.latlng);
@@ -34,6 +42,7 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({ onLocation
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -70,7 +79,7 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({ onLocation
     setPosition(newPos);
     setSearchQuery(suggestion.display_name);
     setShowDropdown(false);
-    onLocationSelect({ lat: newPos.lat, lng: newPos.lng, addressDetails: suggestion.address });
+    onLocationSelect({ lat: newPos.lat, lng: newPos.lng, addressDetails: suggestion.address, displayName: suggestion.display_name });
   };
 
   const handleMapClick = async (latlng: L.LatLng) => {
@@ -78,7 +87,7 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({ onLocation
       const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latlng.lat}&lon=${latlng.lng}&accept-language=es`);
       const data = await response.json();
       if (data?.address) {
-        onLocationSelect({ lat: latlng.lat, lng: latlng.lng, addressDetails: data.address });
+        onLocationSelect({ lat: latlng.lat, lng: latlng.lng, addressDetails: data.address, displayName: data.display_name });
         setSearchQuery(data.display_name);
       } else {
         onLocationSelect({ lat: latlng.lat, lng: latlng.lng });
@@ -88,21 +97,54 @@ export const MapLocationPicker: React.FC<MapLocationPickerProps> = ({ onLocation
     }
   };
 
+  const handleLocateMe = () => {
+    if (!navigator.geolocation) {
+      alert("La geolocalización no está soportada por tu navegador.");
+      return;
+    }
+    
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const latlng = new L.LatLng(pos.coords.latitude, pos.coords.longitude);
+        setPosition(latlng);
+        await handleMapClick(latlng);
+        setIsLocating(false);
+      },
+      () => {
+        alert("No se pudo obtener tu ubicación actual. Asegúrate de haber dado los permisos necesarios al navegador.");
+        setIsLocating(false);
+      }
+    );
+  };
+
   return (
     <div className="position-relative">
-      <InputGroup className="mb-2">
-        <Form.Control
-          type="text"
-          placeholder="Buscar dirección en el mapa..."
-          value={searchQuery}
-          onChange={onSearchChange}
-          disabled={disabled}
-          isInvalid={!!error}
-        />
-        <Button variant="outline-secondary" disabled>
-          {isSearching ? <Spinner size="sm" animation="border" /> : <Search size={18} />}
+      <div className="d-flex flex-column flex-md-row gap-2 mb-3">
+        <InputGroup className="flex-grow-1">
+          <Form.Control
+            type="text"
+            placeholder="Buscar dirección en el mapa..."
+            value={searchQuery}
+            onChange={onSearchChange}
+            disabled={disabled}
+            isInvalid={!!error}
+          />
+          <Button variant="outline-secondary" disabled>
+            {isSearching ? <Spinner size="sm" animation="border" /> : <Search size={18} />}
+          </Button>
+        </InputGroup>
+
+        <Button 
+          variant="primary" 
+          onClick={handleLocateMe} 
+          disabled={disabled || isLocating} 
+          className="d-flex align-items-center justify-content-center flex-shrink-0 fw-semibold shadow-sm text-nowrap"
+        >
+          {isLocating ? <Spinner size="sm" animation="border" className="me-2" /> : <Navigation size={18} className="me-2" />}
+          Usar mi ubicación actual
         </Button>
-      </InputGroup>
+      </div>
 
       {showDropdown && suggestions.length > 0 && (
         <ListGroup className="position-absolute w-100 z-3 shadow-sm" style={{ top: '100%', maxHeight: '200px', overflowY: 'auto' }}>

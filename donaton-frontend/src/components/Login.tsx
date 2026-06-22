@@ -114,6 +114,12 @@ const Login: React.FC = () => {
       };
 
       login(resData.token, usuarioLogueado, !!data.rememberMe);
+
+      // Limpiar el contador de intentos fallidos tras un login exitoso
+      setFailedAttempts(0);
+      localStorage.removeItem('loginFailedAttempts');
+      localStorage.removeItem('loginBlockUntil');
+
       handleNavigation(resData.rol, resData.subRol);
       
     } catch (err: any) {

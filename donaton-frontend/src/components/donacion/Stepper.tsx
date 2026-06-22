@@ -11,7 +11,7 @@ export const Stepper: React.FC<StepperProps> = ({ currentStep, steps }) => {
     <div className="d-flex justify-content-between align-items-center mb-5 position-relative">
       <div 
         className="position-absolute bg-light" 
-        style={{ top: '50%', left: '0', right: '0', height: '4px', transform: 'translateY(-50%)', zIndex: 0 }}
+        style={{ top: '20px', left: '20px', right: '20px', height: '4px', transform: 'translateY(-50%)', zIndex: 0 }}
       >
         <motion.div 
           className="bg-primary h-100" 

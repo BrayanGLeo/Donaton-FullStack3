@@ -1,23 +1,42 @@
 import { z } from 'zod';
 
 export const donacionStep1Schema = z.object({
+  nombreArticulo: z.string().min(1, 'El nombre es requerido').max(100, 'Máximo 100 caracteres'),
   categoria: z.string().min(1, 'La categoría es requerida'),
+  subCategoria: z.string().optional(),
   estadoArticulo: z.string().min(1, 'El estado es requerido'),
   unidadMedida: z.string().min(1, 'La unidad es requerida'),
-  cantidad: z.number()
-    .min(1, 'La cantidad debe ser mayor a 0')
-    .max(999999, 'Cantidad máxima excedida'),
-  pesoAproximado: z.number()
-    .max(99999, 'Peso máximo excedido')
-    .optional(),
+  cantidad: z.number().or(z.nan())
+    .transform(val => Number.isNaN(val) ? 0 : val)
+    .pipe(
+      z.number()
+        .min(0.01, 'La cantidad es requerida')
+        .max(999999, 'Cantidad máxima de 6 dígitos excedida')
+    ),
+  pesoAproximado: z.number().or(z.nan()).optional()
+    .transform(val => (val === undefined || Number.isNaN(val)) ? undefined : val)
+    .pipe(
+      z.number()
+        .min(0.01, 'El peso debe ser mayor a 0')
+        .max(99999, 'Peso máximo de 5 dígitos excedido')
+        .optional()
+    ),
   descripcion: z.string()
     .min(1, 'La descripción es requerida')
-    .max(2000, 'La descripción no puede exceder 2000 caracteres'),
+    .max(3000, 'La descripción no puede exceder 3000 caracteres'),
   fechaVencimiento: z.string().optional(),
   fotoBase64: z.string().optional(),
-  visibilidad: z.string().optional(),
+  visibilidad: z.string({ message: 'Seleccione la visibilidad' }).min(1, 'Seleccione la visibilidad'),
 }).superRefine((data, ctx) => {
-  const requiresDate = ["Alimentos no perecibles", "Agua e Hidratación", "Insumos Médicos"].includes(data.categoria);
+  if (!data.subCategoria) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Selecciona una subcategoría",
+      path: ["subCategoria"],
+    });
+  }
+
+  const requiresDate = ["Alimentos", "Agua e Hidratación", "Insumos Médicos", "Alimentos para Mascotas"].includes(data.categoria);
   if (requiresDate) {
     if (data.fechaVencimiento) {
       const selectedDate = new Date(data.fechaVencimiento);

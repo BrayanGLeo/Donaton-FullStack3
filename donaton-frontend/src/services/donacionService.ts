@@ -31,6 +31,7 @@ export interface DonacionResponse extends DonacionPayload {
   id: number;
   trackingId?: string;
   fechaRegistro: string;
+  nombreDonante?: string;
 }
 
 export const registrarDonacion = async (payload: DonacionPayload): Promise<DonacionResponse> => {
