@@ -67,7 +67,7 @@ class AuthControllerTest {
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenReturn(null);
         when(usuarioRepository.findByEmail("test@donaton.cl")).thenReturn(Optional.of(usuario));
-        when(jwtUtil.generateToken("test@donaton.cl", "ADMIN", 1L)).thenReturn("tokenFalso123");
+        when(jwtUtil.generateToken("test@donaton.cl", "ADMIN", 1L, false)).thenReturn("tokenFalso123");
 
         ResponseEntity<?> response = authController.login(loginRequest);
 
