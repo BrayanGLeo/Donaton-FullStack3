@@ -109,7 +109,7 @@ const DashboardRecepcionista: React.FC = () => {
                         )}
                       </td>
                       <td className="px-4">
-                        <Badge bg={getBadgeColor(donacion.estado)}>
+                        <Badge bg={getBadgeColor(donacion.estado || '')}>
                           {donacion.estado}
                         </Badge>
                       </td>

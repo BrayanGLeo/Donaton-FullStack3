@@ -5,6 +5,7 @@ import Navigation from './components/Navigation';
 import LandingPage from './components/LandingPage';
 import Login from './components/Login';
 import Registro from './components/Registro';
+import RecuperarPassword from './components/RecuperarPassword';
 import ProtectedRoute from './components/ProtectedRoute';
 import { DonacionForm } from './components/DonacionForm';
 import { DonacionList } from './components/DonacionList';
@@ -16,12 +17,14 @@ import HistorialAcopio from './components/HistorialAcopio';
 import IngresarNecesidad from './components/IngresarNecesidad';
 import AdminDashboard from './components/AdminDashboard';
 import DashboardRecepcionista from './components/DashboardRecepcionista';
+import { Toaster } from 'react-hot-toast';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './index.css';
 
 const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
     <div className="bg-light min-vh-100 d-flex flex-column">
+      <Toaster position="top-right" toastOptions={{ duration: 4000, style: { fontWeight: '500', borderRadius: '10px' } }} />
       <Navigation />
       <main className="flex-grow-1">
         {children}
@@ -52,6 +55,7 @@ const App: React.FC = () => {
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/registro" element={<Registro />} />
+            <Route path="/recuperar-password" element={<RecuperarPassword />} />
             
             {/* Rutas Protegidas - Solo DONANTE */}
             <Route path="/donar" element={

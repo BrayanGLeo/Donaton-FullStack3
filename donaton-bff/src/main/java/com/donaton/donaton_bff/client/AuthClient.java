@@ -20,4 +20,13 @@ public interface AuthClient {
 
     @GetMapping("/api/auth/usuarios")
     ResponseEntity<Object> obtenerUsuarios();
+
+    @PostMapping("/api/auth/forgot-password")
+    ResponseEntity<Object> forgotPassword(@RequestBody Object request);
+
+    @PostMapping("/api/auth/verify-code")
+    ResponseEntity<Object> verifyCode(@RequestBody Object request);
+
+    @PostMapping("/api/auth/reset-password")
+    ResponseEntity<Object> resetPassword(@RequestBody Object request);
 }

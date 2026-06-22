@@ -81,8 +81,16 @@ Acelera tu entorno de desarrollo en minutos gracias a la contenedorización comp
 *   Node.js (v18+) & npm
 *   Java 17 (opcional si se ejecuta puramente en Docker)
 
-### Paso 1: Levantar la Infraestructura y Backend
-En la raíz del proyecto, ejecuta el siguiente comando para desplegar las bases de datos (MySQL), el gestor de colas (RabbitMQ) y toda la malla de microservicios:
+### Paso 1: Compilar y Levantar la Infraestructura y Backend
+Dado que las imágenes de Docker requieren los ejecutables `.jar` ya construidos, primero debes compilar los microservicios. 
+
+En la raíz del proyecto, ejecuta el siguiente comando en **PowerShell** para compilar todos los microservicios automáticamente (omitiendo los tests para mayor rapidez):
+
+```powershell
+Get-ChildItem -Directory -Filter "donaton-*" | Where-Object { Test-Path "$($_.FullName)\mvnw.cmd" } | ForEach-Object { Write-Host "Compilando $($_.Name)..." -ForegroundColor Green; cd $_.FullName; .\mvnw.cmd clean package -DskipTests; cd .. }
+```
+
+Una vez que todos los proyectos compilen con éxito (`BUILD SUCCESS`), ejecuta el siguiente comando para construir las imágenes y levantar toda la malla de microservicios, bases de datos y herramientas adicionales:
 
 ```bash
 docker-compose up -d --build

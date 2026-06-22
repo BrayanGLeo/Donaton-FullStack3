@@ -1,5 +1,7 @@
 package com.donaton.donaton_auth.entity;
 
+import java.time.LocalDateTime;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -74,6 +76,12 @@ public class Usuario {
 
     @Column(name = "centro_acopio_id")
     private Long centroAcopioId;
+
+    @Column(name = "recovery_code", length = 6)
+    private String recoveryCode;
+
+    @Column(name = "recovery_code_expiration")
+    private LocalDateTime recoveryCodeExpiration;
 
     public Usuario() {
         // Constructor vacío requerido por JPA
@@ -245,5 +253,21 @@ public class Usuario {
 
     public void setCentroAcopioId(Long centroAcopioId) {
         this.centroAcopioId = centroAcopioId;
+    }
+
+    public String getRecoveryCode() {
+        return recoveryCode;
+    }
+
+    public void setRecoveryCode(String recoveryCode) {
+        this.recoveryCode = recoveryCode;
+    }
+
+    public LocalDateTime getRecoveryCodeExpiration() {
+        return recoveryCodeExpiration;
+    }
+
+    public void setRecoveryCodeExpiration(LocalDateTime recoveryCodeExpiration) {
+        this.recoveryCodeExpiration = recoveryCodeExpiration;
     }
 }

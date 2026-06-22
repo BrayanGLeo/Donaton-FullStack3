@@ -19,6 +19,11 @@ export interface DonacionPayload {
   transporteEspecial?: boolean;
   regionRetiro?: string;
   comunaRetiro?: string;
+  latitudRetiro?: number | null;
+  longitudRetiro?: number | null;
+  visibilidad?: string;
+  direccionRetiroCalle?: string;
+  direccionRetiroNumero?: string;
   donanteId?: number;
 }
 
@@ -26,6 +31,7 @@ export interface DonacionResponse extends DonacionPayload {
   id: number;
   trackingId?: string;
   fechaRegistro: string;
+  nombreDonante?: string;
 }
 
 export const registrarDonacion = async (payload: DonacionPayload): Promise<DonacionResponse> => {

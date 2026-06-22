@@ -37,4 +37,19 @@ public class AuthProxyController {
     public ResponseEntity<Object> obtenerUsuarios() {
         return authClient.obtenerUsuarios();
     }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Object> forgotPassword(@RequestBody Object request) {
+        return authClient.forgotPassword(request);
+    }
+
+    @PostMapping("/verify-code")
+    public ResponseEntity<Object> verifyCode(@RequestBody Object request) {
+        return authClient.verifyCode(request);
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<Object> resetPassword(@RequestBody Object request) {
+        return authClient.resetPassword(request);
+    }
 }

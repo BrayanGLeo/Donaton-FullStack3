@@ -6,18 +6,18 @@ import org.springframework.web.servlet.function.RouterFunction;
 import org.springframework.web.servlet.function.ServerResponse;
 import org.springframework.web.servlet.function.RequestPredicates;
 
-import static org.springframework.cloud.gateway.server.mvc.handler.GatewayRouterFunctions.route;
-import static org.springframework.cloud.gateway.server.mvc.handler.HandlerFunctions.http;
-import static org.springframework.cloud.gateway.server.mvc.filter.LoadBalancerFilterFunctions.lb;
+import org.springframework.cloud.gateway.server.mvc.handler.GatewayRouterFunctions;
+import org.springframework.cloud.gateway.server.mvc.handler.HandlerFunctions;
+import org.springframework.cloud.gateway.server.mvc.filter.LoadBalancerFilterFunctions;
 
 @Configuration
 public class GatewayConfig {
 
-    @Bean
+    @Bean(name = "donatonBffRoute")
     public RouterFunction<ServerResponse> bffRoute() {
-        return route("donaton_bff_route")
-            .route(RequestPredicates.path("/api/**"), http())
-            .filter(lb("donaton-bff"))
+        return GatewayRouterFunctions.route("donaton_bff_route")
+            .route(RequestPredicates.path("/api/**"), HandlerFunctions.http())
+            .filter(LoadBalancerFilterFunctions.lb("donaton-bff"))
             .build();
     }
 }

@@ -23,6 +23,7 @@ import com.donaton.donaton_auth.dto.LoginRequest;
 import com.donaton.donaton_auth.entity.Usuario;
 import com.donaton.donaton_auth.repository.UsuarioRepository;
 import com.donaton.donaton_auth.security.JwtUtil;
+import com.donaton.donaton_auth.service.EmailService;
 
 @ExtendWith(MockitoExtension.class)
 class AuthControllerTest {
@@ -38,6 +39,9 @@ class AuthControllerTest {
 
     @Mock
     private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+
+    @Mock
+    private EmailService emailService;
 
     @InjectMocks
     private AuthController authController;
@@ -63,7 +67,7 @@ class AuthControllerTest {
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenReturn(null);
         when(usuarioRepository.findByEmail("test@donaton.cl")).thenReturn(Optional.of(usuario));
-        when(jwtUtil.generateToken("test@donaton.cl", "ADMIN", 1L)).thenReturn("tokenFalso123");
+        when(jwtUtil.generateToken("test@donaton.cl", "ADMIN", 1L, false)).thenReturn("tokenFalso123");
 
         ResponseEntity<?> response = authController.login(loginRequest);
 
@@ -87,6 +91,7 @@ class AuthControllerTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void testRegistrarDonante_Success() {
         com.donaton.donaton_auth.dto.DonanteRegistroRequest request = new com.donaton.donaton_auth.dto.DonanteRegistroRequest();
         request.setEmail("nuevo@donaton.cl");
@@ -97,9 +102,10 @@ class AuthControllerTest {
         when(usuarioRepository.findByEmail("nuevo@donaton.cl")).thenReturn(Optional.empty());
         when(passwordEncoder.encode("123456")).thenReturn("encoded_pass");
 
-        ResponseEntity<String> response = authController.registrarDonante(request);
+        ResponseEntity<Object> response = authController.registrarDonante(request);
 
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
-        assertEquals("Usuario registrado con éxito", response.getBody());
+        java.util.Map<String, String> responseBody = (java.util.Map<String, String>) response.getBody();
+        assertEquals("Usuario registrado con éxito", responseBody.get("message"));
     }
 }

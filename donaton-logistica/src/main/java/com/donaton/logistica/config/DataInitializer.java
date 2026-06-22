@@ -20,6 +20,7 @@ public class DataInitializer {
     @Bean
     CommandLineRunner initCentrosAcopio(CentroAcopioRepository repository) {
         return args -> {
+            repository.deleteAll(); // Refrescar los datos para cargar las direcciones reales
             if (repository.count() == 0) {
                 String regArica = "Arica y Parinacota";
                 String regTarapaca = "Tarapacá";
@@ -39,38 +40,38 @@ public class DataInitializer {
                 String regMagallanes = "Magallanes y de la Antártica Chilena";
 
                 List<CentroAcopio> centros = Arrays.asList(
-                    new CentroAcopio("Acopio Arica", regArica, "Arica", "Calle Arica 123"),
-                    new CentroAcopio("Acopio Putre", regArica, "Putre", "Calle Putre 456"),
-                    new CentroAcopio("Acopio Iquique", regTarapaca, "Iquique", "Av Iquique 111"),
-                    new CentroAcopio("Acopio Alto Hospicio", regTarapaca, "Alto Hospicio", "Av Alto Hospicio 222"),
-                    new CentroAcopio("Acopio Antofagasta", regAntofa, "Antofagasta", "Centro Antofagasta 333"),
-                    new CentroAcopio("Acopio Calama", regAntofa, "Calama", "Av Calama 444"),
-                    new CentroAcopio("Acopio Copiapó", regAtacama, "Copiapó", "Calle Copiapo 555"),
-                    new CentroAcopio("Acopio Vallenar", regAtacama, "Vallenar", "Av Vallenar 666"),
-                    new CentroAcopio("Acopio La Serena", regCoquimbo, "La Serena", "Av La Serena 777"),
-                    new CentroAcopio("Acopio Coquimbo", regCoquimbo, "Coquimbo", "Calle Coquimbo 888"),
-                    new CentroAcopio("Acopio Viña del Mar", regValpo, "Viña del Mar", "Av Viña 999"),
-                    new CentroAcopio("Acopio Valparaíso", regValpo, "Valparaíso", "Calle Valparaiso 100"),
-                    new CentroAcopio("Acopio Puente Alto", regMetro, "Puente Alto", "Av Puente Alto 101"),
-                    new CentroAcopio("Acopio Maipú", regMetro, "Maipú", "Av Maipu 102"),
-                    new CentroAcopio("Acopio Rancagua", regOhig, "Rancagua", "Av Rancagua 103"),
-                    new CentroAcopio("Acopio San Fernando", regOhig, "San Fernando", "Av San Fernando 104"),
-                    new CentroAcopio("Acopio Talca", regMaule, "Talca", "Av Talca 105"),
-                    new CentroAcopio("Acopio Curicó", regMaule, "Curicó", "Av Curico 106"),
-                    new CentroAcopio("Acopio Chillán", regNuble, "Chillán", "Av Chillan 107"),
-                    new CentroAcopio("Acopio San Carlos", regNuble, "San Carlos", "Av San Carlos 108"),
-                    new CentroAcopio("Acopio Concepción", regBiobio, "Concepción", "Av Concepcion 109"),
-                    new CentroAcopio("Acopio Los Ángeles", regBiobio, "Los Ángeles", "Av Los Angeles 110"),
-                    new CentroAcopio("Acopio Temuco", regAraucania, "Temuco", "Av Temuco 111"),
-                    new CentroAcopio("Acopio Villarrica", regAraucania, "Villarrica", "Av Villarrica 112"),
-                    new CentroAcopio("Acopio Valdivia", regLosRios, "Valdivia", "Av Valdivia 113"),
-                    new CentroAcopio("Acopio La Unión", regLosRios, "La Unión", "Av La Union 114"),
-                    new CentroAcopio("Acopio Puerto Montt", regLosLagos, "Puerto Montt", "Av P Montt 115"),
-                    new CentroAcopio("Acopio Osorno", regLosLagos, "Osorno", "Av Osorno 116"),
-                    new CentroAcopio("Acopio Coyhaique", regAysen, "Coyhaique", "Av Coyhaique 117"),
-                    new CentroAcopio("Acopio Puerto Aysén", regAysen, "Puerto Aysén", "Av P Aysen 118"),
-                    new CentroAcopio("Acopio Punta Arenas", regMagallanes, "Punta Arenas", "Av Punta Arenas 119"),
-                    new CentroAcopio("Acopio Puerto Natales", regMagallanes, "Puerto Natales", "Av P Natales 120")
+                    new CentroAcopio("Gimnasio Municipal Arica", regArica, "Arica", "Rafael Sotomayor 415"),
+                    new CentroAcopio("Gimnasio Municipal Putre", regArica, "Putre", "Teniente del Campo 242"),
+                    new CentroAcopio("Casa del Deportista Iquique", regTarapaca, "Iquique", "Manuel Castro Ramos 2395"),
+                    new CentroAcopio("Gimnasio Municipal Alto Hospicio", regTarapaca, "Alto Hospicio", "Avenida Los Álamos 3161"),
+                    new CentroAcopio("Complejo Deportivo Angamos", regAntofa, "Antofagasta", "Av. Angamos 0393"),
+                    new CentroAcopio("Gimnasio Techado Calama", regAntofa, "Calama", "Av. Balmaceda 3236"),
+                    new CentroAcopio("Municipalidad de Copiapó", regAtacama, "Copiapó", "Chacabuco 850"),
+                    new CentroAcopio("Municipalidad de Vallenar", regAtacama, "Vallenar", "Plaza de Armas s/n"),
+                    new CentroAcopio("Coliseo Monumental La Serena", regCoquimbo, "La Serena", "Av. Estadio 1450"),
+                    new CentroAcopio("Gimnasio Techado Coquimbo", regCoquimbo, "Coquimbo", "Santiago Trigo 520"),
+                    new CentroAcopio("Gimnasio Polideportivo Viña del Mar", regValpo, "Viña del Mar", "Av. Los Castaños 404"),
+                    new CentroAcopio("Municipalidad de Valparaíso", regValpo, "Valparaíso", "Condell 1490"),
+                    new CentroAcopio("Gimnasio Municipal Puente Alto", regMetro, "Puente Alto", "Av. Concha y Toro 1820"),
+                    new CentroAcopio("Municipalidad de Maipú", regMetro, "Maipú", "Av. 5 de Abril 0444"),
+                    new CentroAcopio("Municipalidad de Rancagua", regOhig, "Rancagua", "Plaza de Los Héroes 445"),
+                    new CentroAcopio("Municipalidad de San Fernando", regOhig, "San Fernando", "Cardenal Caro 250"),
+                    new CentroAcopio("Municipalidad de Talca", regMaule, "Talca", "1 Norte 770"),
+                    new CentroAcopio("Municipalidad de Curicó", regMaule, "Curicó", "Estado 279"),
+                    new CentroAcopio("Municipalidad de Chillán", regNuble, "Chillán", "18 de Septiembre 510"),
+                    new CentroAcopio("Municipalidad de San Carlos", regNuble, "San Carlos", "Independencia 444"),
+                    new CentroAcopio("Municipalidad de Concepción", regBiobio, "Concepción", "O'Higgins 525"),
+                    new CentroAcopio("Municipalidad de Los Ángeles", regBiobio, "Los Ángeles", "Caupolicán 399"),
+                    new CentroAcopio("Gimnasio B. O'Higgins Temuco", regAraucania, "Temuco", "Manuel Bulnes 201"),
+                    new CentroAcopio("Municipalidad de Villarrica", regAraucania, "Villarrica", "Pedro de Valdivia 810"),
+                    new CentroAcopio("Municipalidad de Valdivia", regLosRios, "Valdivia", "Independencia 455"),
+                    new CentroAcopio("Municipalidad de La Unión", regLosRios, "La Unión", "Arturo Prat 680"),
+                    new CentroAcopio("Municipalidad de Puerto Montt", regLosLagos, "Puerto Montt", "San Felipe 80"),
+                    new CentroAcopio("Municipalidad de Osorno", regLosLagos, "Osorno", "Av. Juan Mackenna 851"),
+                    new CentroAcopio("Municipalidad de Coyhaique", regAysen, "Coyhaique", "Francisco Bilbao 357"),
+                    new CentroAcopio("Municipalidad de Puerto Aysén", regAysen, "Puerto Aysén", "Esmeralda 607"),
+                    new CentroAcopio("Municipalidad de Punta Arenas", regMagallanes, "Punta Arenas", "Plaza Muñoz Gamero 745"),
+                    new CentroAcopio("Municipalidad de Puerto Natales", regMagallanes, "Puerto Natales", "Carlos Bories 398")
                 );
                 repository.saveAll(centros);
                 logger.info("Centros de acopio inicializados.");
