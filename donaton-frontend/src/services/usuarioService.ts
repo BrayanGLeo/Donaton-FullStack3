@@ -49,3 +49,25 @@ export const obtenerCentrosAcopioPorRegion = async (region: string): Promise<Cen
     return [];
   }
 };
+
+export const verificarEmailDisponible = async (email: string): Promise<boolean> => {
+  try {
+    const response = await axios.get('/api/auth/verificar-email', { params: { email } });
+    return response.data.disponible ?? true;
+  } catch (error: any) {
+    if (error.response?.status === 409) return false;
+    console.warn('Endpoint verificar-email no disponible', error);
+    return true; // En caso de error de red o que el endpoint no exista, dejamos pasar la validación
+  }
+};
+
+export const verificarRutDisponible = async (rut: string): Promise<boolean> => {
+  try {
+    const response = await axios.get('/api/auth/verificar-rut', { params: { rut } });
+    return response.data.disponible ?? true;
+  } catch (error: any) {
+    if (error.response?.status === 409) return false;
+    console.warn('Endpoint verificar-rut no disponible', error);
+    return true;
+  }
+};

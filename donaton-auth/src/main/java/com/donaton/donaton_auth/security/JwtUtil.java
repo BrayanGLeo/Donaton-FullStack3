@@ -21,22 +21,32 @@ public class JwtUtil {
     }
 
     public String generateToken(String email, String rol) {
+        return generateToken(email, rol, false);
+    }
+
+    public String generateToken(String email, String rol, boolean rememberMe) {
+        long expiration = rememberMe ? EXPIRATION_TIME * 7 : EXPIRATION_TIME;
         return Jwts.builder()
                 .setSubject(email)
                 .claim("rol", rol)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
+                .setExpiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
     public String generateToken(String email, String rol, Long userId) {
+        return generateToken(email, rol, userId, false);
+    }
+
+    public String generateToken(String email, String rol, Long userId, boolean rememberMe) {
+        long expiration = rememberMe ? EXPIRATION_TIME * 7 : EXPIRATION_TIME;
         return Jwts.builder()
                 .setSubject(email)
                 .claim("rol", rol)
                 .claim("userId", userId)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
+                .setExpiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }

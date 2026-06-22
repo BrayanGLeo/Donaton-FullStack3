@@ -35,3 +35,40 @@ export const COMUNAS_POR_REGION: Record<string, string[]> = {
   "Arica y Parinacota": ["Arica", "Camarones", "General Lagos", "Putre"],
   "Ñuble": ["Bulnes", "Chillán", "Chillán Viejo", "Cobquecura", "Coelemu", "Coihueco", "El Carmen", "Ninhue", "Ñiquén", "Pemuco", "Pinto", "Portezuelo", "Quillón", "Quirihue", "Ránquil", "San Carlos", "San Fabián", "San Ignacio", "San Nicolás", "Treguaco", "Yungay"]
 };
+
+const normalizeString = (str: string) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+export const parseMapAddress = (addressDetails: any) => {
+  const result: { road?: string; houseNumber?: string; region?: string; comuna?: string } = {};
+  
+  if (!addressDetails) return result;
+  
+  if (addressDetails.road) result.road = addressDetails.road;
+  if (addressDetails.house_number) result.houseNumber = addressDetails.house_number;
+  
+  const state = addressDetails.state || '';
+  if (state) {
+    const foundRegion = REGIONES_CHILE.find(r => 
+      normalizeString(r).includes(normalizeString(state)) || 
+      normalizeString(state).includes(normalizeString(r))
+    );
+    
+    if (foundRegion) {
+      result.region = foundRegion;
+      
+      const cityOrTown = addressDetails.city || addressDetails.town || addressDetails.village || addressDetails.municipality || addressDetails.county || '';
+      if (cityOrTown) {
+        const comunas = COMUNAS_POR_REGION[foundRegion] || [];
+        const foundComuna = comunas.find(c => 
+          normalizeString(c).includes(normalizeString(cityOrTown)) || 
+          normalizeString(cityOrTown).includes(normalizeString(c))
+        );
+        if (foundComuna) {
+          result.comuna = foundComuna;
+        }
+      }
+    }
+  }
+  
+  return result;
+};

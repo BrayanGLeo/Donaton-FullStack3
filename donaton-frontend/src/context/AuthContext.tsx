@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 
 export type Rol = 'DONANTE' | 'LOGISTICA' | 'COORDINADOR' | 'ADMIN';
 
@@ -15,7 +15,7 @@ export interface Usuario {
 interface AuthContextType {
   token: string | null;
   usuario: Usuario | null;
-  login: (token: string, usuario: Usuario) => void;
+  login: (token: string, usuario: Usuario, rememberMe?: boolean) => void;
   logout: () => void;
   isAuthenticated: boolean;
 }
@@ -23,40 +23,35 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [token, setToken] = useState<string | null>(null);
-  const [usuario, setUsuario] = useState<Usuario | null>(null);
-  const [isReady, setIsReady] = useState(false);
-
-  useEffect(() => {
-    // Restaurar sesión desde localStorage al cargar la app
-    const storedToken = localStorage.getItem('donaton_token');
-    const storedUser = localStorage.getItem('donaton_user');
-    
-    if (storedToken && storedUser) {
+  const [token, setToken] = useState<string | null>(() => sessionStorage.getItem('donaton_token') || localStorage.getItem('donaton_token'));
+  const [usuario, setUsuario] = useState<Usuario | null>(() => {
+    const storedUser = sessionStorage.getItem('donaton_user') || localStorage.getItem('donaton_user');
+    if (storedUser) {
       try {
         const parsed = JSON.parse(storedUser);
-        // Si el objeto guardado no tiene id, la sesión es antigua → forzar re-login
-        if (parsed.id == null) {
-          console.warn('[Auth] Sesión sin id detectada, limpiando localStorage...');
-          localStorage.removeItem('donaton_token');
-          localStorage.removeItem('donaton_user');
-        } else {
-          setToken(storedToken);
-          setUsuario(parsed);
-        }
+        if (parsed.id != null) return parsed;
       } catch (e) {
         console.error('Error al parsear el usuario almacenado', e);
       }
     }
+    return null;
+  });
 
-    setIsReady(true);
-  }, []);
-
-  const login = (newToken: string, newUsuario: Usuario) => {
+  const login = (newToken: string, newUsuario: Usuario, rememberMe: boolean = false) => {
     setToken(newToken);
     setUsuario(newUsuario);
-    localStorage.setItem('donaton_token', newToken);
-    localStorage.setItem('donaton_user', JSON.stringify(newUsuario));
+    
+    if (rememberMe) {
+      localStorage.setItem('donaton_token', newToken);
+      localStorage.setItem('donaton_user', JSON.stringify(newUsuario));
+      sessionStorage.removeItem('donaton_token');
+      sessionStorage.removeItem('donaton_user');
+    } else {
+      sessionStorage.setItem('donaton_token', newToken);
+      sessionStorage.setItem('donaton_user', JSON.stringify(newUsuario));
+      localStorage.removeItem('donaton_token');
+      localStorage.removeItem('donaton_user');
+    }
   };
 
   const logout = () => {
@@ -64,13 +59,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUsuario(null);
     localStorage.removeItem('donaton_token');
     localStorage.removeItem('donaton_user');
+    sessionStorage.removeItem('donaton_token');
+    sessionStorage.removeItem('donaton_user');
   };
 
   const contextValue = React.useMemo(() => ({ token, usuario, login, logout, isAuthenticated: !!token }), [token, usuario]);
-
-  if (!isReady) {
-    return null;
-  }
 
   return (
     <AuthContext.Provider value={contextValue}>

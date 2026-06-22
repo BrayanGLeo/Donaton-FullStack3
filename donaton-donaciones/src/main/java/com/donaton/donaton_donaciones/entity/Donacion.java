@@ -45,6 +45,10 @@ public class Donacion {
     private String regionRetiro;
     private String comunaRetiro;
 
+    private Double latitudRetiro;
+    private Double longitudRetiro;
+    private String visibilidad;
+
     private Long donanteId;
 
     public Donacion() {
@@ -119,4 +123,13 @@ public class Donacion {
 
     public Long getDonanteId() { return donanteId; }
     public void setDonanteId(Long donanteId) { this.donanteId = donanteId; }
+
+    public Double getLatitudRetiro() { return latitudRetiro; }
+    public void setLatitudRetiro(Double latitudRetiro) { this.latitudRetiro = latitudRetiro; }
+
+    public Double getLongitudRetiro() { return longitudRetiro; }
+    public void setLongitudRetiro(Double longitudRetiro) { this.longitudRetiro = longitudRetiro; }
+
+    public String getVisibilidad() { return visibilidad; }
+    public void setVisibilidad(String visibilidad) { this.visibilidad = visibilidad; }
 }

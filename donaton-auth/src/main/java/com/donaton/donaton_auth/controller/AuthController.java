@@ -8,17 +8,25 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.List;
 
+import java.time.LocalDateTime;
+import java.security.SecureRandom;
+
 import com.donaton.donaton_auth.dto.AuthResponse;
 import com.donaton.donaton_auth.dto.DonanteRegistroRequest;
+import com.donaton.donaton_auth.dto.ForgotPasswordRequest;
 import com.donaton.donaton_auth.dto.LoginRequest;
 import com.donaton.donaton_auth.dto.RegistroAdminRequest;
+import com.donaton.donaton_auth.dto.ResetPasswordRequest;
+import com.donaton.donaton_auth.dto.VerifyCodeRequest;
 import com.donaton.donaton_auth.entity.Usuario;
 import com.donaton.donaton_auth.repository.UsuarioRepository;
 import com.donaton.donaton_auth.security.JwtUtil;
+import com.donaton.donaton_auth.service.EmailService;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -28,12 +36,17 @@ public class AuthController {
     private final JwtUtil jwtUtil;
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
+    private static final String MESSAGE_KEY = "message";
+    private static final String DISPONIBLE_KEY = "disponible";
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
-    public AuthController(AuthenticationManager authenticationManager, JwtUtil jwtUtil, UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder) {
+    public AuthController(AuthenticationManager authenticationManager, JwtUtil jwtUtil, UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder, EmailService emailService) {
         this.authenticationManager = authenticationManager;
         this.jwtUtil = jwtUtil;
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
+        this.emailService = emailService;
     }
 
     @PostMapping("/login")
@@ -45,7 +58,8 @@ public class AuthController {
 
             Usuario usuario = usuarioRepository.findByEmail(loginRequest.getEmail()).orElseThrow();
 
-            String token = jwtUtil.generateToken(usuario.getEmail(), usuario.getRol(), usuario.getId());
+            boolean rememberMe = loginRequest.getRememberMe() != null && loginRequest.getRememberMe();
+            String token = jwtUtil.generateToken(usuario.getEmail(), usuario.getRol(), usuario.getId(), rememberMe);
 
             AuthResponse response = new AuthResponse(
                 token, 
@@ -67,7 +81,7 @@ public class AuthController {
     @PostMapping("/registro")
     public ResponseEntity<Object> registrarDonante(@RequestBody DonanteRegistroRequest request) {
         if (usuarioRepository.findByEmail(request.getEmail()).isPresent()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(java.util.Map.of("message", "El correo ya está registrado"));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(java.util.Map.of(MESSAGE_KEY, "El correo ya está registrado"));
         }
         Usuario usuario = new Usuario();
         usuario.setEmail(request.getEmail());
@@ -90,16 +104,16 @@ public class AuthController {
         usuario.setLongitud(request.getLongitud());
 
         usuarioRepository.save(usuario);
-        return ResponseEntity.status(HttpStatus.CREATED).body(java.util.Map.of("message", "Usuario registrado con éxito"));
+        return ResponseEntity.status(HttpStatus.CREATED).body(java.util.Map.of(MESSAGE_KEY, "Usuario registrado con éxito"));
     }
 
     @PostMapping("/admin/registro")
     public ResponseEntity<Object> registrarUsuarioAdmin(@RequestBody RegistroAdminRequest nuevoUsuario) {
         if (usuarioRepository.findByEmail(nuevoUsuario.getEmail()).isPresent()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(java.util.Map.of("message", "El correo ya está registrado"));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(java.util.Map.of(MESSAGE_KEY, "El correo ya está registrado"));
         }
         if (!"LOGISTICA".equals(nuevoUsuario.getRol()) && !"COORDINADOR".equals(nuevoUsuario.getRol())) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(java.util.Map.of("message", "Rol inválido. Solo LOGISTICA o COORDINADOR"));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(java.util.Map.of(MESSAGE_KEY, "Rol inválido. Solo LOGISTICA o COORDINADOR"));
         }
         Usuario usuario = new Usuario();
         usuario.setEmail(nuevoUsuario.getEmail());
@@ -126,11 +140,89 @@ public class AuthController {
         }
         
         usuarioRepository.save(usuario);
-        return ResponseEntity.status(HttpStatus.CREATED).body(java.util.Map.of("message", "Usuario registrado con éxito"));
+        
+        // Enviar correo de bienvenida con las credenciales
+        String mensaje = "Hola " + usuario.getNombreCompleto() + ",\n\n"
+                + "Tu cuenta de " + usuario.getRol() + " ha sido creada en Donaton.\n"
+                + "Credenciales de acceso:\n"
+                + "Correo: " + usuario.getEmail() + "\n"
+                + "Contraseña provisional: " + nuevoUsuario.getPassword() + "\n\n"
+                + "Te recomendamos cambiar tu contraseña al ingresar.\n\n"
+                + "Saludos,\nEl equipo de Donaton";
+        emailService.sendCustomEmail(usuario.getEmail(), "Bienvenido a Donaton - Tus Credenciales", mensaje);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(java.util.Map.of(MESSAGE_KEY, "Usuario registrado con éxito"));
     }
 
     @GetMapping("/usuarios")
     public ResponseEntity<List<Usuario>> listarUsuarios() {
         return ResponseEntity.ok(usuarioRepository.findAll());
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Object> forgotPassword(@RequestBody ForgotPasswordRequest request) {
+        return usuarioRepository.findByEmail(request.getEmail()).map(usuario -> {
+            String code = String.format("%06d", SECURE_RANDOM.nextInt(999999));
+            usuario.setRecoveryCode(code);
+            usuario.setRecoveryCodeExpiration(LocalDateTime.now().plusMinutes(15));
+            usuarioRepository.save(usuario);
+            
+            emailService.sendPasswordRecoveryEmail(usuario.getEmail(), code);
+            
+            return ResponseEntity.ok().body((Object) java.util.Map.of(MESSAGE_KEY, "Código de recuperación enviado al correo"));
+        }).orElseGet(() -> 
+            // Para no revelar si el correo existe o no, siempre retornamos éxito
+            ResponseEntity.ok().body((Object) java.util.Map.of(MESSAGE_KEY, "Si el correo está registrado, recibirás un código"))
+        );
+    }
+
+    @PostMapping("/verify-code")
+    public ResponseEntity<Object> verifyCode(@RequestBody VerifyCodeRequest request) {
+        return usuarioRepository.findByEmail(request.getEmail()).<ResponseEntity<Object>>map(usuario -> {
+            if (usuario.getRecoveryCode() == null || !usuario.getRecoveryCode().equals(request.getCode())) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body((Object) java.util.Map.of(MESSAGE_KEY, "Código inválido"));
+            }
+            if (usuario.getRecoveryCodeExpiration() == null || usuario.getRecoveryCodeExpiration().isBefore(LocalDateTime.now())) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body((Object) java.util.Map.of(MESSAGE_KEY, "El código ha expirado"));
+            }
+            return ResponseEntity.ok().body((Object) java.util.Map.of(MESSAGE_KEY, "Código válido"));
+        }).orElse(ResponseEntity.status(HttpStatus.BAD_REQUEST).body((Object) java.util.Map.of(MESSAGE_KEY, "Usuario no encontrado")));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<Object> resetPassword(@RequestBody ResetPasswordRequest request) {
+        return usuarioRepository.findByEmail(request.getEmail()).<ResponseEntity<Object>>map(usuario -> {
+            if (usuario.getRecoveryCode() == null || !usuario.getRecoveryCode().equals(request.getCode())) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body((Object) java.util.Map.of(MESSAGE_KEY, "Código inválido"));
+            }
+            if (usuario.getRecoveryCodeExpiration() == null || usuario.getRecoveryCodeExpiration().isBefore(LocalDateTime.now())) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body((Object) java.util.Map.of(MESSAGE_KEY, "El código ha expirado"));
+            }
+            
+            usuario.setPassword(passwordEncoder.encode(request.getNewPassword()));
+            usuario.setRecoveryCode(null);
+            usuario.setRecoveryCodeExpiration(null);
+            usuarioRepository.save(usuario);
+            
+            return ResponseEntity.ok().body((Object) java.util.Map.of(MESSAGE_KEY, "Contraseña actualizada exitosamente"));
+        }).orElse(ResponseEntity.status(HttpStatus.BAD_REQUEST).body((Object) java.util.Map.of(MESSAGE_KEY, "Usuario no encontrado")));
+    }
+
+    @GetMapping("/verificar-email")
+    public ResponseEntity<Object> verificarEmail(@RequestParam String email) {
+        boolean exists = usuarioRepository.findByEmail(email).isPresent();
+        if (exists) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(java.util.Map.of(DISPONIBLE_KEY, false));
+        }
+        return ResponseEntity.ok(java.util.Map.of(DISPONIBLE_KEY, true));
+    }
+
+    @GetMapping("/verificar-rut")
+    public ResponseEntity<Object> verificarRut(@RequestParam String rut) {
+        boolean exists = usuarioRepository.findByRut(rut).isPresent();
+        if (exists) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(java.util.Map.of(DISPONIBLE_KEY, false));
+        }
+        return ResponseEntity.ok(java.util.Map.of(DISPONIBLE_KEY, true));
     }
 }

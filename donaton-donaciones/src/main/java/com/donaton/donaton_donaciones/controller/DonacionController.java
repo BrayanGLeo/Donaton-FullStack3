@@ -45,6 +45,9 @@ public class DonacionController {
         donacion.setTransporteEspecial(donacionReq.getTransporteEspecial());
         donacion.setRegionRetiro(donacionReq.getRegionRetiro());
         donacion.setComunaRetiro(donacionReq.getComunaRetiro());
+        donacion.setLatitudRetiro(donacionReq.getLatitudRetiro());
+        donacion.setLongitudRetiro(donacionReq.getLongitudRetiro());
+        donacion.setVisibilidad(donacionReq.getVisibilidad() != null ? donacionReq.getVisibilidad() : "Pública");
 
         Long donanteId = null;
         if (authHeader != null && authHeader.startsWith("Bearer ")) {

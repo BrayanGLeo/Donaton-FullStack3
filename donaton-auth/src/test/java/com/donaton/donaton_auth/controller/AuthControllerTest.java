@@ -23,6 +23,7 @@ import com.donaton.donaton_auth.dto.LoginRequest;
 import com.donaton.donaton_auth.entity.Usuario;
 import com.donaton.donaton_auth.repository.UsuarioRepository;
 import com.donaton.donaton_auth.security.JwtUtil;
+import com.donaton.donaton_auth.service.EmailService;
 
 @ExtendWith(MockitoExtension.class)
 class AuthControllerTest {
@@ -38,6 +39,9 @@ class AuthControllerTest {
 
     @Mock
     private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+
+    @Mock
+    private EmailService emailService;
 
     @InjectMocks
     private AuthController authController;
@@ -87,6 +91,7 @@ class AuthControllerTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void testRegistrarDonante_Success() {
         com.donaton.donaton_auth.dto.DonanteRegistroRequest request = new com.donaton.donaton_auth.dto.DonanteRegistroRequest();
         request.setEmail("nuevo@donaton.cl");
