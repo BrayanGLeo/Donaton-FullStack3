@@ -28,4 +28,20 @@ public class NecesidadController {
     public ResponseEntity<java.util.List<Necesidad>> obtenerNecesidades() {
         return ResponseEntity.ok(necesidadService.obtenerTodas());
     }
+
+    @PutMapping("/{id}/estado")
+    public ResponseEntity<Necesidad> actualizarEstado(
+            @PathVariable Long id,
+            @RequestBody java.util.Map<String, String> payload) {
+        String nuevoEstado = payload.get("estado");
+        String centroAcopioIdStr = payload.get("centroAcopioId");
+        String conductorIdStr = payload.get("conductorId");
+        Necesidad actualizada = necesidadService.actualizarEstado(id, nuevoEstado, centroAcopioIdStr, conductorIdStr);
+        return ResponseEntity.ok(actualizada);
+    }
+
+    @GetMapping("/historial")
+    public ResponseEntity<java.util.List<com.donaton.necesidades.entity.HistorialNecesidad>> obtenerHistorial() {
+        return ResponseEntity.ok(necesidadService.obtenerHistorial());
+    }
 }

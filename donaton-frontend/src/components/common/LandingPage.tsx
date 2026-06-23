@@ -1,7 +1,7 @@
 import React from 'react';
 import { Container, Row, Col, Card } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 
 const LandingPage: React.FC = () => {
   const { isAuthenticated, usuario } = useAuth();
@@ -104,3 +104,4 @@ const LandingPage: React.FC = () => {
 };
 
 export default LandingPage;
+

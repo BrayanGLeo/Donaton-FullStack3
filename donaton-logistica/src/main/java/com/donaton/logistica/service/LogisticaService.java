@@ -86,4 +86,17 @@ public class LogisticaService {
 
         return recepcion;
     }
+
+    @org.springframework.transaction.annotation.Transactional
+    public Inventario consumirInventario(String recurso, Integer cantidad) {
+        Inventario inventario = inventarioRepository.findByRecurso(recurso)
+                .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("Recurso no encontrado en el inventario"));
+        
+        if (cantidad > inventario.getCantidadTotal()) {
+            throw new IllegalArgumentException("Stock insuficiente para el recurso: " + recurso);
+        }
+        
+        inventario.setCantidadTotal(inventario.getCantidadTotal() - cantidad);
+        return inventarioRepository.save(inventario);
+    }
 }

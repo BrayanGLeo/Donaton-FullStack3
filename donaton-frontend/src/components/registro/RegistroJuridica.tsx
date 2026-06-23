@@ -1,7 +1,7 @@
 import React from 'react';
 import { Form, Button, Row, Col, InputGroup, Spinner, OverlayTrigger, Tooltip, Modal } from 'react-bootstrap';
 import { useForm, Controller } from 'react-hook-form';
-import Select, { components } from 'react-select';
+import Select from 'react-select';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CheckCircle2, Info, X, AlertTriangle, Eye, EyeOff, UploadCloud } from 'lucide-react';
 import { useBlockNavigation } from '../../hooks/useBlockNavigation';
@@ -23,9 +23,7 @@ const calculateIsDirty = (values: any) => Object.entries(values).some(([key, val
   return val !== '' && val !== undefined && val !== null;
 });
 
-const CustomInput = (props: any) => (
-  <components.Input {...props} maxLength={50} />
-);
+import { RegionComunaInput } from '../common/RegionComunaInput';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const isFieldInvalid = (field: string, getValues: any, errors: any, isSubmitted: boolean) => {
@@ -159,7 +157,7 @@ export const RegistroJuridica: React.FC<Props> = ({ onSubmit, isLoading, onCance
                   options={REGIONES_CHILE.map(r => ({ value: r, label: r }))}
                   placeholder="Seleccione una región..."
                   isDisabled={isLoading}
-                  components={{ Input: CustomInput }}
+                  components={{ Input: RegionComunaInput }}
                   value={field.value ? { value: field.value, label: field.value } : null}
                   onChange={(option) => field.onChange(option?.value || '')}
                   styles={{
@@ -189,7 +187,7 @@ export const RegistroJuridica: React.FC<Props> = ({ onSubmit, isLoading, onCance
                   options={selectedRegion ? COMUNAS_POR_REGION[selectedRegion]?.map(c => ({ value: c, label: c })) : []}
                   placeholder="Seleccione una comuna..."
                   isDisabled={isLoading || !selectedRegion}
-                  components={{ Input: CustomInput }}
+                  components={{ Input: RegionComunaInput }}
                   value={field.value ? { value: field.value, label: field.value } : null}
                   onChange={(option) => field.onChange(option?.value || '')}
                   styles={{
@@ -401,3 +399,6 @@ const FileDropzone = () => {
     </Form.Group>
   );
 };
+
+
+

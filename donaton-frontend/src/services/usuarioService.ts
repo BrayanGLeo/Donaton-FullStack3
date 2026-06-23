@@ -1,12 +1,48 @@
 import axios from 'axios';
 import type { Usuario } from '../context/AuthContext';
 
-export const obtenerUsuarios = async (): Promise<Usuario[]> => {
+export interface PageResponse<T> {
+  content: T[];
+  pageable: {
+    pageNumber: number;
+    pageSize: number;
+  };
+  totalElements: number;
+  totalPages: number;
+  last: boolean;
+  first: boolean;
+}
+
+export interface UsuarioFiltros {
+  rol?: string;
+  region?: string;
+  comuna?: string;
+  rut?: string;
+  page?: number;
+  size?: number;
+  sortField?: string;
+  sortDir?: string;
+}
+
+export const obtenerUsuarios = async (filtros?: UsuarioFiltros): Promise<PageResponse<Usuario>> => {
   try {
-    const response = await axios.get<Usuario[]>('/api/auth/usuarios');
+    const cleanFiltros = Object.fromEntries(
+      Object.entries(filtros || {}).filter(([_, v]) => v !== '' && v !== null && v !== undefined)
+    );
+    const response = await axios.get<PageResponse<Usuario>>('/api/auth/usuarios', { params: cleanFiltros });
     return response.data;
   } catch (error) {
     console.error('Error al obtener los usuarios:', error);
+    throw error;
+  }
+};
+
+export const obtenerUsuariosStats = async (): Promise<{ total: number; activos: number; donantes: number; logistica: number }> => {
+  try {
+    const response = await axios.get('/api/auth/admin/usuarios/stats');
+    return response.data;
+  } catch (error) {
+    console.error('Error al obtener stats:', error);
     throw error;
   }
 };
@@ -69,5 +105,50 @@ export const verificarRutDisponible = async (rut: string): Promise<boolean> => {
     if (error.response?.status === 409) return false;
     console.warn('Endpoint verificar-rut no disponible', error);
     return true;
+  }
+};
+
+export const actualizarUsuario = async (id: number, datos: Partial<Usuario>): Promise<void> => {
+  try {
+    await axios.put(`/api/auth/admin/usuarios/${id}`, datos);
+  } catch (error) {
+    console.error(`Error al actualizar el usuario ${id}:`, error);
+    throw error;
+  }
+};
+
+export const eliminarUsuario = async (id: number): Promise<void> => {
+  try {
+    await axios.delete(`/api/auth/admin/usuarios/${id}`);
+  } catch (error) {
+    console.error(`Error al eliminar (desactivar) el usuario ${id}:`, error);
+    throw error;
+  }
+};
+
+export const reactivarUsuario = async (id: number): Promise<void> => {
+  try {
+    await axios.put(`/api/auth/admin/usuarios/${id}/reactivar`);
+  } catch (error) {
+    console.error(`Error al reactivar usuario con id ${id}:`, error);
+    throw error;
+  }
+};
+
+export const actualizarEstadoMasivoUsuarios = async (ids: number[], activo: boolean): Promise<void> => {
+  try {
+    await axios.put('/api/auth/admin/usuarios/bulk-status', { ids, activo });
+  } catch (error) {
+    console.error('Error al actualizar estado masivo:', error);
+    throw error;
+  }
+};
+
+export const cambiarPassword = async (id: number, currentPassword: string, newPassword: string): Promise<void> => {
+  try {
+    await axios.put(`/api/auth/usuarios/${id}/password`, { currentPassword, newPassword });
+  } catch (error) {
+    console.error(`Error al cambiar contraseña para el usuario ${id}:`, error);
+    throw error;
   }
 };

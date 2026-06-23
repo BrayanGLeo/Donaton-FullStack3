@@ -20,14 +20,25 @@ public class NecesidadRequestDTO {
     @Max(value = -66, message = "La longitud no puede ser mayor a -66.0")
     private Double longitud;
 
+    private String region;
+
+    private String comuna;
+
+    private String tipoEmergencia;
+
+    private Long coordinadorId;
+
     public NecesidadRequestDTO() {
         // Constructor vacío para serialización JSON
     }
 
-    public NecesidadRequestDTO(String recursos, Double latitud, Double longitud) {
+    public NecesidadRequestDTO(String recursos, Double latitud, Double longitud, String region, String comuna, String tipoEmergencia) {
         this.recursos = recursos;
         this.latitud = latitud;
         this.longitud = longitud;
+        this.region = region;
+        this.comuna = comuna;
+        this.tipoEmergencia = tipoEmergencia;
     }
 
     public String getRecursos() {
@@ -52,5 +63,37 @@ public class NecesidadRequestDTO {
 
     public void setLongitud(Double longitud) {
         this.longitud = longitud;
+    }
+
+    public String getRegion() {
+        return region;
+    }
+
+    public void setRegion(String region) {
+        this.region = region;
+    }
+
+    public String getComuna() {
+        return comuna;
+    }
+
+    public void setComuna(String comuna) {
+        this.comuna = comuna;
+    }
+
+    public String getTipoEmergencia() {
+        return tipoEmergencia;
+    }
+
+    public void setTipoEmergencia(String tipoEmergencia) {
+        this.tipoEmergencia = tipoEmergencia;
+    }
+
+    public Long getCoordinadorId() {
+        return coordinadorId;
+    }
+
+    public void setCoordinadorId(Long coordinadorId) {
+        this.coordinadorId = coordinadorId;
     }
 }

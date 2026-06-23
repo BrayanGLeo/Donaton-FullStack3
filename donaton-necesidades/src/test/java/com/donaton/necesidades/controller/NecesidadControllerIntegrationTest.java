@@ -32,7 +32,7 @@ class NecesidadControllerIntegrationTest {
 
     @Test
     void testReportarNecesidadExitoso() throws Exception {
-        NecesidadRequestDTO request = new NecesidadRequestDTO("Agua y Mantas", -33.4489, -70.6693);
+        NecesidadRequestDTO request = new NecesidadRequestDTO("Agua y Mantas", -33.4489, -70.6693, "Región Metropolitana", "Santiago", "Inundación");
 
         mockMvc.perform(post("/api/necesidades")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -44,7 +44,7 @@ class NecesidadControllerIntegrationTest {
 
     @Test
     void testFallaCoordenadasFueraDeLimite() throws Exception {
-        NecesidadRequestDTO request = new NecesidadRequestDTO("Medicamentos", 150.0, -70.6693);
+        NecesidadRequestDTO request = new NecesidadRequestDTO("Medicamentos", 150.0, -70.6693, "Región Metropolitana", "Santiago", "Terremoto");
 
         mockMvc.perform(post("/api/necesidades")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -55,7 +55,7 @@ class NecesidadControllerIntegrationTest {
 
     @Test
     void testFallaFaltanRecursos() throws Exception {
-        NecesidadRequestDTO request = new NecesidadRequestDTO("", -33.4489, -70.6693);
+        NecesidadRequestDTO request = new NecesidadRequestDTO("", -33.4489, -70.6693, "Región Metropolitana", "Santiago", "Terremoto");
 
         mockMvc.perform(post("/api/necesidades")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -66,7 +66,7 @@ class NecesidadControllerIntegrationTest {
 
     @Test
     void testFallaFaltaLatitud() throws Exception {
-        NecesidadRequestDTO request = new NecesidadRequestDTO("Medicamentos", null, -70.6693);
+        NecesidadRequestDTO request = new NecesidadRequestDTO("Medicamentos", null, -70.6693, "Región Metropolitana", "Santiago", "General");
 
         mockMvc.perform(post("/api/necesidades")
                 .contentType(MediaType.APPLICATION_JSON)

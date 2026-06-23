@@ -1,0 +1,198 @@
+import React from 'react';
+import { Card, Table, Badge, Button, Row, Col, Form, Spinner } from 'react-bootstrap';
+import Select from 'react-select';
+import { REGIONES_CHILE, COMUNAS_POR_REGION } from '../../utils/chileData';
+import type { DonacionResponse } from '../../services/donacionService';
+import type { CentroAcopio } from '../../services/logisticaService';
+import type { Usuario } from '../../context/AuthContext';
+
+export interface UsuarioExtended extends Usuario {
+  rut?: string;
+  telefono?: string;
+  direccion?: string;
+}
+
+const CATEGORIAS_DONACION = [
+  'Alimentos no perecibles', 'Agua embotellada', 'Ropa nueva', 'Ropa usada en buen estado',
+  'Artículos de higiene', 'Artículos de limpieza', 'Materiales de construcción',
+  'Medicamentos y primeros auxilios', 'Herramientas', 'Muebles', 'Alimento para mascotas', 'Otro'
+];
+
+interface AdminDonacionesViewProps {
+  loadingDonaciones: boolean;
+  donacionesFiltradas: DonacionResponse[];
+  donacionFiltros: any;
+  setDonacionFiltros: React.Dispatch<React.SetStateAction<any>>;
+  centros: CentroAcopio[];
+  usuariosMapDonacion: Record<number, UsuarioExtended>;
+  setDonacionDetalle: React.Dispatch<React.SetStateAction<DonacionResponse | null>>;
+  RegionComunaInput: any;
+  getDonanteNameFromMap: (donanteId?: number, map?: Record<number, UsuarioExtended>) => string;
+  getEstadoBadgeColor: (estado: string) => string;
+}
+
+export const AdminDonacionesView: React.FC<AdminDonacionesViewProps> = ({
+  loadingDonaciones,
+  donacionesFiltradas,
+  donacionFiltros,
+  setDonacionFiltros,
+  centros,
+  usuariosMapDonacion,
+  setDonacionDetalle,
+  RegionComunaInput,
+  getDonanteNameFromMap,
+  getEstadoBadgeColor,
+}) => (
+  <div>
+    <div className="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h4 className="fw-bold mb-1" style={{ color: '#1a1a2e' }}>📦 Historial de Donaciones</h4>
+        <p className="text-muted mb-0">Registro histórico de todas las donaciones del sistema</p>
+      </div>
+      <Badge bg="primary" pill className="fs-6 px-3 py-2">{donacionesFiltradas.length} registros</Badge>
+    </div>
+
+    <Card className="border-0 shadow-sm mb-4" style={{ borderRadius: '16px' }}>
+      <Card.Body className="bg-light p-3">
+        <Row className="g-2 align-items-center">
+          <Col md={2}>
+            <Form.Control size="sm" placeholder="🔍 ID" value={donacionFiltros.id} onChange={e => setDonacionFiltros((prev: any) => ({ ...prev, id: e.target.value }))} />
+          </Col>
+          <Col md={2}>
+            <Select
+              isClearable
+              components={{ Input: RegionComunaInput }}
+              placeholder="Región..."
+              options={REGIONES_CHILE.map(r => ({ value: r, label: r }))}
+              value={donacionFiltros.region ? { value: donacionFiltros.region, label: donacionFiltros.region } : null}
+              onChange={opt => setDonacionFiltros((prev: any) => ({ ...prev, region: opt?.value ?? '', comuna: '', centroAcopio: '' }))}
+              menuPortalTarget={document.body}
+              menuPosition="fixed"
+              styles={{ control: (base) => ({ ...base, fontSize: '0.875rem', minHeight: '31px' }), menuPortal: (base) => ({ ...base, zIndex: 9999 }) }}
+            />
+          </Col>
+          <Col md={2}>
+            <Select
+              isClearable
+              components={{ Input: RegionComunaInput }}
+              placeholder="Comuna..."
+              isDisabled={!donacionFiltros.region}
+              options={donacionFiltros.region ? (COMUNAS_POR_REGION[donacionFiltros.region as keyof typeof COMUNAS_POR_REGION] ?? []).map(c => ({ value: c, label: c })) : []}
+              value={donacionFiltros.comuna ? { value: donacionFiltros.comuna, label: donacionFiltros.comuna } : null}
+              onChange={opt => setDonacionFiltros((prev: any) => ({ ...prev, comuna: opt?.value ?? '' }))}
+              noOptionsMessage={() => donacionFiltros.region ? 'No hay comunas' : 'Selecciona una región primero'}
+              menuPortalTarget={document.body}
+              menuPosition="fixed"
+              styles={{ control: (base) => ({ ...base, fontSize: '0.875rem', minHeight: '31px' }), menuPortal: (base) => ({ ...base, zIndex: 9999 }) }}
+            />
+          </Col>
+          <Col md={3}>
+            <Select
+              isClearable
+              components={{ Input: RegionComunaInput }}
+              placeholder="Categoría..."
+              options={CATEGORIAS_DONACION.map(c => ({ value: c, label: c }))}
+              value={donacionFiltros.categoria ? { value: donacionFiltros.categoria, label: donacionFiltros.categoria } : null}
+              onChange={opt => setDonacionFiltros((prev: any) => ({ ...prev, categoria: opt?.value ?? '' }))}
+              menuPortalTarget={document.body}
+              menuPosition="fixed"
+              styles={{ control: (base) => ({ ...base, fontSize: '0.875rem', minHeight: '31px' }), menuPortal: (base) => ({ ...base, zIndex: 9999 }) }}
+            />
+          </Col>
+          <Col md={3}>
+            <Form.Select
+              size="sm"
+              value={donacionFiltros.centroAcopio}
+              onChange={e => setDonacionFiltros((prev: any) => ({ ...prev, centroAcopio: e.target.value }))}
+            >
+              <option value="">
+                {donacionFiltros.region ? `Centros en ${donacionFiltros.region.split(' ')[0]}...` : 'Todos los Centros'}
+              </option>
+              {(donacionFiltros.region
+                ? centros.filter(c => c.region === donacionFiltros.region)
+                : centros
+              ).map(c => (
+                <option key={c.id} value={c.id.toString()}>{c.nombre} — {c.comuna}</option>
+              ))}
+            </Form.Select>
+          </Col>
+        </Row>
+        <Row className="g-2 align-items-center mt-1">
+          <Col md={4}>
+            <Form.Control
+              size="sm"
+              placeholder="👤 Buscar por donante (nombre, razón social...)"
+              value={donacionFiltros.donante}
+              onChange={e => setDonacionFiltros((prev: any) => ({ ...prev, donante: e.target.value }))}
+            />
+          </Col>
+        </Row>
+      </Card.Body>
+    </Card>
+
+    {loadingDonaciones ? (
+      <div className="text-center py-5"><Spinner animation="border" variant="primary" /><p className="mt-2 text-muted">Cargando donaciones...</p></div>
+    ) : (
+      <Card className="border-0 shadow-sm" style={{ borderRadius: '16px', overflow: 'hidden' }}>
+        <Table hover responsive className="align-middle mb-0">
+          <thead style={{ backgroundColor: '#f8f9ff' }}>
+            <tr>
+              <th className="py-3 px-4" style={{ color: '#6c63ff', fontWeight: 600 }}>ID</th>
+              <th className="py-3" style={{ color: '#6c63ff', fontWeight: 600 }}>Cantidad</th>
+              <th className="py-3" style={{ color: '#6c63ff', fontWeight: 600 }}>Recurso</th>
+              <th className="py-3" style={{ color: '#6c63ff', fontWeight: 600 }}>Ubicación</th>
+              <th className="py-3" style={{ color: '#6c63ff', fontWeight: 600 }}>Tracking</th>
+              <th className="py-3" style={{ color: '#6c63ff', fontWeight: 600 }}>Donante</th>
+              <th className="py-3" style={{ color: '#6c63ff', fontWeight: 600 }}>Estado</th>
+              <th className="py-3 pe-4" style={{ color: '#6c63ff', fontWeight: 600 }}>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {donacionesFiltradas.map((d: DonacionResponse & { acopioRecepcion?: string }) => (
+              <tr key={d.id} style={{ transition: 'background 0.2s' }}>
+                <td className="px-4 fw-semibold text-muted">#{d.id}</td>
+                <td>
+                  <span className="fw-semibold">{d.cantidad}</span>{' '}
+                  <small style={{ color: '#6c63ff', fontWeight: 500 }}>{d.unidadMedida || 'u.'}</small>
+                </td>
+                <td style={{ color: '#333' }}>{d.recurso}</td>
+                <td>
+                  <small style={{ color: '#555', fontWeight: 500 }}>{d.comunaRetiro || d.origen || '—'}</small>
+                </td>
+                <td>
+                  <code className="bg-light text-dark px-2 py-1 rounded" style={{ fontSize: '0.85rem' }}>{d.trackingId}</code>
+                </td>
+                <td>
+                  <small style={{ color: '#444', fontWeight: 500 }}>{getDonanteNameFromMap(d.donanteId, usuariosMapDonacion)}</small>
+                </td>
+                <td>
+                  <Badge
+                    bg={getEstadoBadgeColor(d.estado || '')}
+                    className="px-3 py-2"
+                    style={{ fontSize: '0.8rem', borderRadius: '20px' }}
+                  >
+                    {d.estado}
+                  </Badge>
+                </td>
+                <td className="pe-4">
+                  <Button variant="outline-primary" size="sm" style={{ borderRadius: '8px' }} onClick={() => setDonacionDetalle(d)}>
+                    🔍 Detalles
+                  </Button>
+                </td>
+              </tr>
+            ))}
+            {donacionesFiltradas.length === 0 && (
+              <tr>
+                <td colSpan={8} className="text-center py-5">
+                  <div style={{ fontSize: '3rem' }}>📭</div>
+                  <p className="text-muted mt-2">No hay donaciones que coincidan con los filtros</p>
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </Table>
+      </Card>
+    )}
+  </div>
+);
+

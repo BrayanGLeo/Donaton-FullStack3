@@ -5,6 +5,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,6 +23,17 @@ public class NecesidadesClientService {
     @CircuitBreaker(name = "necesidadesService", fallbackMethod = "fallbackObtenerNecesidades")
     public ResponseEntity<String> obtenerNecesidades() {
         String url = "http://donaton-necesidades/api/necesidades";
+        return restTemplate.getForEntity(url, String.class);
+    }
+
+    public ResponseEntity<String> actualizarEstadoNecesidad(Long id, java.util.Map<String, String> payload) {
+        String url = "http://donaton-necesidades/api/necesidades/" + id + "/estado";
+        HttpEntity<java.util.Map<String, String>> request = new HttpEntity<>(payload);
+        return restTemplate.exchange(url, HttpMethod.PUT, request, String.class);
+    }
+
+    public ResponseEntity<String> obtenerHistorialNecesidades() {
+        String url = "http://donaton-necesidades/api/necesidades/historial";
         return restTemplate.getForEntity(url, String.class);
     }
 

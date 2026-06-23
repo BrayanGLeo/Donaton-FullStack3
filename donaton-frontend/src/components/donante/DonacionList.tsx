@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Card, Table, Spinner, Badge, Alert, Button, Modal, Row, Col } from 'react-bootstrap';
-import { listarDonaciones, type DonacionResponse } from '../services/donacionService';
-import { obtenerCentrosAcopio, type CentroAcopio } from '../services/logisticaService';
-import { obtenerUsuarios } from '../services/usuarioService';
-import { useAuth, type Usuario } from '../context/AuthContext';
+import { listarDonaciones, type DonacionResponse } from '../../services/donacionService';
+import { obtenerCentrosAcopio, type CentroAcopio } from '../../services/logisticaService';
+import { obtenerUsuarios } from '../../services/usuarioService';
+import { useAuth, type Usuario } from '../../context/AuthContext';
 
 interface Props {
   refreshTrigger: number;
@@ -57,13 +57,30 @@ export const DonacionList: React.FC<Props> = ({ refreshTrigger }) => {
   const [usuariosMap, setUsuariosMap] = useState<Record<number, Usuario>>({});
 
   useEffect(() => {
-    obtenerCentrosAcopio().then(setCentros).catch(() => {});
-    obtenerUsuarios().then(users => {
-      const map: Record<number, Usuario> = {};
-      users.forEach(u => map[Number(u.id)] = u);
-      setUsuariosMap(map);
-    }).catch(() => {});
-  }, []);
+    const fetchData = async () => {
+      try {
+        const centrosData = await obtenerCentrosAcopio().catch(e => {
+          console.error("Error centros:", e);
+          return [];
+        });
+        setCentros(centrosData);
+
+        try {
+          const usuariosPage = await obtenerUsuarios({ size: 1000 });
+          const userMap: Record<number, Usuario> = {};
+          usuariosPage.content.forEach((u: Usuario) => {
+            if (u.id) userMap[Number(u.id)] = u;
+          });
+          setUsuariosMap(userMap);
+        } catch (e) {
+          console.error("Error usuarios:", e);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchData();
+  }, [usuario]);
 
   const getDonanteName = (donanteId?: number) => {
     if (!donanteId || !usuariosMap[donanteId]) return 'Donante solidario';
@@ -84,7 +101,7 @@ export const DonacionList: React.FC<Props> = ({ refreshTrigger }) => {
           : data;
         setDonaciones(misDonaciones);
       } catch (err) {
-        console.error(err);
+        console.error("Error en fetchDonaciones:", err);
         setError('Ocurrió un error al cargar las donaciones.');
       } finally {
         setIsLoading(false);
@@ -92,7 +109,7 @@ export const DonacionList: React.FC<Props> = ({ refreshTrigger }) => {
     };
 
     fetchDonaciones();
-  }, [refreshTrigger]);
+  }, [refreshTrigger, usuario]);
 
   if (isLoading) {
     return (
@@ -268,3 +285,4 @@ export const DonacionList: React.FC<Props> = ({ refreshTrigger }) => {
     </>
   );
 };
+

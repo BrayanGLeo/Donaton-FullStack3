@@ -10,9 +10,21 @@ export interface Usuario {
   tipoPersona?: string;
   email?: string;
   rol: Rol;
+  sitioWeb?: string;
   subRol?: string;
+  tipoVehiculo?: string;
+  matricula?: string;
+  centroAcopioId?: number;
+  latitud?: number;
+  longitud?: number;
+  ultimaConexion?: string;
   region?: string;
-  centroAcopioId?: number | null;
+  comuna?: string;
+  direccion?: string;
+  rut?: string;
+  giro?: string;
+  telefono?: string;
+  activo?: boolean;
 }
 
 interface AuthContextType {

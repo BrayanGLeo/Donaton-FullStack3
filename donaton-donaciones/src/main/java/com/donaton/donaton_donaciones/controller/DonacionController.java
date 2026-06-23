@@ -48,6 +48,7 @@ public class DonacionController {
         donacion.setLatitudRetiro(donacionReq.getLatitudRetiro());
         donacion.setLongitudRetiro(donacionReq.getLongitudRetiro());
         donacion.setVisibilidad(donacionReq.getVisibilidad() != null ? donacionReq.getVisibilidad() : "Pública");
+        donacion.setConductorId(donacionReq.getConductorId());
 
         Long donanteId = null;
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
@@ -75,6 +76,12 @@ public class DonacionController {
             return ResponseEntity.badRequest().build();
         }
         Donacion actualizada = service.actualizarEstado(id, nuevoEstado);
+        return ResponseEntity.ok(actualizada);
+    }
+
+    @PutMapping("/{id}/conductor/{conductorId}")
+    public ResponseEntity<Donacion> asignarConductor(@PathVariable Long id, @PathVariable Long conductorId) {
+        Donacion actualizada = service.asignarConductor(id, conductorId);
         return ResponseEntity.ok(actualizada);
     }
 }

@@ -14,6 +14,9 @@ public interface LogisticaClient {
     @GetMapping("/api/logistica/inventario")
     ResponseEntity<Object> listarInventario();
 
+    @PostMapping("/api/logistica/inventario/consumir")
+    ResponseEntity<Object> consumirInventario(@RequestBody Object request);
+
     @PutMapping("/api/logistica/ingreso/{trackingId}")
     ResponseEntity<Object> registrarIngreso(@PathVariable("trackingId") String trackingId);
 

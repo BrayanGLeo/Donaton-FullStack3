@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Container, Row, Col, Card, Spinner, Alert, Badge, Form, Table, Button, Modal } from 'react-bootstrap';
-import { listarDonaciones, type DonacionResponse } from '../services/donacionService';
+import { listarDonaciones, type DonacionResponse } from '../../services/donacionService';
 import { Eye, EyeOff, Search, Users, PackageCheck, Award, Share2, Heart } from 'lucide-react';
 import { PieChart, Pie, Tooltip, ResponsiveContainer } from 'recharts';
-import { obtenerCentrosAcopioPorRegion, obtenerUsuarios, type CentroAcopio } from '../services/usuarioService';
-import { REGIONES_CHILE } from '../utils/chileData';
-import { useAuth, type Usuario } from '../context/AuthContext';
+import { obtenerCentrosAcopioPorRegion, obtenerUsuarios, type CentroAcopio } from '../../services/usuarioService';
+import { REGIONES_CHILE } from '../../utils/chileData';
+import { useAuth, type Usuario } from '../../context/AuthContext';
 
 const HistorialAcopio: React.FC = () => {
   const { usuario } = useAuth();
@@ -37,20 +37,25 @@ const HistorialAcopio: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [data, users] = await Promise.all([
-          listarDonaciones(),
-          obtenerUsuarios()
-        ]);
+        const data = await listarDonaciones();
 
-        const map: Record<number, Usuario> = {};
-        users.forEach(u => map[Number(u.id)] = u);
-        setUsuariosMap(map);
-
-        // Solo mostramos donaciones con estado RECIBIDO en el historial público
-        const donacionesRecibidas = data.filter(d => d.estado === 'RECIBIDO');
+        // Solo mostramos donaciones con estado RECIBIDO (ya entregadas en el centro de acopio)
+        const donacionesRecibidas = data.filter(d => 
+          d.estado === 'RECIBIDO' || d.estado === 'Recibido' || d.estado?.toLowerCase() === 'recibido'
+        );
         setDonaciones(donacionesRecibidas);
+
+        try {
+          const usersResponse = await obtenerUsuarios({ size: 1000 });
+          const map: Record<number, Usuario> = {};
+          usersResponse.content.forEach(u => map[Number(u.id)] = u);
+          setUsuariosMap(map);
+        } catch (e) {
+          console.warn('No se pudieron cargar los usuarios para historial público', e);
+        }
+
       } catch (err) {
-        console.error('Error al obtener historial o usuarios:', err);
+        console.error('Error al obtener historial:', err);
         setError('No se pudo cargar el historial de acopio. Por favor, intenta de nuevo más tarde.');
       } finally {
         setLoading(false);
@@ -58,7 +63,7 @@ const HistorialAcopio: React.FC = () => {
     };
 
     fetchData();
-  }, []);
+  }, [usuario]);
 
   const getDonanteName = (donanteId?: number) => {
     if (!donanteId || !usuariosMap[donanteId]) return 'Solidario/a';
@@ -415,3 +420,4 @@ const HistorialAcopio: React.FC = () => {
 };
 
 export default HistorialAcopio;
+

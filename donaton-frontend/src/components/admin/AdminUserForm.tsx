@@ -4,26 +4,25 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import toast from 'react-hot-toast';
 import { Eye, EyeOff, Dices, X } from 'lucide-react';
-import Select, { components } from 'react-select';
+import Select from 'react-select';
 
-import { REGIONES_CHILE, COMUNAS_POR_REGION } from '../utils/chileData';
-import { COUNTRY_CODES } from '../utils/countryCodes';
+import { REGIONES_CHILE, COMUNAS_POR_REGION } from '../../utils/chileData';
+import { RegionComunaInput } from '../common/RegionComunaInput';
+import { COUNTRY_CODES } from '../../utils/countryCodes';
 import { 
   formatRutInput, formatPhoneInput, formatNoSpaceInput, formatNameInput, 
   getPasswordStrength, preventSpaceKeyDown, preventRutKeyDown, preventPhoneKeyDown 
-} from '../utils/validators';
+} from '../../utils/validators';
 import { 
   registrarUsuarioAdmin, obtenerCentrosAcopioPorRegion, type CentroAcopio 
-} from '../services/usuarioService';
-import { adminUserSchema, type AdminUserValues } from './registro/RegistroSchemas';
+} from '../../services/usuarioService';
+import { adminUserSchema, type AdminUserValues } from '../registro/RegistroSchemas';
 
 interface AdminUserFormProps {
   onUserCreated: () => void;
 }
 
-const CustomInput = (props: any) => (
-  <components.Input {...props} maxLength={50} />
-);
+
 
 export const AdminUserForm: React.FC<AdminUserFormProps> = ({ onUserCreated }) => {
   const [centrosAcopio, setCentrosAcopio] = useState<CentroAcopio[]>([]);
@@ -210,47 +209,52 @@ export const AdminUserForm: React.FC<AdminUserFormProps> = ({ onUserCreated }) =
                   <Form.Control.Feedback type="invalid">{errors.telefono?.message}</Form.Control.Feedback>
                 </InputGroup>
               </Form.Group>
-              <Form.Group className="mb-2">
-                <Form.Label className="text-white-50 small mb-0">Región de Residencia</Form.Label>
-                <Controller
-                  name="region"
-                  control={control}
-                  render={({ field }) => (
-                    <Select
-                      {...field}
-                      options={REGIONES_CHILE.map(r => ({ value: r, label: r }))}
-                      placeholder="Seleccione..."
-                      components={{ Input: CustomInput }}
-                      value={field.value ? { value: field.value, label: field.value } : null}
-                      onChange={(option) => field.onChange(option?.value || '')}
-                      styles={lightSelectStyles(!!errors.region)}
+              <Row>
+                <Col md={6}>
+                  <Form.Group className="mb-2">
+                    <Form.Label className="text-white-50 small mb-0">Región de Residencia</Form.Label>
+                    <Controller
+                      name="region"
+                      control={control}
+                      render={({ field }) => (
+                        <Select
+                          {...field}
+                          options={REGIONES_CHILE.map(r => ({ value: r, label: r }))}
+                          placeholder="Seleccione..."
+                          components={{ Input: RegionComunaInput }}
+                          value={field.value ? { value: field.value, label: field.value } : null}
+                          onChange={(option) => field.onChange(option?.value || '')}
+                          styles={lightSelectStyles(!!errors.region)}
+                        />
+                      )}
                     />
-                  )}
-                />
-                {errors.region && <div className="text-danger mt-1" style={{ fontSize: '0.875em' }}>{errors.region.message}</div>}
-              </Form.Group>
-              
-              <Form.Group className="mb-2">
-                <Form.Label className="text-white-50 small mb-0">Comuna de Residencia</Form.Label>
-                <Controller
-                  name="comuna"
-                  control={control}
-                  render={({ field }) => (
-                    <Select
-                      {...field}
-                      options={region ? COMUNAS_POR_REGION[region]?.map((c: string) => ({ value: c, label: c })) : []}
-                      placeholder="Seleccione..."
-                      isDisabled={!region}
-                      components={{ Input: CustomInput }}
-                      value={field.value ? { value: field.value, label: field.value } : null}
-                      onChange={(option) => field.onChange(option?.value || '')}
-                      styles={lightSelectStyles(!!errors.comuna)}
-                      noOptionsMessage={() => region ? "No hay comunas" : "Seleccione región"}
+                    {errors.region && <div className="text-danger mt-1" style={{ fontSize: '0.875em' }}>{errors.region.message}</div>}
+                  </Form.Group>
+                </Col>
+                <Col md={6}>
+                  <Form.Group className="mb-2">
+                    <Form.Label className="text-white-50 small mb-0">Comuna de Residencia</Form.Label>
+                    <Controller
+                      name="comuna"
+                      control={control}
+                      render={({ field }) => (
+                        <Select
+                          {...field}
+                          options={region ? COMUNAS_POR_REGION[region]?.map((c: string) => ({ value: c, label: c })) : []}
+                          placeholder="Seleccione..."
+                          isDisabled={!region}
+                          components={{ Input: RegionComunaInput }}
+                          value={field.value ? { value: field.value, label: field.value } : null}
+                          onChange={(option) => field.onChange(option?.value || '')}
+                          styles={lightSelectStyles(!!errors.comuna)}
+                          noOptionsMessage={() => region ? "No hay comunas" : "Seleccione región"}
+                        />
+                      )}
                     />
-                  )}
-                />
-                {errors.comuna && <div className="text-danger mt-1" style={{ fontSize: '0.875em' }}>{errors.comuna.message}</div>}
-              </Form.Group>
+                    {errors.comuna && <div className="text-danger mt-1" style={{ fontSize: '0.875em' }}>{errors.comuna.message}</div>}
+                  </Form.Group>
+                </Col>
+              </Row>
 
               <Form.Group className="mb-2">
                 <Form.Label className="text-white-50 small mb-0">Dirección de Residencia</Form.Label>
@@ -294,7 +298,7 @@ export const AdminUserForm: React.FC<AdminUserFormProps> = ({ onUserCreated }) =
                           {...field}
                           options={REGIONES_CHILE.map(r => ({ value: r, label: r }))}
                           placeholder="Seleccione..."
-                          components={{ Input: CustomInput }}
+                          components={{ Input: RegionComunaInput }}
                           value={field.value ? { value: field.value, label: field.value } : null}
                           onChange={(option) => field.onChange(option?.value || '')}
                           styles={lightSelectStyles(!!errors.regionAcopio)}
@@ -314,7 +318,7 @@ export const AdminUserForm: React.FC<AdminUserFormProps> = ({ onUserCreated }) =
                           options={centrosAcopio.map(c => ({ value: c.id.toString(), label: `${c.nombre} (${c.comuna})` }))}
                           placeholder="Seleccione..."
                           isDisabled={!regionAcopio}
-                          components={{ Input: CustomInput }}
+                          components={{ Input: RegionComunaInput }}
                           value={field.value ? { value: field.value, label: centrosAcopio.find(c => c.id.toString() === field.value)?.nombre + ' (' + centrosAcopio.find(c => c.id.toString() === field.value)?.comuna + ')' } : null}
                           onChange={(option) => field.onChange(option?.value || '')}
                           styles={lightSelectStyles(!!errors.centroAcopioId)}
@@ -405,3 +409,5 @@ export const AdminUserForm: React.FC<AdminUserFormProps> = ({ onUserCreated }) =
     </Form>
   );
 };
+
+

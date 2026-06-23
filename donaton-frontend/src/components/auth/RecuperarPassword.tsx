@@ -8,7 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { formatNoSpaceInput, preventSpaceKeyDown, getPasswordStrength, validarPassword, validarEmailDominio } from '../utils/validators';
+import { formatNoSpaceInput, preventSpaceKeyDown, getPasswordStrength, validarPassword, validarEmailDominio } from '../../utils/validators';
 
 type Fase = 'SOLICITAR' | 'VERIFICAR' | 'RESETEAR' | 'EXITO';
 
@@ -327,3 +327,4 @@ const RecuperarPassword: React.FC = () => {
 };
 
 export default RecuperarPassword;
+

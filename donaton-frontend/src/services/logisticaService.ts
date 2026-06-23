@@ -27,6 +27,8 @@ export interface CentroAcopio {
   region: string;
   comuna: string;
   direccion: string;
+  latitud?: number;
+  longitud?: number;
 }
 
 export const obtenerInventario = async (): Promise<InventarioItem[]> => {

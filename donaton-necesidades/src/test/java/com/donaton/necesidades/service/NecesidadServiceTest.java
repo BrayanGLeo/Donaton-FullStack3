@@ -27,9 +27,9 @@ class NecesidadServiceTest {
 
     @Test
     void testReportarNecesidad() {
-        NecesidadRequestDTO request = new NecesidadRequestDTO("Alimentos", -33.0, -70.0);
+        NecesidadRequestDTO request = new NecesidadRequestDTO("Alimentos", -33.0, -70.0, "Valparaíso", "Viña del Mar", "Incendio");
         
-        Necesidad mockNecesidad = new Necesidad("Alimentos", -33.0, -70.0, LocalDateTime.now());
+        Necesidad mockNecesidad = new Necesidad("Alimentos", -33.0, -70.0, LocalDateTime.now(), "Valparaíso", "Viña del Mar", "Incendio");
         mockNecesidad.setId(10L);
 
         when(necesidadRepository.save(any(Necesidad.class))).thenReturn(mockNecesidad);

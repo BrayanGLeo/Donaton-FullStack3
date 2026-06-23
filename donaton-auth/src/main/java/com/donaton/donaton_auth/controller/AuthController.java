@@ -5,14 +5,24 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
+import java.time.ZoneId;
+import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.time.LocalDateTime;
 import java.security.SecureRandom;
 
@@ -23,6 +33,8 @@ import com.donaton.donaton_auth.dto.LoginRequest;
 import com.donaton.donaton_auth.dto.RegistroAdminRequest;
 import com.donaton.donaton_auth.dto.ResetPasswordRequest;
 import com.donaton.donaton_auth.dto.VerifyCodeRequest;
+import com.donaton.donaton_auth.dto.ChangePasswordRequest;
+import com.donaton.donaton_auth.dto.UpdateUserRequest;
 import com.donaton.donaton_auth.entity.Usuario;
 import com.donaton.donaton_auth.repository.UsuarioRepository;
 import com.donaton.donaton_auth.security.JwtUtil;
@@ -39,6 +51,9 @@ public class AuthController {
     private final EmailService emailService;
     private static final String MESSAGE_KEY = "message";
     private static final String DISPONIBLE_KEY = "disponible";
+    private static final String LOGISTICA_ROLE = "LOGISTICA";
+    private static final String ADMIN_ROLE = "ADMIN";
+    private static final String USUARIO_NO_ENCONTRADO = "Usuario no encontrado.";
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     public AuthController(AuthenticationManager authenticationManager, JwtUtil jwtUtil, UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder, EmailService emailService) {
@@ -57,6 +72,10 @@ public class AuthController {
             );
 
             Usuario usuario = usuarioRepository.findByEmail(loginRequest.getEmail()).orElseThrow();
+            
+            // Actualizar última conexión
+            usuario.setUltimaConexion(LocalDateTime.now(ZoneId.systemDefault()));
+            usuarioRepository.save(usuario);
 
             boolean rememberMe = loginRequest.getRememberMe() != null && loginRequest.getRememberMe();
             String token = jwtUtil.generateToken(usuario.getEmail(), usuario.getRol(), usuario.getId(), rememberMe);
@@ -117,7 +136,7 @@ public class AuthController {
         if (usuarioRepository.findByEmail(nuevoUsuario.getEmail()).isPresent()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(java.util.Map.of(MESSAGE_KEY, "El correo ya está registrado"));
         }
-        if (!"LOGISTICA".equals(nuevoUsuario.getRol()) && !"COORDINADOR".equals(nuevoUsuario.getRol())) {
+        if (!LOGISTICA_ROLE.equals(nuevoUsuario.getRol()) && !"COORDINADOR".equals(nuevoUsuario.getRol())) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(java.util.Map.of(MESSAGE_KEY, "Rol inválido. Solo LOGISTICA o COORDINADOR"));
         }
         Usuario usuario = new Usuario();
@@ -134,7 +153,7 @@ public class AuthController {
         usuario.setDireccion(nuevoUsuario.getDireccion());
         
         // Mapear campos Logistica
-        if ("LOGISTICA".equals(nuevoUsuario.getRol())) {
+        if (LOGISTICA_ROLE.equals(usuario.getRol())) {
             usuario.setSubRol(nuevoUsuario.getSubRol());
             if ("CONDUCTOR".equals(nuevoUsuario.getSubRol())) {
                 usuario.setTipoVehiculo(nuevoUsuario.getTipoVehiculo());
@@ -160,8 +179,130 @@ public class AuthController {
     }
 
     @GetMapping("/usuarios")
-    public ResponseEntity<List<Usuario>> listarUsuarios() {
-        return ResponseEntity.ok(usuarioRepository.findAll());
+    public ResponseEntity<Page<Usuario>> listarUsuarios(
+            @RequestParam(required = false) String rol,
+            @RequestParam(required = false) String region,
+            @RequestParam(required = false) String comuna,
+            @RequestParam(required = false) String rut,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") String sortField,
+            @RequestParam(defaultValue = "asc") String sortDir
+    ) {
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name()) ? Sort.by(sortField).ascending() : Sort.by(sortField).descending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+        return ResponseEntity.ok(usuarioRepository.findByFiltros(rol, region, comuna, rut, pageable));
+    }
+
+    @GetMapping("/admin/usuarios/stats")
+    public ResponseEntity<Map<String, Long>> obtenerStats() {
+        Map<String, Long> stats = new HashMap<>();
+        stats.put("total", usuarioRepository.count());
+        stats.put("activos", usuarioRepository.countActivos());
+        stats.put("donantes", usuarioRepository.countByRol("DONANTE"));
+        stats.put("logistica", usuarioRepository.countByRol(LOGISTICA_ROLE) + usuarioRepository.countByRol("COORDINADOR"));
+        return ResponseEntity.ok(stats);
+    }
+
+    @PutMapping("/admin/usuarios/{id}")
+    public ResponseEntity<Object> actualizarUsuario(@PathVariable Long id, @RequestBody UpdateUserRequest request) {
+        return usuarioRepository.findById(id).<ResponseEntity<Object>>map(usuario -> {
+            if (ADMIN_ROLE.equals(usuario.getRol())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(java.util.Map.of(MESSAGE_KEY, "Los usuarios administradores no pueden ser modificados."));
+            }
+
+            // Actualizar campos permitidos (rut y password no se tocan)
+            if (request.getEmail() != null && !request.getEmail().equals(usuario.getEmail())) {
+                if (usuarioRepository.findByEmail(request.getEmail()).isPresent()) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(java.util.Map.of(MESSAGE_KEY, "El correo ya está en uso."));
+                }
+                usuario.setEmail(request.getEmail());
+            }
+
+            updateUsuarioFields(usuario, request);
+
+            usuarioRepository.save(usuario);
+            return ResponseEntity.ok(java.util.Map.of(MESSAGE_KEY, "Usuario actualizado exitosamente."));
+        }).orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(java.util.Map.of(MESSAGE_KEY, USUARIO_NO_ENCONTRADO)));
+    }
+
+    @PutMapping("/usuarios/{id}/password")
+    public ResponseEntity<Object> cambiarPassword(@PathVariable Long id, @RequestBody ChangePasswordRequest request) {
+        return usuarioRepository.findById(id).<ResponseEntity<Object>>map(usuario -> {
+            // Verificar que la contraseña actual sea correcta
+            if (!passwordEncoder.matches(request.getCurrentPassword(), usuario.getPassword())) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(java.util.Map.of(MESSAGE_KEY, "La contraseña actual es incorrecta."));
+            }
+            
+            usuario.setPassword(passwordEncoder.encode(request.getNewPassword()));
+            usuarioRepository.save(usuario);
+            return ResponseEntity.ok(java.util.Map.of(MESSAGE_KEY, "Contraseña actualizada exitosamente."));
+        }).orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(java.util.Map.of(MESSAGE_KEY, USUARIO_NO_ENCONTRADO)));
+    }
+
+    private void updateUsuarioFields(Usuario usuario, UpdateUserRequest request) {
+        updateBasicFields(usuario, request);
+        updateContactFields(usuario, request);
+        updateLogisticaFields(usuario, request);
+    }
+
+    private void updateBasicFields(Usuario usuario, UpdateUserRequest request) {
+        if (request.getRol() != null) usuario.setRol(request.getRol());
+        if (request.getSubRol() != null) usuario.setSubRol(request.getSubRol());
+        if (request.getTipoPersona() != null) usuario.setTipoPersona(request.getTipoPersona());
+        if (request.getNombreCompleto() != null) usuario.setNombreCompleto(request.getNombreCompleto());
+        if (request.getRazonSocial() != null) usuario.setRazonSocial(request.getRazonSocial());
+        if (request.getGiro() != null) usuario.setGiro(request.getGiro());
+    }
+
+    private void updateContactFields(Usuario usuario, UpdateUserRequest request) {
+        if (request.getNombreContacto() != null) usuario.setNombreContacto(request.getNombreContacto());
+        if (request.getTelefono() != null) usuario.setTelefono(request.getTelefono());
+        if (request.getRegion() != null) usuario.setRegion(request.getRegion());
+        if (request.getComuna() != null) usuario.setComuna(request.getComuna());
+        if (request.getDireccion() != null) usuario.setDireccion(request.getDireccion());
+        if (request.getSitioWeb() != null) usuario.setSitioWeb(request.getSitioWeb());
+    }
+
+    private void updateLogisticaFields(Usuario usuario, UpdateUserRequest request) {
+        if (request.getLatitud() != null) usuario.setLatitud(request.getLatitud());
+        if (request.getLongitud() != null) usuario.setLongitud(request.getLongitud());
+        if (request.getTipoVehiculo() != null) usuario.setTipoVehiculo(request.getTipoVehiculo());
+        if (request.getMatricula() != null) usuario.setMatricula(request.getMatricula());
+        if (request.getCentroAcopioId() != null) usuario.setCentroAcopioId(request.getCentroAcopioId());
+    }
+
+    @DeleteMapping("/admin/usuarios/{id}")
+    public ResponseEntity<Object> eliminarUsuario(@PathVariable Long id) {
+        return usuarioRepository.findById(id).<ResponseEntity<Object>>map(usuario -> {
+            if (ADMIN_ROLE.equals(usuario.getRol())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(java.util.Map.of(MESSAGE_KEY, "Los usuarios administradores no pueden ser desactivados."));
+            }
+            usuario.setActivo(false);
+            usuarioRepository.save(usuario);
+            return ResponseEntity.ok(java.util.Map.of(MESSAGE_KEY, "Usuario desactivado exitosamente."));
+        }).orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(java.util.Map.of(MESSAGE_KEY, USUARIO_NO_ENCONTRADO)));
+    }
+
+    @PutMapping("/admin/usuarios/{id}/reactivar")
+    public ResponseEntity<Object> reactivarUsuario(@PathVariable Long id) {
+        return usuarioRepository.findById(id).<ResponseEntity<Object>>map(usuario -> {
+            usuario.setActivo(true);
+            usuarioRepository.save(usuario);
+            return ResponseEntity.ok(java.util.Map.of(MESSAGE_KEY, "Usuario reactivado exitosamente."));
+        }).orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(java.util.Map.of(MESSAGE_KEY, USUARIO_NO_ENCONTRADO)));
+    }
+
+    @PutMapping("/admin/usuarios/bulk-status")
+    public ResponseEntity<Object> actualizarEstadoMasivo(@RequestBody BulkStatusRequest request) {
+        List<Usuario> usuarios = usuarioRepository.findAllById(request.getIds());
+        for (Usuario u : usuarios) {
+            if (!ADMIN_ROLE.equals(u.getRol())) {
+                u.setActivo(request.getActivo());
+            }
+        }
+        usuarioRepository.saveAll(usuarios);
+        return ResponseEntity.ok(java.util.Map.of(MESSAGE_KEY, "Usuarios actualizados exitosamente."));
     }
 
     @PostMapping("/forgot-password")
@@ -169,7 +310,7 @@ public class AuthController {
         return usuarioRepository.findByEmail(request.getEmail()).map(usuario -> {
             String code = String.format("%06d", SECURE_RANDOM.nextInt(999999));
             usuario.setRecoveryCode(code);
-            usuario.setRecoveryCodeExpiration(LocalDateTime.now().plusMinutes(15));
+            usuario.setRecoveryCodeExpiration(LocalDateTime.now(ZoneId.systemDefault()).plusMinutes(15));
             usuarioRepository.save(usuario);
             
             emailService.sendPasswordRecoveryEmail(usuario.getEmail(), code);
@@ -187,7 +328,7 @@ public class AuthController {
             if (usuario.getRecoveryCode() == null || !usuario.getRecoveryCode().equals(request.getCode())) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body((Object) java.util.Map.of(MESSAGE_KEY, "Código inválido"));
             }
-            if (usuario.getRecoveryCodeExpiration() == null || usuario.getRecoveryCodeExpiration().isBefore(LocalDateTime.now())) {
+            if (usuario.getRecoveryCodeExpiration() == null || usuario.getRecoveryCodeExpiration().isBefore(LocalDateTime.now(ZoneId.systemDefault()))) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body((Object) java.util.Map.of(MESSAGE_KEY, "El código ha expirado"));
             }
             return ResponseEntity.ok().body((Object) java.util.Map.of(MESSAGE_KEY, "Código válido"));
@@ -200,7 +341,7 @@ public class AuthController {
             if (usuario.getRecoveryCode() == null || !usuario.getRecoveryCode().equals(request.getCode())) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body((Object) java.util.Map.of(MESSAGE_KEY, "Código inválido"));
             }
-            if (usuario.getRecoveryCodeExpiration() == null || usuario.getRecoveryCodeExpiration().isBefore(LocalDateTime.now())) {
+            if (usuario.getRecoveryCodeExpiration() == null || usuario.getRecoveryCodeExpiration().isBefore(LocalDateTime.now(ZoneId.systemDefault()))) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body((Object) java.util.Map.of(MESSAGE_KEY, "El código ha expirado"));
             }
             
@@ -229,5 +370,26 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(java.util.Map.of(DISPONIBLE_KEY, false));
         }
         return ResponseEntity.ok(java.util.Map.of(DISPONIBLE_KEY, true));
+    }
+}
+
+class BulkStatusRequest {
+    private List<Long> ids;
+    private Boolean activo;
+
+    public List<Long> getIds() {
+        return ids;
+    }
+
+    public void setIds(List<Long> ids) {
+        this.ids = ids;
+    }
+
+    public Boolean getActivo() {
+        return activo;
+    }
+
+    public void setActivo(Boolean activo) {
+        this.activo = activo;
     }
 }

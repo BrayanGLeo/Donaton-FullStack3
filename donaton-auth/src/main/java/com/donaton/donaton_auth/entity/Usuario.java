@@ -83,6 +83,12 @@ public class Usuario {
     @Column(name = "recovery_code_expiration")
     private LocalDateTime recoveryCodeExpiration;
 
+    @Column
+    private Boolean activo = true;
+
+    @Column(name = "ultima_conexion")
+    private LocalDateTime ultimaConexion;
+
     public Usuario() {
         // Constructor vacío requerido por JPA
     }
@@ -269,5 +275,21 @@ public class Usuario {
 
     public void setRecoveryCodeExpiration(LocalDateTime recoveryCodeExpiration) {
         this.recoveryCodeExpiration = recoveryCodeExpiration;
+    }
+
+    public Boolean getActivo() {
+        return activo;
+    }
+
+    public void setActivo(Boolean activo) {
+        this.activo = activo;
+    }
+
+    public LocalDateTime getUltimaConexion() {
+        return ultimaConexion;
+    }
+
+    public void setUltimaConexion(LocalDateTime ultimaConexion) {
+        this.ultimaConexion = ultimaConexion;
     }
 }
