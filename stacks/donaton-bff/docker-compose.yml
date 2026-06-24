@@ -1,0 +1,15 @@
+services:
+  donaton-bff:
+    build:
+      context: ../../donaton-bff
+      dockerfile: Dockerfile
+    container_name: donaton-bff
+    restart: always
+    environment:
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://donaton-eureka-server:8761/eureka/
+    networks:
+      - donaton-network
+
+networks:
+  donaton-network:
+    external: true

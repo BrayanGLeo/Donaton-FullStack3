@@ -1,4 +1,4 @@
-FROM eclipse-temurin:17-jdk-alpine
+FROM gcr.io/distroless/java17-debian12
 
 WORKDIR /app
 

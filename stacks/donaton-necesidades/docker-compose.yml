@@ -1,0 +1,18 @@
+services:
+  donaton-necesidades:
+    build:
+      context: ../../donaton-necesidades
+      dockerfile: Dockerfile
+    container_name: donaton-necesidades
+    restart: always
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://donaton-mysql-necesidades:3306/necesidades_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root_password_123
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://donaton-eureka-server:8761/eureka/
+    networks:
+      - donaton-network
+
+networks:
+  donaton-network:
+    external: true

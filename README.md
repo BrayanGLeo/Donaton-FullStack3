@@ -90,12 +90,12 @@ En la raíz del proyecto, ejecuta el siguiente comando en **PowerShell** para co
 Get-ChildItem -Directory -Filter "donaton-*" | Where-Object { Test-Path "$($_.FullName)\mvnw.cmd" } | ForEach-Object { Write-Host "Compilando $($_.Name)..." -ForegroundColor Green; cd $_.FullName; .\mvnw.cmd clean package -DskipTests; cd .. }
 ```
 
-Una vez que todos los proyectos compilen con éxito (`BUILD SUCCESS`), ejecuta el siguiente comando para construir las imágenes y levantar toda la malla de microservicios, bases de datos y herramientas adicionales:
+Una vez que todos los proyectos compilen con éxito (`BUILD SUCCESS`), ejecuta el siguiente script de PowerShell para levantar ordenadamente toda la malla de microservicios, bases de datos y herramientas adicionales en sus respectivos stacks:
 
-```bash
-docker-compose up -d --build
+```powershell
+.\start-all.ps1
 ```
-> *Tip: Puedes verificar el estado y los logs de los contenedores con `docker ps` y `docker-compose logs -f`. El panel de Eureka estará disponible en `http://localhost:8761`.*
+> *Tip: Puedes verificar el estado de los contenedores con `docker ps`. El panel de Eureka estará disponible en `http://localhost:8761`. Para detener de manera segura toda la arquitectura, ejecuta `.\stop-all.ps1`.*
 
 ### Paso 2: Iniciar el Frontend
 En una nueva terminal, navega al directorio de la aplicación frontend (ej. `cd frontend`) y levanta el servidor de desarrollo:
@@ -111,7 +111,7 @@ La plataforma estará lista y accesible desde tu navegador en `http://localhost:
 
 Para ejecutar las pruebas unitarias y enviar el reporte de cobertura y calidad de código a SonarQube (que corre localmente en `http://localhost:9000`), puedes utilizar Maven desde la raíz de cada microservicio.
 
-Primero asegúrate de que el contenedor de SonarQube esté en ejecución (viene incluido en el `docker-compose.yml`). Luego, en la terminal, ingresa a la carpeta de cualquier microservicio (por ejemplo, `donaton-logistica`) y ejecuta:
+Primero asegúrate de que el contenedor de SonarQube esté en ejecución (se levanta automáticamente con el script `start-all.ps1`). Luego, en la terminal, ingresa a la carpeta de cualquier microservicio (por ejemplo, `donaton-logistica`) y ejecuta:
 
 ```bash
 ./mvnw test

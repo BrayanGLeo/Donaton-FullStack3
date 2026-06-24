@@ -1,0 +1,17 @@
+services:
+  donaton-api-gateway:
+    build:
+      context: ../../donaton-api-gateway
+      dockerfile: Dockerfile
+    container_name: donaton-api-gateway
+    restart: always
+    ports:
+      - "8081:8081"
+    environment:
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://donaton-eureka-server:8761/eureka/
+    networks:
+      - donaton-network
+
+networks:
+  donaton-network:
+    external: true

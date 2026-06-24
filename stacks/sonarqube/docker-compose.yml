@@ -1,0 +1,24 @@
+services:
+  sonarqube:
+    image: sonarqube:lts-community
+    container_name: donaton-sonarqube
+    restart: always
+    ports:
+      - "9000:9000"
+    environment:
+      - SONAR_FORCEAUTHENTICATION=false
+    volumes:
+      - sonarqube-data:/opt/sonarqube/data
+      - sonarqube-logs:/opt/sonarqube/logs
+      - sonarqube-extensions:/opt/sonarqube/extensions
+    networks:
+      - donaton-network
+
+networks:
+  donaton-network:
+    external: true
+
+volumes:
+  sonarqube-data:
+  sonarqube-logs:
+  sonarqube-extensions:
