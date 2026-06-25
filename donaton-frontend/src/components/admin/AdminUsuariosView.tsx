@@ -298,6 +298,7 @@ export const AdminUsuariosView: React.FC<AdminUsuariosViewProps> = ({
         onHide={() => setUserToEdit(null)}
         usuario={userToEdit}
         onSuccess={fetchUsuariosActualizados}
+        usuarios={usuarios}
       />
 
       <Modal 

@@ -121,6 +121,25 @@ export const AdminMapaView: React.FC<AdminMapaViewProps> = ({
   const showDonaciones = mapFilter === 'GLOBAL' || mapFilter === 'DONACIONES';
   const showNecesidades = mapFilter === 'GLOBAL' || mapFilter === 'NECESIDADES';
 
+  const puntosAccion: any[] = [];
+  if (showDonaciones) {
+    puntosAccion.push(...donacionesLogistica.map(d => ({ ...d, _tipo: 'donacion' })));
+  }
+  if (showNecesidades) {
+    puntosAccion.push(...necesidades.map(n => ({ ...n, _tipo: 'necesidad' })));
+  }
+
+  const [currentPage, setCurrentPage] = React.useState(0);
+  const [itemsPerPage, setItemsPerPage] = React.useState(10);
+
+  React.useEffect(() => {
+    setCurrentPage(0);
+  }, [mapFilter]);
+
+  const totalElements = puntosAccion.length;
+  const totalPages = Math.ceil(totalElements / itemsPerPage) || 1;
+  const paginatedPuntos = puntosAccion.slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage);
+
   return (
     <div>
       <div className="d-flex justify-content-between align-items-center mb-4">
@@ -155,63 +174,87 @@ export const AdminMapaView: React.FC<AdminMapaViewProps> = ({
                   <h6 className="fw-bold mb-0" style={{ color: '#6c63ff' }}>📋 Puntos de Acción</h6>
                 </div>
 
-                {showDonaciones && donacionesLogistica.map((d) => (
-                  <div key={`don-${d.id}`} className="p-3 border-bottom text-start w-100 d-block" style={{ transition: 'background 0.2s', backgroundColor: d.estado === 'En tránsito' ? '#f0f8ff' : '#fff' }}>
-                    <div className="d-flex justify-content-between align-items-center mb-2">
-                      <Badge bg="info" style={{ fontSize: '0.7rem', cursor: 'pointer' }} onClick={() => setMapCenter([d.latitudRetiro || 0, d.longitudRetiro || 0])}>
-                        📍 Donación #{d.id}
-                      </Badge>
-                      <Form.Select
-                        size="sm"
-                        value={d.estado || 'Pendiente'}
-                        onChange={(e) => setConfirmModal({ show: true, type: 'donacion', id: d.id, newState: e.target.value })}
-                        style={{ width: '120px', borderRadius: '8px', fontSize: '0.8rem' }}
-                        disabled={isDonacionLocked(d.estado || '', usuario)}
-                      >
-                        {getOpcionesDonacion(d.estado || '', usuario).map(est => (
-                          <option key={est} value={est}>{est}</option>
-                        ))}
-                      </Form.Select>
-                    </div>
-                    <p className="mb-1 fw-semibold text-dark" style={{ fontSize: '0.9rem' }}>
-                      {d.cantidad} {d.unidadMedida ? d.unidadMedida : 'x'} {d.recurso}
-                    </p>
-                    <small className="text-muted d-block"><Truck size={12} className="me-1"/>{d.direccionRetiro || (d.direccionRetiroCalle + ' ' + (d.direccionRetiroNumero ? '#' + d.direccionRetiroNumero : '')).trim()}, {d.comunaRetiro}, {d.regionRetiro}</small>
-                    <div className="mt-2 text-end">
-                      <Button variant="outline-primary" size="sm" style={{ fontSize: '0.75rem', padding: '0.2rem 0.6rem', borderRadius: '8px' }} onClick={() => setDonacionDetalle(d)}>Ver Detalles</Button>
-                    </div>
-                  </div>
-                ))}
+                {paginatedPuntos.map((item) => {
+                  if (item._tipo === 'donacion') {
+                    const d = item as DonacionResponse;
+                    return (
+                      <div key={`don-${d.id}`} className="p-3 border-bottom text-start w-100 d-block" style={{ transition: 'background 0.2s', backgroundColor: d.estado === 'En tránsito' ? '#f0f8ff' : '#fff' }}>
+                        <div className="d-flex justify-content-between align-items-center mb-2">
+                          <Badge bg="info" style={{ fontSize: '0.7rem', cursor: 'pointer' }} onClick={() => setMapCenter([d.latitudRetiro || 0, d.longitudRetiro || 0])}>
+                            📍 Donación #{d.id}
+                          </Badge>
+                          <Form.Select
+                            size="sm"
+                            value={d.estado || 'Pendiente'}
+                            onChange={(e) => setConfirmModal({ show: true, type: 'donacion', id: d.id, newState: e.target.value })}
+                            style={{ width: '120px', borderRadius: '8px', fontSize: '0.8rem' }}
+                            disabled={isDonacionLocked(d.estado || '', usuario)}
+                          >
+                            {getOpcionesDonacion(d.estado || '', usuario).map(est => (
+                              <option key={est} value={est}>{est}</option>
+                            ))}
+                          </Form.Select>
+                        </div>
+                        <p className="mb-1 fw-semibold text-dark" style={{ fontSize: '0.9rem' }}>
+                          {d.cantidad} {d.unidadMedida ? d.unidadMedida : 'x'} {d.recurso}
+                        </p>
+                        <small className="text-muted d-block"><Truck size={12} className="me-1"/>{d.direccionRetiro || (d.direccionRetiroCalle + ' ' + (d.direccionRetiroNumero ? '#' + d.direccionRetiroNumero : '')).trim()}, {d.comunaRetiro}, {d.regionRetiro}</small>
+                        <div className="mt-2 text-end">
+                          <Button variant="outline-primary" size="sm" style={{ fontSize: '0.75rem', padding: '0.2rem 0.6rem', borderRadius: '8px' }} onClick={() => setDonacionDetalle(d)}>Ver Detalles</Button>
+                        </div>
+                      </div>
+                    );
+                  } else {
+                    const n = item as Necesidad;
+                    return (
+                      <div key={`nec-${n.id}`} className="p-3 border-bottom text-start w-100 d-block" style={{ transition: 'background 0.2s', backgroundColor: getNecesidadBgColor(n.estado) }}>
+                        <div className="d-flex justify-content-between align-items-center mb-2">
+                          <Badge bg="danger" style={{ fontSize: '0.7rem', cursor: 'pointer' }} onClick={() => setMapCenter([n.latitud, n.longitud])}>
+                            🚨 {n.tipoEmergencia || 'Necesidad'}
+                          </Badge>
+                          <Form.Select
+                            size="sm"
+                            value={n.estado || 'Pendiente'}
+                            onChange={(e) => setConfirmModal({ show: true, type: 'necesidad', id: n.id, newState: e.target.value })}
+                            style={{ width: '120px', borderRadius: '8px', fontSize: '0.8rem' }}
+                            disabled={isNecesidadLocked(n.estado || '', usuario)}
+                          >
+                            {getOpcionesNecesidad(n.estado || '', usuario).map(est => (
+                              <option key={est} value={est}>{est}</option>
+                            ))}
+                          </Form.Select>
+                        </div>
+                        <div className="mb-0 fw-semibold text-dark" style={{ fontSize: '0.9rem' }}>{renderRecursos(n.recursos)}</div>
+                      </div>
+                    );
+                  }
+                })}
 
-                {showNecesidades && necesidades.map((n) => (
-                  <div key={`nec-${n.id}`} className="p-3 border-bottom text-start w-100 d-block" style={{ transition: 'background 0.2s', backgroundColor: getNecesidadBgColor(n.estado) }}>
-                    <div className="d-flex justify-content-between align-items-center mb-2">
-                      <Badge bg="danger" style={{ fontSize: '0.7rem', cursor: 'pointer' }} onClick={() => setMapCenter([n.latitud, n.longitud])}>
-                        🚨 {n.tipoEmergencia || 'Necesidad'}
-                      </Badge>
-                      <Form.Select
-                        size="sm"
-                        value={n.estado || 'Pendiente'}
-                        onChange={(e) => setConfirmModal({ show: true, type: 'necesidad', id: n.id, newState: e.target.value })}
-                        style={{ width: '120px', borderRadius: '8px', fontSize: '0.8rem' }}
-                        disabled={isNecesidadLocked(n.estado || '', usuario)}
-                      >
-                        {getOpcionesNecesidad(n.estado || '', usuario).map(est => (
-                          <option key={est} value={est}>{est}</option>
-                        ))}
-                      </Form.Select>
-                    </div>
-                    <div className="mb-0 fw-semibold text-dark" style={{ fontSize: '0.9rem' }}>{renderRecursos(n.recursos)}</div>
-                  </div>
-                ))}
-
-                {((showDonaciones && donacionesLogistica.length === 0) || !showDonaciones) && ((showNecesidades && necesidades.length === 0) || !showNecesidades) && (
+                {totalElements === 0 && (
                   <div className="text-center py-5 text-muted">
                     <div style={{ fontSize: '2rem' }}>🍃</div>
                     No hay puntos activos en la lista
                   </div>
                 )}
               </Card.Body>
+              
+              {/* Pagination Controls */}
+              {totalElements > 0 && (
+                <div className="d-flex justify-content-between align-items-center p-3 border-top bg-light" style={{ position: 'sticky', bottom: 0, zIndex: 10 }}>
+                  <small className="text-muted">Mostrando {paginatedPuntos.length} de {totalElements}</small>
+                  <div className="d-flex gap-2 align-items-center">
+                    <Form.Select size="sm" style={{ width: '70px', borderRadius: '10px' }} value={itemsPerPage} onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(0); }}>
+                      <option value="10">10</option>
+                      <option value="25">25</option>
+                      <option value="50">50</option>
+                    </Form.Select>
+                    <div className="d-flex gap-1">
+                      <Button size="sm" variant="outline-secondary" disabled={currentPage === 0} onClick={() => setCurrentPage(prev => prev - 1)} style={{ padding: '0.2rem 0.4rem', fontSize: '0.75rem' }}>&lt;</Button>
+                      <Button size="sm" variant="outline-primary" disabled={currentPage >= totalPages - 1} onClick={() => setCurrentPage(prev => prev + 1)} style={{ padding: '0.2rem 0.4rem', fontSize: '0.75rem' }}>&gt;</Button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </Card>
           </Col>
 

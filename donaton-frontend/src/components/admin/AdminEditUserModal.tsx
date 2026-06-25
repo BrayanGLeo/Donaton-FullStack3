@@ -7,11 +7,14 @@ import type { Usuario } from '../../context/AuthContext';
 import { REGIONES_CHILE, COMUNAS_POR_REGION } from '../../utils/chileData';
 import { COUNTRY_CODES } from '../../utils/countryCodes';
 import { RegionComunaInput } from '../common/RegionComunaInput';
+import { formatNameInput, formatNoSpaceInput, preventSpaceKeyDown, formatPhoneInput, preventPhoneKeyDown, validarEmailDominio } from '../../utils/validators';
 
 interface UsuarioExtended extends Usuario {
   email?: string;
   tipoPersona?: string;
   nombreCompleto?: string;
+  nombres?: string;
+  apellidos?: string;
   razonSocial?: string;
   rut?: string;
   codigoPais?: string;
@@ -26,9 +29,10 @@ interface AdminEditUserModalProps {
   onHide: () => void;
   usuario: UsuarioExtended | null;
   onSuccess: () => void;
+  usuarios: UsuarioExtended[];
 }
 
-export const AdminEditUserModal: React.FC<AdminEditUserModalProps> = ({ show, onHide, usuario, onSuccess }) => {
+export const AdminEditUserModal: React.FC<AdminEditUserModalProps> = ({ show, onHide, usuario, onSuccess, usuarios }) => {
   const [formData, setFormData] = useState<Partial<UsuarioExtended>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -53,8 +57,22 @@ export const AdminEditUserModal: React.FC<AdminEditUserModalProps> = ({ show, on
         }
       }
 
+      let nombresStr = '';
+      let apellidosStr = '';
+      const nom = usuario.nombreCompleto || '';
+      const spaceIdx = nom.indexOf(' ');
+      if (spaceIdx > -1) {
+        nombresStr = nom.substring(0, spaceIdx);
+        apellidosStr = nom.substring(spaceIdx + 1);
+      } else {
+        nombresStr = nom;
+      }
+
       setFormData({
         email: usuario.email,
+        nombres: nombresStr,
+        apellidos: apellidosStr,
+        razonSocial: usuario.razonSocial || usuario.nombreCompleto,
         nombreCompleto: usuario.nombreCompleto || usuario.razonSocial,
         rol: usuario.rol,
         subRol: usuario.subRol,
@@ -76,9 +94,34 @@ export const AdminEditUserModal: React.FC<AdminEditUserModalProps> = ({ show, on
   const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!usuario) return;
-    
-    if (formData.nombreCompleto?.trim().length === 0) {
-      setError('El nombre no puede estar vacío o contener solo espacios.');
+    const isJuridica = usuario.tipoPersona === 'JURIDICA';
+    let nombreFinal = '';
+
+    if (isJuridica) {
+      if (!formData.razonSocial?.trim()) {
+        setError('La razón social no puede estar vacía.');
+        return;
+      }
+      nombreFinal = formData.razonSocial.trim();
+    } else {
+      if (!formData.nombres?.trim() || !formData.apellidos?.trim()) {
+        setError('Los nombres y apellidos no pueden estar vacíos.');
+        return;
+      }
+      nombreFinal = `${formData.nombres.trim()} ${formData.apellidos.trim()}`;
+    }
+
+    const emailAComprobar = formData.email?.trim().toLowerCase();
+    if (emailAComprobar) {
+      const isEmailTaken = usuarios.some(u => u.email?.toLowerCase() === emailAComprobar && u.id !== usuario.id);
+      if (isEmailTaken) {
+        setError('El correo electrónico ya está registrado por otro usuario.');
+        return;
+      }
+    }
+
+    if (formData.email && !validarEmailDominio(formData.email)) {
+      setError('El dominio del correo electrónico no está permitido o el formato es incorrecto.');
       return;
     }
 
@@ -90,7 +133,7 @@ export const AdminEditUserModal: React.FC<AdminEditUserModalProps> = ({ show, on
 
       const cleanedData = {
         ...formData,
-        nombreCompleto: formData.nombreCompleto?.trim(),
+        nombreCompleto: nombreFinal,
         email: formData.email?.trim(),
         telefono: fullPhone,
         direccion: formData.direccion?.trim(),
@@ -139,19 +182,52 @@ export const AdminEditUserModal: React.FC<AdminEditUserModalProps> = ({ show, on
           {error && <Alert variant="danger">{error}</Alert>}
           
           <Row className="g-3">
-            <Col md={6}>
-              <Form.Group>
-                <Form.Label className="fw-semibold small">Nombre o Razón Social</Form.Label>
-                <Form.Control 
-                  type="text" 
-                  name="nombreCompleto" 
-                  value={formData.nombreCompleto || ''} 
-                  onChange={handleChange} 
-                  maxLength={100}
-                  required 
-                />
-              </Form.Group>
-            </Col>
+            {usuario.tipoPersona === 'JURIDICA' ? (
+              <Col md={12}>
+                <Form.Group>
+                  <Form.Label className="fw-semibold small">Razón Social</Form.Label>
+                  <Form.Control 
+                    type="text" 
+                    name="razonSocial" 
+                    value={formData.razonSocial || ''} 
+                    onChange={handleChange} 
+                    maxLength={100}
+                    required 
+                  />
+                </Form.Group>
+              </Col>
+            ) : (
+              <>
+                <Col md={6}>
+                  <Form.Group>
+                    <Form.Label className="fw-semibold small">Nombres</Form.Label>
+                    <Form.Control 
+                      type="text" 
+                      name="nombres" 
+                      value={formData.nombres || ''} 
+                      onChange={handleChange} 
+                      onInput={formatNameInput}
+                      maxLength={50}
+                      required 
+                    />
+                  </Form.Group>
+                </Col>
+                <Col md={6}>
+                  <Form.Group>
+                    <Form.Label className="fw-semibold small">Apellidos</Form.Label>
+                    <Form.Control 
+                      type="text" 
+                      name="apellidos" 
+                      value={formData.apellidos || ''} 
+                      onChange={handleChange} 
+                      onInput={formatNameInput}
+                      maxLength={50}
+                      required 
+                    />
+                  </Form.Group>
+                </Col>
+              </>
+            )}
             
             <Col md={6}>
               <Form.Group>
@@ -173,6 +249,8 @@ export const AdminEditUserModal: React.FC<AdminEditUserModalProps> = ({ show, on
                   name="email" 
                   value={formData.email || ''} 
                   onChange={handleChange} 
+                  onInput={formatNoSpaceInput}
+                  onKeyDown={preventSpaceKeyDown}
                   maxLength={100}
                   required 
                 />
@@ -190,7 +268,7 @@ export const AdminEditUserModal: React.FC<AdminEditUserModalProps> = ({ show, on
                     style={{ maxWidth: '120px' }}
                   >
                     {COUNTRY_CODES.map((country) => (
-                      <option key={country.code} value={country.code}>{country.code}</option>
+                      <option key={country.code} value={country.code}>{country.flag} {country.code}</option>
                     ))}
                   </Form.Select>
                   <Form.Control 
@@ -198,8 +276,9 @@ export const AdminEditUserModal: React.FC<AdminEditUserModalProps> = ({ show, on
                     name="telefono" 
                     value={formData.telefono || ''} 
                     onChange={handleChange} 
+                    onInput={formatPhoneInput}
+                    onKeyDown={preventPhoneKeyDown}
                     maxLength={15}
-                    pattern="^[0-9\s\-]{8,15}$"
                     title="Ejemplo: 912345678"
                   />
                 </InputGroup>
@@ -292,8 +371,7 @@ export const AdminEditUserModal: React.FC<AdminEditUserModalProps> = ({ show, on
               <Form.Group>
                 <Form.Label className="fw-semibold small">Dirección Detallada</Form.Label>
                 <Form.Control 
-                  as="textarea" 
-                  rows={2}
+                  type="text" 
                   name="direccion" 
                   value={formData.direccion || ''} 
                   onChange={handleChange} 

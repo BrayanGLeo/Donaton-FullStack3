@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Card, Table, Badge, Form, Row, Col, InputGroup } from 'react-bootstrap';
+import React, { useState, useEffect } from 'react';
+import { Card, Table, Badge, Form, Row, Col, InputGroup, Button } from 'react-bootstrap';
 import { Archive, Search, Filter } from 'lucide-react';
 import Select from 'react-select';
 import { REGIONES_CHILE, COMUNAS_POR_REGION } from '../../utils/chileData';
@@ -16,6 +16,12 @@ export const PanelHistorialNecesidades: React.FC<PanelHistorialNecesidadesProps>
   getNecesidadBgColor = () => '#fff'
 }) => {
   const [filtros, setFiltros] = useState({ id: '', estado: '', region: '', comuna: '' });
+  const [currentPage, setCurrentPage] = useState(0);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [filtros]);
 
   const necesidadesFiltradas = necesidades.filter(n => {
     const matchId = filtros.id === '' || n.id.toString() === filtros.id;
@@ -24,6 +30,10 @@ export const PanelHistorialNecesidades: React.FC<PanelHistorialNecesidadesProps>
     const matchComuna = filtros.comuna === '' || n.comuna === filtros.comuna;
     return matchId && matchEstado && matchRegion && matchComuna;
   });
+
+  const totalElements = necesidadesFiltradas.length;
+  const totalPages = Math.ceil(totalElements / itemsPerPage) || 1;
+  const paginatedNecesidades = necesidadesFiltradas.slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage);
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleString('es-CL', {
@@ -74,7 +84,7 @@ export const PanelHistorialNecesidades: React.FC<PanelHistorialNecesidadesProps>
 
       <Card className="shadow-sm border-0" style={{ borderRadius: '16px', overflow: 'hidden' }}>
         <div className="bg-light p-3 border-bottom d-flex justify-content-between align-items-center">
-          <h6 className="mb-0 fw-bold text-success">Total Registros ({necesidadesFiltradas.length})</h6>
+          <h6 className="mb-0 fw-bold text-success">Total Registros ({totalElements})</h6>
         </div>
         
         <div className="p-3 bg-white border-bottom">
@@ -157,7 +167,7 @@ export const PanelHistorialNecesidades: React.FC<PanelHistorialNecesidadesProps>
                 </tr>
               </thead>
               <tbody>
-                {necesidadesFiltradas.map(item => (
+                {paginatedNecesidades.map(item => (
                   <tr key={item.id} style={{ backgroundColor: getNecesidadBgColor(item.estado) }}>
                     <td className="px-4 fw-semibold text-danger">Necesidad #{item.id}</td>
                     <td className="text-muted">{formatDate(item.fechaReporte)}</td>
@@ -183,6 +193,24 @@ export const PanelHistorialNecesidades: React.FC<PanelHistorialNecesidadesProps>
                 ))}
               </tbody>
             </Table>
+            
+            {/* Pagination Controls */}
+            {totalElements > 0 && (
+              <div className="d-flex justify-content-between align-items-center p-3 border-top bg-white">
+                <small className="text-muted">Mostrando {paginatedNecesidades.length} de {totalElements} registros</small>
+                <div className="d-flex gap-2 align-items-center">
+                  <Form.Select size="sm" style={{ width: '80px', borderRadius: '10px' }} value={itemsPerPage} onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(0); }}>
+                    <option value="10">10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                  </Form.Select>
+                  <div className="d-flex gap-1">
+                    <Button size="sm" variant="outline-secondary" disabled={currentPage === 0} onClick={() => setCurrentPage(prev => prev - 1)}>Anterior</Button>
+                    <Button size="sm" variant="outline-primary" disabled={currentPage >= totalPages - 1} onClick={() => setCurrentPage(prev => prev + 1)}>Siguiente</Button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </Card>

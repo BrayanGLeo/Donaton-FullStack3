@@ -42,14 +42,26 @@ export const AdminDonacionesView: React.FC<AdminDonacionesViewProps> = ({
   RegionComunaInput,
   getDonanteNameFromMap,
   getEstadoBadgeColor,
-}) => (
+}) => {
+  const [currentPage, setCurrentPage] = React.useState(0);
+  const [itemsPerPage, setItemsPerPage] = React.useState(10);
+
+  React.useEffect(() => {
+    setCurrentPage(0);
+  }, [donacionFiltros]);
+
+  const totalElements = donacionesFiltradas.length;
+  const totalPages = Math.ceil(totalElements / itemsPerPage) || 1;
+  const paginatedDonaciones = donacionesFiltradas.slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage);
+
+  return (
   <div>
     <div className="d-flex justify-content-between align-items-center mb-4">
       <div>
         <h4 className="fw-bold mb-1" style={{ color: '#1a1a2e' }}>📦 Historial de Donaciones</h4>
         <p className="text-muted mb-0">Registro histórico de todas las donaciones del sistema</p>
       </div>
-      <Badge bg="primary" pill className="fs-6 px-3 py-2">{donacionesFiltradas.length} registros</Badge>
+      <Badge bg="primary" pill className="fs-6 px-3 py-2">{totalElements} registros</Badge>
     </div>
 
     <Card className="border-0 shadow-sm mb-4" style={{ borderRadius: '16px' }}>
@@ -148,7 +160,7 @@ export const AdminDonacionesView: React.FC<AdminDonacionesViewProps> = ({
             </tr>
           </thead>
           <tbody>
-            {donacionesFiltradas.map((d: DonacionResponse & { acopioRecepcion?: string }) => (
+            {paginatedDonaciones.map((d: DonacionResponse & { acopioRecepcion?: string }) => (
               <tr key={d.id} style={{ transition: 'background 0.2s' }}>
                 <td className="px-4 fw-semibold text-muted">#{d.id}</td>
                 <td>
@@ -181,7 +193,7 @@ export const AdminDonacionesView: React.FC<AdminDonacionesViewProps> = ({
                 </td>
               </tr>
             ))}
-            {donacionesFiltradas.length === 0 && (
+            {totalElements === 0 && (
               <tr>
                 <td colSpan={8} className="text-center py-5">
                   <div style={{ fontSize: '3rem' }}>📭</div>
@@ -191,8 +203,27 @@ export const AdminDonacionesView: React.FC<AdminDonacionesViewProps> = ({
             )}
           </tbody>
         </Table>
+
+        {/* Pagination Controls */}
+        {totalElements > 0 && (
+          <div className="d-flex justify-content-between align-items-center p-3 border-top bg-white">
+            <small className="text-muted">Mostrando {paginatedDonaciones.length} de {totalElements} registros</small>
+            <div className="d-flex gap-2 align-items-center">
+              <Form.Select size="sm" style={{ width: '80px', borderRadius: '10px' }} value={itemsPerPage} onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(0); }}>
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+              </Form.Select>
+              <div className="d-flex gap-1">
+                <Button size="sm" variant="outline-secondary" disabled={currentPage === 0} onClick={() => setCurrentPage(prev => prev - 1)}>Anterior</Button>
+                <Button size="sm" variant="outline-primary" disabled={currentPage >= totalPages - 1} onClick={() => setCurrentPage(prev => prev + 1)}>Siguiente</Button>
+              </div>
+            </div>
+          </div>
+        )}
       </Card>
     )}
   </div>
-);
+  );
+};
 

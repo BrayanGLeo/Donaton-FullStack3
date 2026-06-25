@@ -25,6 +25,7 @@ const matchComuna = (comunaRaw?: string) => {
 export interface ItemNecesidad {
   id: string;
   categoria: string;
+  subcategoria: string;
   cantidad: number | '';
   unidad: string;
 }
@@ -53,12 +54,98 @@ const UNIDADES_DISPONIBLES = [
   "Pallets"
 ];
 
+const SUBCATEGORIAS: Record<string, string[]> = {
+  "Alimentos": [
+    "Frutas y Verduras",
+    "Comida Preparada",
+    "Lácteos/Refrigerados",
+    "Panadería/Pastelería"
+  ],
+  "Alimentos imperecederos": [
+    "Arroz",
+    "Fideos/Pastas",
+    "Legumbres",
+    "Aceite",
+    "Salsa de Tomate",
+    "Atún/Jurel en Conserva",
+    "Leche (Polvo/Caja larga vida)",
+    "Harina",
+    "Azúcar",
+    "Sal",
+    "Té/Café",
+    "Avena/Cereales"
+  ],
+  "Ropa y Calzado": [
+    "Poleras/Camisas",
+    "Pantalones/Jeans",
+    "Chaquetas/Abrigos",
+    "Ropa Interior (Nueva)",
+    "Zapatos/Zapatillas",
+    "Ropa de Bebé/Niño",
+    "Ropa de Cama"
+  ],
+  "Agua e Hidratación": [
+    "Agua Embotellada (Bidón)",
+    "Agua Embotellada (Individual)",
+    "Bebidas Isotónicas",
+    "Jugos en Caja"
+  ],
+  "Artículos de Higiene Personal": [
+    "Jabón/Gel de Ducha",
+    "Shampoo/Acondicionador",
+    "Pasta y Cepillo Dental",
+    "Papel Higiénico",
+    "Toallas Higiénicas",
+    "Pañales (Bebé/Adulto)",
+    "Desodorante"
+  ],
+  "Insumos Médicos": [
+    "Mascarillas",
+    "Guantes de Látex/Nitrilo",
+    "Alcohol/Alcohol Gel",
+    "Gasas/Vendas",
+    "Paracetamol/Ibuprofeno",
+    "Suero",
+    "Jeringas"
+  ],
+  "Materiales de Construcción": [
+    "Madera/Tablas",
+    "Clavos/Tornillos",
+    "Cemento",
+    "Zinc/Calaminas",
+    "Pintura",
+    "Cables Eléctricos"
+  ],
+  "Herramientas": [
+    "Martillo/Serrucho",
+    "Palas/Picos",
+    "Taladro",
+    "Destornilladores/Alicates"
+  ],
+  "Muebles y Enseres": [
+    "Camas/Colchones",
+    "Mesas/Sillas",
+    "Cocina/Estufa",
+    "Refrigerador",
+    "Muebles de Guardado"
+  ],
+  "Alimentos para Mascotas": [
+    "Comida para Perros (Seca)",
+    "Comida para Perros (Húmeda)",
+    "Comida para Gatos (Seca)",
+    "Comida para Gatos (Húmeda)",
+    "Arena para Gatos"
+  ],
+  "Otro": []
+};
+
 // No map utils needed here
 
 const IngresarNecesidad: React.FC = () => {
   const { usuario } = useAuth();
   const [items, setItems] = useState<ItemNecesidad[]>([]);
-  const [currentItem, setCurrentItem] = useState<ItemNecesidad>({ id: crypto.randomUUID(), categoria: '', cantidad: '', unidad: 'Unidades' });
+  const [currentItem, setCurrentItem] = useState<ItemNecesidad>({ id: crypto.randomUUID(), categoria: '', subcategoria: '', cantidad: '', unidad: 'Unidades' });
+  const [otroSubcategoria, setOtroSubcategoria] = useState('');
   const [tipoEmergencia, setTipoEmergencia] = useState('');
   const [latitud, setLatitud] = useState<number | ''>('');
   const [longitud, setLongitud] = useState<number | ''>('');
@@ -93,12 +180,19 @@ const IngresarNecesidad: React.FC = () => {
   };
 
   const handleAddItem = () => {
-    if (!currentItem.categoria || currentItem.cantidad === '' || Number(currentItem.cantidad) <= 0) {
-      alert("Por favor, completa la categoría y una cantidad válida antes de añadir.");
+    let finalSubcategoria = currentItem.subcategoria;
+    if (currentItem.categoria === 'Otro' || currentItem.subcategoria === 'Otro') {
+      finalSubcategoria = otroSubcategoria.trim();
+    }
+
+    if (!currentItem.categoria || !finalSubcategoria || currentItem.cantidad === '' || Number(currentItem.cantidad) <= 0) {
+      alert("Por favor, completa la categoría, la subcategoría/recurso y una cantidad válida antes de añadir.");
       return;
     }
-    setItems([...items, currentItem]);
-    setCurrentItem({ id: crypto.randomUUID(), categoria: '', cantidad: '', unidad: 'Unidades' });
+
+    setItems([...items, { ...currentItem, subcategoria: finalSubcategoria }]);
+    setCurrentItem({ id: crypto.randomUUID(), categoria: '', subcategoria: '', cantidad: '', unidad: 'Unidades' });
+    setOtroSubcategoria('');
   };
 
   const handleRemoveItem = (index: number) => {
@@ -113,7 +207,7 @@ const IngresarNecesidad: React.FC = () => {
     e.preventDefault();
     
     // Validación de ítems
-    const isValidItems = items.every(item => item.categoria && item.cantidad !== '' && Number(item.cantidad) > 0);
+    const isValidItems = items.every(item => item.categoria && item.subcategoria && item.cantidad !== '' && Number(item.cantidad) > 0);
 
     if (!isValidItems || items.length === 0 || latitud === '' || longitud === '') {
       setError("Por favor, completa correctamente todos los campos de recursos y la ubicación exacta.");
@@ -139,7 +233,8 @@ const IngresarNecesidad: React.FC = () => {
       
       setSuccess(true);
       setItems([]);
-      setCurrentItem({ id: crypto.randomUUID(), categoria: '', cantidad: '', unidad: 'Unidades' });
+      setCurrentItem({ id: crypto.randomUUID(), categoria: '', subcategoria: '', cantidad: '', unidad: 'Unidades' });
+      setOtroSubcategoria('');
       setTipoEmergencia('');
       setLatitud('');
       setLongitud('');
@@ -187,7 +282,10 @@ const IngresarNecesidad: React.FC = () => {
                                 <Form.Label className="small mb-1">Categoría</Form.Label>
                                 <Form.Select
                                   value={currentItem.categoria}
-                                  onChange={(e) => setCurrentItem({ ...currentItem, categoria: e.target.value })}
+                                  onChange={(e) => {
+                                    setCurrentItem({ ...currentItem, categoria: e.target.value, subcategoria: '' });
+                                    setOtroSubcategoria('');
+                                  }}
                                   disabled={isLoading}
                                 >
                                   <option value="">Selecciona...</option>
@@ -197,6 +295,42 @@ const IngresarNecesidad: React.FC = () => {
                                 </Form.Select>
                               </Form.Group>
                             </Col>
+                            {currentItem.categoria && (
+                              <Col md={12}>
+                                <Form.Group>
+                                  <Form.Label className="small mb-1">Subcategoría / Recurso</Form.Label>
+                                  <Form.Select
+                                    value={currentItem.subcategoria}
+                                    onChange={(e) => {
+                                      setCurrentItem({ ...currentItem, subcategoria: e.target.value });
+                                      if (e.target.value !== 'Otro') setOtroSubcategoria('');
+                                    }}
+                                    disabled={isLoading}
+                                  >
+                                    <option value="">Selecciona...</option>
+                                    {(SUBCATEGORIAS[currentItem.categoria] || []).map(sub => (
+                                      <option key={sub} value={sub}>{sub}</option>
+                                    ))}
+                                    <option value="Otro">Otro (Especificar)</option>
+                                  </Form.Select>
+                                </Form.Group>
+                              </Col>
+                            )}
+                            {(currentItem.categoria === 'Otro' || currentItem.subcategoria === 'Otro') && (
+                              <Col md={12}>
+                                <Form.Group>
+                                  <Form.Label className="small mb-1">Especificar Recurso</Form.Label>
+                                  <Form.Control
+                                    type="text"
+                                    placeholder="Ej. Pañales talla G, Colchones, etc."
+                                    value={otroSubcategoria}
+                                    onChange={(e) => setOtroSubcategoria(e.target.value)}
+                                    disabled={isLoading}
+                                    maxLength={100}
+                                  />
+                                </Form.Group>
+                              </Col>
+                            )}
                             <Col md={6}>
                               <Form.Group>
                                 <Form.Label className="small mb-1">Cantidad</Form.Label>
@@ -246,8 +380,9 @@ const IngresarNecesidad: React.FC = () => {
                             {items.map((item, index) => (
                               <li key={item.id} className="list-group-item d-flex justify-content-between align-items-center bg-white border-light">
                                 <div>
-                                  <strong className="text-dark">{item.categoria}</strong>
-                                  <span className="ms-2 text-muted">{item.cantidad} {item.unidad}</span>
+                                  <strong className="text-dark d-block">{item.subcategoria}</strong>
+                                  <small className="text-muted">{item.categoria}</small>
+                                  <span className="ms-2 text-primary fw-semibold">{item.cantidad} {item.unidad}</span>
                                 </div>
                                 <Button 
                                   variant="outline-danger" 

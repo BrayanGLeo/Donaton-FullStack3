@@ -103,6 +103,7 @@ const PerfilDonante: React.FC = () => {
   };
 
   const handleEmailUpdate = async (): Promise<boolean> => {
+    if (!usuario?.id) return false;
     if (seguridadForm.email === userData.email) return false;
     
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

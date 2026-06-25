@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Card, Badge, Button, Spinner, Alert, Nav, Modal, Table, Pagination } from 'react-bootstrap';
+import { Container, Row, Col, Card, Badge, Button, Spinner, Alert, Nav, Modal, Table, Pagination, Form } from 'react-bootstrap';
 import { MapPin, CheckCircle, XCircle, Truck, Navigation, Clock, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { type DonacionResponse, listarDonaciones, actualizarEstadoDonacion } from '../../services/donacionService';
@@ -158,7 +158,7 @@ const SubPanel: React.FC<SubPanelProps> = ({
 }) => {
   const [tab, setTab] = useState<SubTab>('nuevo');
   const [page, setPage] = useState(1);
-  const itemsPerPage = 5;
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Reset pagination when tab changes
   useEffect(() => {
@@ -201,6 +201,8 @@ const SubPanel: React.FC<SubPanelProps> = ({
     },
   };
 
+  const paginatedItems = current.slice((page - 1) * itemsPerPage, page * itemsPerPage);
+
 
   const renderContenido = () => {
     if (current.length === 0) {
@@ -217,7 +219,6 @@ const SubPanel: React.FC<SubPanelProps> = ({
 
     if (tab === 'completado') {
       return (
-        <>
           <div className="table-responsive border rounded-3 mb-3">
             <Table hover className="mb-0 align-middle">
               <thead className="bg-light">
@@ -231,7 +232,7 @@ const SubPanel: React.FC<SubPanelProps> = ({
                 </tr>
               </thead>
               <tbody>
-                {current.slice((page - 1) * itemsPerPage, page * itemsPerPage).map(d => {
+                {paginatedItems.map(d => {
                   const destino = centrosAcopio.find(c => c.id === d.centroAcopioDestinoId) || centrosAcopio.find(c => c.region === d.regionRetiro || c.region === d.origen);
                   return (
                     <tr key={d.id}>
@@ -247,33 +248,25 @@ const SubPanel: React.FC<SubPanelProps> = ({
               </tbody>
             </Table>
           </div>
-          {current.length > itemsPerPage && (
-            <Pagination className="justify-content-center mb-0">
-              <Pagination.Prev disabled={page === 1} onClick={() => setPage(page - 1)} />
-              {Array.from({ length: Math.ceil(current.length / itemsPerPage) }).map((_, i) => (
-                <Pagination.Item key={i + 1} active={page === i + 1} onClick={() => setPage(i + 1)}>
-                  {i + 1}
-                </Pagination.Item>
-              ))}
-              <Pagination.Next disabled={page === Math.ceil(current.length / itemsPerPage)} onClick={() => setPage(page + 1)} />
-            </Pagination>
-          )}
-        </>
       );
     }
 
-    return current.map(d => (
-      <ViajeCard
-        key={d.id}
-        d={d}
-        subtab={tab}
-        actionLoading={actionLoading}
-        centrosAcopio={centrosAcopio}
-        esNecesidad={esNecesidad}
-        onAceptar={onAceptar}
-        onRechazar={onRechazar}
-      />
-    ));
+    return (
+      <div className="d-flex flex-column gap-3">
+        {paginatedItems.map(d => (
+          <ViajeCard
+            key={d.id}
+            d={d}
+            subtab={tab}
+            actionLoading={actionLoading}
+            centrosAcopio={centrosAcopio}
+            esNecesidad={esNecesidad}
+            onAceptar={onAceptar}
+            onRechazar={onRechazar}
+          />
+        ))}
+      </div>
+    );
   };
 
   return (
@@ -321,6 +314,34 @@ const SubPanel: React.FC<SubPanelProps> = ({
         {/* Contenido */}
         <div className="p-4">
           {renderContenido()}
+          
+          {current.length > 0 && (
+            <div className="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+              <span className="text-muted small">
+                Mostrando {(page - 1) * itemsPerPage + 1} - {Math.min(page * itemsPerPage, current.length)} de {current.length} registros
+              </span>
+              <div className="d-flex align-items-center gap-2">
+                <Form.Select 
+                  size="sm" 
+                  value={itemsPerPage} 
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                    setItemsPerPage(Number(e.target.value));
+                    setPage(1);
+                  }}
+                  style={{ width: '80px', borderRadius: '8px' }}
+                >
+                  <option value={5}>5</option>
+                  <option value={10}>10</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                </Form.Select>
+                <Pagination className="mb-0" size="sm">
+                  <Pagination.Prev disabled={page === 1} onClick={() => setPage(p => p - 1)} />
+                  <Pagination.Next disabled={page === Math.ceil(current.length / itemsPerPage) || current.length === 0} onClick={() => setPage(p => p + 1)} />
+                </Pagination>
+              </div>
+            </div>
+          )}
         </div>
       </Card.Body>
     </Card>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Card, Table, Badge, Button, Spinner, Nav, Modal, Form } from 'react-bootstrap';
+import { Container, Row, Col, Card, Table, Badge, Button, Spinner, Nav, Modal, Form, Pagination } from 'react-bootstrap';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -77,9 +77,12 @@ const PanelAdminAcopio: React.FC = () => {
   const [conductores, setConductores] = useState<{ value: number; label: string }[]>([]);
 
   // Pagination
-  const [currentPageDonaciones, setCurrentPageDonaciones] = useState(1);
-  const [currentPageNecesidades, setCurrentPageNecesidades] = useState(1);
-  const itemsPerPage = 5;
+  const [page, setPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
+  useEffect(() => {
+    setPage(1);
+  }, [activeTab]);
 
   // Modals & Actions
   const [actionLoading, setActionLoading] = useState<number | null>(null);
@@ -156,30 +159,53 @@ const PanelAdminAcopio: React.FC = () => {
   // Inventario agrupado
   const inventarioMap = new Map<string, number>();
   donacionesRecibidas.forEach(d => {
-    const key = `${d.categoria || 'Otros'}|${d.unidadMedida || 'Unidades'}`;
+    const key = `${d.categoria || 'Otros'}|${d.recurso || 'General'}|${d.unidadMedida || 'Unidades'}`;
     inventarioMap.set(key, (inventarioMap.get(key) || 0) + (d.cantidad || 1));
   });
   const inventarioLista = Array.from(inventarioMap.entries()).map(([key, cant]) => {
-    const [cat, uni] = key.split('|');
-    return { categoria: cat, unidadMedida: uni, cantidad: cant };
+    const [cat, subcat, uni] = key.split('|');
+    return { categoria: cat, subcategoria: subcat, unidadMedida: uni, cantidad: cant };
   });
 
   // Pagination calculation
-  const indexOfLastItem = currentPageDonaciones * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentDonaciones = donacionesPendientes.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPagesDon = Math.ceil(donacionesPendientes.length / itemsPerPage);
+  const startIndex = (page - 1) * itemsPerPage;
+  const endIndex = page * itemsPerPage;
 
-  const handleNextPage = () => { if (currentPageDonaciones < totalPagesDon) setCurrentPageDonaciones(prev => prev + 1); };
-  const handlePrevPage = () => { if (currentPageDonaciones > 1) setCurrentPageDonaciones(prev => prev - 1); };
+  const paginatedDonacionesPendientes = donacionesPendientes.slice(startIndex, endIndex);
+  const paginatedDonacionesRecibidas = donacionesRecibidas.slice(startIndex, endIndex);
+  const paginatedInventario = inventarioLista.slice(startIndex, endIndex);
+  const paginatedNecesidadesActivas = necesidadesActivas.slice(startIndex, endIndex);
+  const paginatedNecesidadesCubiertas = necesidadesCubiertas.slice(startIndex, endIndex);
 
-  const indexOfLastNecItem = currentPageNecesidades * itemsPerPage;
-  const indexOfFirstNecItem = indexOfLastNecItem - itemsPerPage;
-  const currentNecesidades = necesidadesActivas.slice(indexOfFirstNecItem, indexOfLastNecItem);
-  const totalPagesNec = Math.ceil(necesidadesActivas.length / itemsPerPage);
-
-  const handleNextPageNec = () => { if (currentPageNecesidades < totalPagesNec) setCurrentPageNecesidades(prev => prev + 1); };
-  const handlePrevPageNec = () => { if (currentPageNecesidades > 1) setCurrentPageNecesidades(prev => prev - 1); };
+  const renderPaginationUI = (totalItems: number) => {
+    if (totalItems === 0) return null;
+    return (
+      <div className="d-flex justify-content-between align-items-center mt-3 pt-3 border-top px-1">
+        <span className="text-muted small">
+          Mostrando {startIndex + 1} - {Math.min(endIndex, totalItems)} de {totalItems} registros
+        </span>
+        <div className="d-flex align-items-center gap-2">
+          <Form.Select 
+            size="sm" 
+            value={itemsPerPage} 
+            onChange={(e) => {
+              setItemsPerPage(Number(e.target.value));
+              setPage(1);
+            }}
+            style={{ width: '80px', borderRadius: '8px' }}
+          >
+            <option value={10}>10</option>
+            <option value={25}>25</option>
+            <option value={50}>50</option>
+          </Form.Select>
+          <Pagination className="mb-0" size="sm">
+            <Pagination.Prev disabled={page === 1} onClick={() => setPage(p => p - 1)} />
+            <Pagination.Next disabled={page === Math.ceil(totalItems / itemsPerPage) || totalItems === 0} onClick={() => setPage(p => p + 1)} />
+          </Pagination>
+        </div>
+      </div>
+    );
+  };
 
   // Handlers
   const centrarMapa = (lat?: number | null, lng?: number | null) => {
@@ -250,7 +276,7 @@ const PanelAdminAcopio: React.FC = () => {
     const recursos = parseRecursos(necesidad.recursos);
     let suficientes = true;
     const detalles = recursos.map(rec => {
-      const inv = inventarioLista.find(i => i.categoria === rec.categoria && i.unidadMedida === rec.unidad);
+      const inv = inventarioLista.find(i => i.categoria === rec.categoria && i.subcategoria === rec.subcategoria && i.unidadMedida === rec.unidad);
       const cantInv = inv ? inv.cantidad : 0;
       if (cantInv < rec.cantidad) suficientes = false;
       return {
@@ -338,7 +364,7 @@ const PanelAdminAcopio: React.FC = () => {
                             </tr>
                           </thead>
                           <tbody>
-                            {currentDonaciones.map(don => {
+                            {paginatedDonacionesPendientes.map(don => {
                               const isRechazada = don.estado?.toUpperCase() === 'RECHAZADA_CONDUCTOR';
                               const isAssigned = !isRechazada && (don.conductorId || ['EN_TRANSITO', 'DESPACHADO', 'ASIGNADO', 'EN TRÁNSITO'].includes(don.estado?.toUpperCase() || ''));
                               const canReceive = ['EN_TRANSITO', 'DESPACHADO', 'EN TRÁNSITO'].includes(don.estado?.toUpperCase() || '');
@@ -418,15 +444,7 @@ const PanelAdminAcopio: React.FC = () => {
                         </Table>
                       </div>
                       
-                      {totalPagesDon > 1 && (
-                        <div className="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
-                          <span className="text-muted small">Página {currentPageDonaciones} de {totalPagesDon}</span>
-                          <div>
-                            <Button variant="light" size="sm" onClick={handlePrevPage} disabled={currentPageDonaciones === 1} className="me-2 rounded-pill">Anterior</Button>
-                            <Button variant="light" size="sm" onClick={handleNextPage} disabled={currentPageDonaciones === totalPagesDon} className="rounded-pill">Siguiente</Button>
-                          </div>
-                        </div>
-                      )}
+                      {renderPaginationUI(donacionesPendientes.length)}
                     </Card>
                   )}
                 </Col>
@@ -468,7 +486,7 @@ const PanelAdminAcopio: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {donacionesRecibidas.map(don => (
+                    {paginatedDonacionesRecibidas.map(don => (
                       <tr key={don.id}>
                         <td><span className="fw-bold text-primary">#{don.id}</span></td>
                         <td className="fw-semibold text-dark">{don.categoria}</td>
@@ -494,6 +512,7 @@ const PanelAdminAcopio: React.FC = () => {
                     )}
                   </tbody>
                 </Table>
+                {renderPaginationUI(donacionesRecibidas.length)}
               </div>
             )}
 
@@ -503,18 +522,19 @@ const PanelAdminAcopio: React.FC = () => {
                 <Table className="modern-table w-100" hover borderless>
                   <thead>
                     <tr>
-                      <th>Categoría de Recurso</th>
+                      <th>Recurso / Subcategoría</th>
                       <th>Volumen Disponible</th>
                       <th>Unidad de Medida</th>
                       <th>Disponibilidad</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {inventarioLista.map((inv) => (
-                      <tr key={`${inv.categoria}-${inv.unidadMedida}`}>
+                    {paginatedInventario.map((inv) => (
+                      <tr key={`${inv.categoria}-${inv.subcategoria}-${inv.unidadMedida}`}>
                         <td className="fw-semibold text-dark">
                           <Package size={16} className="me-2 text-muted" />
-                          {inv.categoria}
+                          <span className="d-block">{inv.subcategoria}</span>
+                          <small className="text-muted fw-normal">{inv.categoria}</small>
                         </td>
                         <td className="text-muted fw-bold">{inv.cantidad}</td>
                         <td className="text-muted">{inv.unidadMedida}</td>
@@ -538,6 +558,7 @@ const PanelAdminAcopio: React.FC = () => {
                     )}
                   </tbody>
                 </Table>
+                {renderPaginationUI(inventarioLista.length)}
               </div>
             )}
 
@@ -569,7 +590,7 @@ const PanelAdminAcopio: React.FC = () => {
                             </tr>
                           </thead>
                           <tbody>
-                            {currentNecesidades.map(nec => {
+                            {paginatedNecesidadesActivas.map(nec => {
                               let recInfo: any = null;
                               try {
                                 if (nec.recursos) {
@@ -637,15 +658,7 @@ const PanelAdminAcopio: React.FC = () => {
                         </Table>
                       </div>
                       
-                      {totalPagesNec > 1 && (
-                        <div className="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
-                          <span className="text-muted small">Página {currentPageNecesidades} de {totalPagesNec}</span>
-                          <div>
-                            <Button variant="light" size="sm" onClick={handlePrevPageNec} disabled={currentPageNecesidades === 1} className="me-2 rounded-pill">Anterior</Button>
-                            <Button variant="light" size="sm" onClick={handleNextPageNec} disabled={currentPageNecesidades === totalPagesNec} className="rounded-pill">Siguiente</Button>
-                          </div>
-                        </div>
-                      )}
+                      {renderPaginationUI(necesidadesActivas.length)}
                     </Card>
                   )}
                 </Col>
@@ -689,7 +702,7 @@ const PanelAdminAcopio: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {necesidadesCubiertas.map(nec => {
+                    {paginatedNecesidadesCubiertas.map(nec => {
                       let recInfo = { categoria: '', cantidad: '', unidad: '' };
                       if (nec.recursos) {
                         try {
@@ -730,6 +743,7 @@ const PanelAdminAcopio: React.FC = () => {
                     )}
                   </tbody>
                 </Table>
+                {renderPaginationUI(necesidadesCubiertas.length)}
               </div>
             )}
           </Card.Body>
@@ -789,8 +803,11 @@ const PanelAdminAcopio: React.FC = () => {
                   </thead>
                   <tbody>
                     {chequearInventario(necesidadSeleccionada).detalles.map((det, i) => (
-                      <tr key={`${det.categoria}-${det.unidad}-${i}`}>
-                        <td className="fw-bold">{det.categoria}</td>
+                      <tr key={`${det.categoria}-${det.subcategoria}-${det.unidad}-${i}`}>
+                        <td>
+                          <span className="fw-bold d-block">{det.subcategoria}</span>
+                          <small className="text-muted">{det.categoria}</small>
+                        </td>
                         <td>{det.cantidad} <small>{det.unidad}</small></td>
                         <td className="fw-bold">{det.disponible} <small>{det.unidad}</small></td>
                         <td>
