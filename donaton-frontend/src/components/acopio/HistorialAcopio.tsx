@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Container, Row, Col, Card, Spinner, Alert, Badge, Form, Table, Button, Modal } from 'react-bootstrap';
 import { listarDonaciones, type DonacionResponse } from '../../services/donacionService';
-import { Eye, EyeOff, Search, Users, PackageCheck, Award, Share2, Heart } from 'lucide-react';
+import { Eye, EyeOff, Search, Users, PackageCheck, Award, Share2, Heart, MapPin } from 'lucide-react';
 import { PieChart, Pie, Tooltip, ResponsiveContainer } from 'recharts';
 import { obtenerCentrosAcopioPorRegion, obtenerUsuarios, type CentroAcopio } from '../../services/usuarioService';
 import { REGIONES_CHILE } from '../../utils/chileData';
@@ -375,91 +375,114 @@ const HistorialAcopio: React.FC = () => {
         <Modal.Header closeButton className="border-0 pb-0">
           <Modal.Title className="fw-bold text-primary">Detalles de la Donación</Modal.Title>
         </Modal.Header>
-        <Modal.Body className="pt-3">
+        <Modal.Body className="py-4">
           {selectedDonacion && (
-            <div className="d-flex flex-column gap-3">
-              {/* Solo mostrar foto si NO es privada y tiene foto */}
-              {selectedDonacion.fotoBase64 && selectedDonacion.visibilidad !== 'Privada' && (
-                <div className="text-center mb-2">
-                  <img src={selectedDonacion.fotoBase64} alt="Donación" className="img-fluid rounded shadow-sm" style={{ maxHeight: '200px' }} />
-                </div>
-              )}
-
-              <div className="bg-light p-3 rounded">
-                <div className="d-flex justify-content-between mb-2">
-                  <span className="text-muted fw-semibold">Privacidad:</span>
+            <Row className="g-4">
+              <Col md={6}>
+                <h6 className="fw-bold text-muted mb-3 border-bottom pb-2">Información General</h6>
+                <div className="mb-2">
+                  <strong>Privacidad: </strong> 
                   <Badge bg={selectedDonacion.visibilidad === 'Privada' ? 'secondary' : 'success'}>
                     {selectedDonacion.visibilidad === 'Privada' ? 'Anónima' : 'Pública'}
                   </Badge>
                 </div>
                 {selectedDonacion.visibilidad !== 'Privada' && (
                   <>
-                    <div className="d-flex justify-content-between mb-2">
-                      <span className="text-muted fw-semibold">ID Tracking:</span>
-                      <span className="fw-bold font-monospace">{selectedDonacion.trackingId || '-'}</span>
-                    </div>
-                    <div className="d-flex justify-content-between mb-2">
-                      <span className="text-muted fw-semibold">Donante:</span>
-                      <span className="fw-semibold">{getDonanteName(selectedDonacion.donanteId)}</span>
-                    </div>
-                    <div className="d-flex justify-content-between mb-2">
-                      <span className="text-muted fw-semibold">Fecha:</span>
-                      <span>{selectedDonacion.fechaRegistro ? new Date(selectedDonacion.fechaRegistro).toLocaleString('es-CL') : ''}</span>
-                    </div>
+                    <p className="mb-2"><strong>ID Tracking:</strong> {selectedDonacion.trackingId || '-'}</p>
+                    <p className="mb-2"><strong>Donante:</strong> {getDonanteName(selectedDonacion.donanteId)}</p>
+                    <p className="mb-2"><strong>Fecha Registro:</strong> {selectedDonacion.fechaRegistro ? new Date(selectedDonacion.fechaRegistro).toLocaleString('es-CL') : ''}</p>
                   </>
                 )}
-
-                <hr />
-
-                <div className="d-flex justify-content-between mb-2">
-                  <span className="text-muted fw-semibold">Título de Donación:</span>
-                  <span>{selectedDonacion.nombreArticulo || 'Varias Donaciones'}</span>
-                </div>
-
-                <div className="mt-3">
-                  <span className="text-muted fw-semibold d-block mb-1">Recursos:</span>
-                  {(() => {
-                    try {
-                      const recs = JSON.parse(selectedDonacion.recursos || '[]');
-                      if (Array.isArray(recs)) {
-                        return (
-                          <div className="table-responsive mt-2">
-                            <Table size="sm" bordered hover className="bg-white">
-                              <thead className="table-light">
-                                <tr>
-                                  <th>Categoría</th>
-                                  <th>Recurso</th>
-                                  <th>Estado</th>
-                                  <th>Cant.</th>
+                <p className="mb-2"><strong>Título:</strong> {selectedDonacion.nombreArticulo || 'Sin título'}</p>
+                <p className="mb-2"><strong>Estado Actual:</strong> <Badge bg={selectedDonacion.estado === 'PENDIENTE' ? 'warning' : 'success'}>{selectedDonacion.estado}</Badge></p>
+              </Col>
+              
+              <Col md={6}>
+                <h6 className="fw-bold text-muted mb-3 border-bottom pb-2">Logística</h6>
+                <p className="mb-2"><strong>Vehículo Especial:</strong> {selectedDonacion.transporteEspecial ? <Badge bg="warning">Sí</Badge> : 'No'}</p>
+                <p className="mb-2"><strong>Horario Disponible:</strong> {selectedDonacion.disponibilidadHoraria || 'Cualquier horario'}</p>
+                {selectedDonacion.visibilidad !== 'Privada' && (
+                  <p className="mb-2"><strong>Conductor ID:</strong> {selectedDonacion.conductorId || 'No asignado'}</p>
+                )}
+              </Col>
+              
+              <Col md={12}>
+                <h6 className="fw-bold text-muted mb-3 border-bottom pb-2">Recursos Donados</h6>
+                {(() => {
+                  try {
+                    const recs = JSON.parse(selectedDonacion.recursos || '[]');
+                    if (Array.isArray(recs) && recs.length > 0) {
+                      return (
+                        <div className="table-responsive">
+                          <Table size="sm" bordered hover className="bg-white">
+                            <thead className="table-success">
+                              <tr>
+                                <th>Categoría</th>
+                                <th>Recurso</th>
+                                <th>Estado</th>
+                                <th>Cant.</th>
+                                <th>Vencimiento</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {recs.map((r: any, idx: number) => (
+                                <tr key={`${r.categoria}-${r.subCategoria}-${idx}`}>
+                                  <td>{r.categoria}</td>
+                                  <td>{r.subCategoria}</td>
+                                  <td>{r.estadoArticulo}</td>
+                                  <td>{r.cantidad} {r.unidadMedida}</td>
+                                  <td>{r.fechaVencimiento || '-'}</td>
                                 </tr>
-                              </thead>
-                              <tbody>
-                                {recs.map((r: any, idx: number) => (
-                                  <tr key={`${r.categoria}-${r.subCategoria}-${idx}`}>
-                                    <td>{r.categoria}</td>
-                                    <td>{r.subCategoria}</td>
-                                    <td>{r.estadoArticulo}</td>
-                                    <td>{r.cantidad} {r.unidadMedida}</td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </Table>
-                          </div>
-                        );
-                      }
-                    } catch {}
-                    return null;
-                  })()}
-                </div>
+                              ))}
+                            </tbody>
+                          </Table>
+                        </div>
+                      );
+                    } else {
+                      return <span className="text-muted fst-italic">No hay recursos en esta donación.</span>;
+                    }
+                  } catch (e) {
+                    console.error('Error parseando recursos:', e);
+                    return <span className="text-muted fst-italic">Error al cargar recursos.</span>;
+                  }
+                })()}
+              </Col>
+              
+              {selectedDonacion.descripcion && (
+                <Col md={12}>
+                  <h6 className="fw-bold text-muted mb-2">Descripción Adicional</h6>
+                  <p className="bg-light p-3 rounded">{selectedDonacion.descripcion}</p>
+                </Col>
+              )}
 
-                <div className="mt-3">
-                  <span className="text-muted fw-semibold d-block mb-1">Descripción:</span>
-                  <p className="mb-0 bg-white p-2 rounded border small">
-                    {selectedDonacion.descripcion || 'Sin descripción.'}
-                  </p>
-                </div>
-              </div>
-            </div>
+              {selectedDonacion.fotoBase64 && selectedDonacion.visibilidad !== 'Privada' && (
+                <Col md={12} className="text-center">
+                  <h6 className="fw-bold text-muted mb-3 text-start">Fotografía Adjunta</h6>
+                  <img src={selectedDonacion.fotoBase64} alt="Donación" className="img-fluid rounded shadow-sm" style={{ maxHeight: '300px', objectFit: 'cover' }} />
+                </Col>
+              )}
+
+              {selectedDonacion.visibilidad !== 'Privada' && (
+                <Col md={12}>
+                  <h6 className="fw-bold text-muted mb-3 border-bottom pb-2">Ubicación de Retiro</h6>
+                  <div className="bg-light p-3 rounded d-flex flex-column gap-2">
+                    <p className="mb-0"><strong>Dirección:</strong> {selectedDonacion.direccionRetiro || `${selectedDonacion.direccionRetiroCalle || ''} ${selectedDonacion.direccionRetiroNumero || ''}`.trim() || 'No especificada'}</p>
+                    <p className="mb-0"><strong>Comuna:</strong> {selectedDonacion.comunaRetiro || selectedDonacion.origen}</p>
+                    <p className="mb-0"><strong>Región:</strong> {selectedDonacion.regionRetiro}</p>
+                    
+                    {selectedDonacion.latitudRetiro != null && selectedDonacion.longitudRetiro != null && (
+                      <Button 
+                        variant="primary" 
+                        className="mt-2 align-self-start d-flex align-items-center gap-2 rounded-pill shadow-sm"
+                        onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${selectedDonacion.latitudRetiro},${selectedDonacion.longitudRetiro}`, '_blank')}
+                      >
+                        <MapPin size={16} /> Ver en Google Maps
+                      </Button>
+                    )}
+                  </div>
+                </Col>
+              )}
+            </Row>
           )}
         </Modal.Body>
         <Modal.Footer className="border-0">

@@ -486,6 +486,7 @@ const PanelAdminAcopio: React.FC = () => {
                       <th>Volumen</th>
                       <th>Comuna de Origen</th>
                       <th>Estado</th>
+                      <th>Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -509,11 +510,22 @@ const PanelAdminAcopio: React.FC = () => {
                             {don.estado}
                           </Badge>
                         </td>
+                        <td>
+                          <Button 
+                            variant="outline-info" 
+                            size="sm" 
+                            onClick={() => { setDonacionDetalle(don); setShowDetallesDonacion(true); }} 
+                            title="Ver Detalles"
+                            className="d-flex align-items-center"
+                          >
+                            <Info size={14} />
+                          </Button>
+                        </td>
                       </tr>
                     ))}
                     {donacionesRecibidas.length === 0 && (
                       <tr>
-                        <td colSpan={5} className="text-center py-5">
+                        <td colSpan={6} className="text-center py-5">
                           <div className="text-muted d-flex flex-column align-items-center">
                             <Archive size={48} className="mb-3 opacity-25" />
                             <h5>Sin Historial</h5>
@@ -898,6 +910,47 @@ const PanelAdminAcopio: React.FC = () => {
                 <p className="mb-2"><strong>Conductor ID:</strong> {donacionDetalle.conductorId || 'No asignado'}</p>
               </Col>
               
+              <Col md={12}>
+                <h6 className="fw-bold text-muted mb-3 border-bottom pb-2">Recursos Donados</h6>
+                {(() => {
+                  try {
+                    const recs = JSON.parse(donacionDetalle.recursos || '[]');
+                    if (Array.isArray(recs) && recs.length > 0) {
+                      return (
+                        <div className="table-responsive">
+                          <Table size="sm" bordered hover className="bg-white">
+                            <thead className="table-success">
+                              <tr>
+                                <th>Categoría</th>
+                                <th>Recurso</th>
+                                <th>Estado</th>
+                                <th>Cant.</th>
+                                <th>Vencimiento</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {recs.map((r: any, idx: number) => (
+                                <tr key={`${r.categoria}-${r.subCategoria}-${idx}`}>
+                                  <td>{r.categoria}</td>
+                                  <td>{r.subCategoria}</td>
+                                  <td>{r.estadoArticulo}</td>
+                                  <td>{r.cantidad} {r.unidadMedida}</td>
+                                  <td>{r.fechaVencimiento || '-'}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </Table>
+                        </div>
+                      );
+                    } else {
+                      return <span className="text-muted fst-italic">No hay recursos en esta donación.</span>;
+                    }
+                  } catch (e) {
+                    console.error('Error parseando recursos:', e);
+                    return <span className="text-muted fst-italic">Error al cargar recursos.</span>;
+                  }
+                })()}
+              </Col>
               {donacionDetalle.descripcion && (
                 <Col md={12}>
                   <h6 className="fw-bold text-muted mb-2">Descripción Adicional</h6>
