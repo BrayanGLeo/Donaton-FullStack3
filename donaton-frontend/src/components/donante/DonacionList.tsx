@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Card, Table, Spinner, Badge, Alert, Button, Modal, Row, Col } from 'react-bootstrap';
-import { listarDonaciones, type DonacionResponse } from '../services/donacionService';
-import { obtenerCentrosAcopio, type CentroAcopio } from '../services/logisticaService';
-import { useAuth } from '../context/AuthContext';
+import { listarDonaciones, type DonacionResponse } from '../../services/donacionService';
+import { obtenerCentrosAcopio, type CentroAcopio } from '../../services/logisticaService';
+import { obtenerUsuarios } from '../../services/usuarioService';
+import { useAuth, type Usuario } from '../../context/AuthContext';
 
 interface Props {
   refreshTrigger: number;
@@ -53,10 +54,41 @@ export const DonacionList: React.FC<Props> = ({ refreshTrigger }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedDonacion, setSelectedDonacion] = useState<DonacionResponse | null>(null);
+  const [usuariosMap, setUsuariosMap] = useState<Record<number, Usuario>>({});
 
   useEffect(() => {
-    obtenerCentrosAcopio().then(setCentros).catch(() => {});
-  }, []);
+    const fetchData = async () => {
+      try {
+        const centrosData = await obtenerCentrosAcopio().catch(e => {
+          console.error("Error centros:", e);
+          return [];
+        });
+        setCentros(centrosData);
+
+        try {
+          const usuariosPage = await obtenerUsuarios({ size: 1000 });
+          const userMap: Record<number, Usuario> = {};
+          usuariosPage.content.forEach((u: Usuario) => {
+            if (u.id) userMap[Number(u.id)] = u;
+          });
+          setUsuariosMap(userMap);
+        } catch (e) {
+          console.error("Error usuarios:", e);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchData();
+  }, [usuario]);
+
+  const getDonanteName = (donanteId?: number) => {
+    if (!donanteId || !usuariosMap[donanteId]) return 'Donante solidario';
+    const u = usuariosMap[donanteId];
+    if (u.tipoPersona === 'Jurídica' && u.razonSocial) return u.razonSocial;
+    if (u.nombreCompleto) return u.nombreCompleto;
+    return u.nombre || 'Donante solidario';
+  };
 
   useEffect(() => {
     const fetchDonaciones = async () => {
@@ -69,7 +101,7 @@ export const DonacionList: React.FC<Props> = ({ refreshTrigger }) => {
           : data;
         setDonaciones(misDonaciones);
       } catch (err) {
-        console.error(err);
+        console.error("Error en fetchDonaciones:", err);
         setError('Ocurrió un error al cargar las donaciones.');
       } finally {
         setIsLoading(false);
@@ -77,7 +109,7 @@ export const DonacionList: React.FC<Props> = ({ refreshTrigger }) => {
     };
 
     fetchDonaciones();
-  }, [refreshTrigger]);
+  }, [refreshTrigger, usuario]);
 
   if (isLoading) {
     return (
@@ -108,9 +140,8 @@ export const DonacionList: React.FC<Props> = ({ refreshTrigger }) => {
               <Table hover className="align-middle">
                 <thead className="table-light">
                   <tr>
-                    <th>ID DB</th>
-                    <th>ID Seguimiento</th>
-                    <th>Recurso</th>
+                    <th>ID de Seguimiento</th>
+                    <th>Subcategoría</th>
                     <th>Cantidad</th>
                     <th>Estado</th>
                     <th>Fecha de Registro</th>
@@ -120,7 +151,6 @@ export const DonacionList: React.FC<Props> = ({ refreshTrigger }) => {
                 <tbody>
                   {donaciones.map((donacion) => (
                     <tr key={donacion.id}>
-                      <td className="text-secondary">#{donacion.id}</td>
                       <td className="fw-bold font-monospace text-primary">
                         {canSeeTracking(usuario, donacion) ? (donacion.trackingId || '-') : <span className="text-muted fst-italic">No disponible</span>}
                       </td>
@@ -193,10 +223,11 @@ export const DonacionList: React.FC<Props> = ({ refreshTrigger }) => {
               {/* Descripción del artículo */}
               <div className="mb-3 p-3 rounded-3" style={{ backgroundColor: '#f8fff8', border: '1px solid #d1fae5' }}>
                 <h6 className="text-success fw-bold mb-3"><i className="bi bi-tags me-2"></i>Descripción del Artículo</h6>
-                {canSeeDonor(usuario) && selectedDonacion.nombreDonante && (
-                  <DetailRow label="Donante" value={selectedDonacion.visibilidad === 'Privada' ? `${selectedDonacion.nombreDonante} (Anónimo en público)` : selectedDonacion.nombreDonante} />
+                {canSeeDonor(usuario) && selectedDonacion.donanteId && (
+                  <DetailRow label="Donante" value={selectedDonacion.visibilidad === 'Privada' ? `${getDonanteName(selectedDonacion.donanteId)} (Anónimo en público)` : getDonanteName(selectedDonacion.donanteId)} />
                 )}
                 <DetailRow label="Categoría" value={selectedDonacion.categoria} />
+                <DetailRow label="Subcategoría" value={selectedDonacion.recurso} />
                 <DetailRow label="Descripción" value={selectedDonacion.descripcion} />
                 <DetailRow label="Estado del Artículo" value={selectedDonacion.estadoArticulo} />
                 <DetailRow label="Cantidad" value={`${selectedDonacion.cantidad} ${selectedDonacion.unidadMedida || ''}`} />
@@ -254,3 +285,4 @@ export const DonacionList: React.FC<Props> = ({ refreshTrigger }) => {
     </>
   );
 };
+

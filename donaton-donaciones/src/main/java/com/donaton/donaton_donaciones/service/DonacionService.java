@@ -21,7 +21,7 @@ public class DonacionService {
 
     public Donacion registrarDonacion(Donacion donacion) {
         donacion.setEstado("Pendiente");
-        donacion.setFechaRegistro(LocalDateTime.now());
+        donacion.setFechaRegistro(LocalDateTime.now(java.time.ZoneId.systemDefault()));
         donacion.setTrackingId("DON-" + java.util.UUID.randomUUID().toString().substring(0, 8).toUpperCase());
         
         Donacion donacionGuardada = repository.save(donacion);
@@ -45,5 +45,13 @@ public class DonacionService {
         }
         
         return donacionActualizada;
+    }
+
+    public Donacion asignarConductor(Long id, Long conductorId) {
+        Donacion donacion = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Donación no encontrada con ID: " + id));
+        donacion.setConductorId(conductorId);
+        donacion.setEstado("ASIGNADO");
+        return repository.save(donacion);
     }
 }

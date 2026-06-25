@@ -25,6 +25,11 @@ public class LogisticaProxyController {
         return logisticaClient.listarInventario();
     }
 
+    @PostMapping("/inventario/consumir")
+    public ResponseEntity<Object> consumirInventario(@RequestBody Object request) {
+        return logisticaClient.consumirInventario(request);
+    }
+
     @PutMapping("/ingreso/{trackingId}")
     public ResponseEntity<Object> registrarIngreso(@PathVariable("trackingId") String trackingId) {
         return logisticaClient.registrarIngreso(trackingId);

@@ -25,6 +25,7 @@ export interface DonacionPayload {
   direccionRetiroCalle?: string;
   direccionRetiroNumero?: string;
   donanteId?: number;
+  conductorId?: number;
 }
 
 export interface DonacionResponse extends DonacionPayload {
@@ -32,6 +33,7 @@ export interface DonacionResponse extends DonacionPayload {
   trackingId?: string;
   fechaRegistro: string;
   nombreDonante?: string;
+  conductorId?: number;
 }
 
 export const registrarDonacion = async (payload: DonacionPayload): Promise<DonacionResponse> => {
@@ -62,6 +64,16 @@ export const actualizarEstadoDonacion = async (id: number, estado: string): Prom
     return response.data;
   } catch (error) {
     console.error('Error al actualizar el estado de la donación:', error);
+    throw error;
+  }
+};
+
+export const asignarConductor = async (id: number, conductorId: number): Promise<DonacionResponse> => {
+  try {
+    const response = await axios.put<DonacionResponse>(`/api/donaciones/${id}/conductor/${conductorId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error al asignar el conductor a la donación:', error);
     throw error;
   }
 };

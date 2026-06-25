@@ -50,6 +50,8 @@ public class Donacion {
     private String visibilidad;
 
     private Long donanteId;
+    
+    private Long conductorId;
 
     public Donacion() {
         // Constructor vacío requerido por JPA
@@ -132,4 +134,7 @@ public class Donacion {
 
     public String getVisibilidad() { return visibilidad; }
     public void setVisibilidad(String visibilidad) { this.visibilidad = visibilidad; }
+
+    public Long getConductorId() { return conductorId; }
+    public void setConductorId(Long conductorId) { this.conductorId = conductorId; }
 }

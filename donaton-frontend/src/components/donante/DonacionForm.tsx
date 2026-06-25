@@ -4,14 +4,14 @@ import { useNavigate } from 'react-router-dom';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { motion, AnimatePresence } from 'framer-motion';
-import { registrarDonacion } from '../services/donacionService';
-import { useAuth } from '../context/AuthContext';
+import { registrarDonacion } from '../../services/donacionService';
+import { useAuth } from '../../context/AuthContext';
 import { Package } from 'lucide-react';
 
-import { donacionGlobalSchema, type DonacionGlobalValues } from './donacion/DonacionSchemas';
-import { DonacionStep1 } from './donacion/DonacionStep1';
-import { DonacionStep2 } from './donacion/DonacionStep2';
-import { Stepper } from './donacion/Stepper';
+import { donacionGlobalSchema, type DonacionGlobalValues } from '../donacion/DonacionSchemas';
+import { DonacionStep1 } from '../donacion/DonacionStep1';
+import { DonacionStep2 } from '../donacion/DonacionStep2';
+import { Stepper } from '../donacion/Stepper';
 
 interface Props {
   onSuccess?: () => void;
@@ -60,7 +60,18 @@ export const DonacionForm: React.FC<Props> = ({ onSuccess }) => {
 
     try {
       setError('');
-      await registrarDonacion({ ...data, donanteId: Number(usuario.id) });
+      
+      const payload: any = { 
+        ...data, 
+        donanteId: Number(usuario.id),
+        recurso: data.subCategoria,
+      };
+
+      if (data.modalidadEntrega === 'Retiro' && data.direccionRetiroCalle && data.direccionRetiroNumero) {
+        payload.direccionRetiro = `${data.direccionRetiroCalle} #${data.direccionRetiroNumero}`.trim();
+      }
+
+      await registrarDonacion(payload);
       setShowSuccessModal(true);
       if (onSuccess) onSuccess();
     } catch (err: any) {
@@ -151,4 +162,6 @@ export const DonacionForm: React.FC<Props> = ({ onSuccess }) => {
     </div>
   );
 };
+
+
 

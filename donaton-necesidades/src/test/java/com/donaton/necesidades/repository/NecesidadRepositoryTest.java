@@ -17,7 +17,7 @@ class NecesidadRepositoryTest {
 
     @Test
     void testSaveNecesidad() {
-        Necesidad necesidad = new Necesidad("Ropa y Abrigo", -33.5, -70.5, LocalDateTime.now());
+        Necesidad necesidad = new Necesidad("Ropa y Abrigo", -33.5, -70.5, LocalDateTime.now(), "Región Metropolitana", "Santiago", "Terremoto");
         Necesidad savedNecesidad = necesidadRepository.save(necesidad);
 
         assertNotNull(savedNecesidad.getId());

@@ -34,4 +34,9 @@ public class DonacionesProxyController {
     public ResponseEntity<Object> actualizarEstado(@PathVariable("id") Long id, @RequestBody Object body) {
         return donacionesClient.actualizarEstado(id, body);
     }
+
+    @PutMapping("/{id}/conductor/{conductorId}")
+    public ResponseEntity<Object> asignarConductor(@PathVariable("id") Long id, @PathVariable("conductorId") Long conductorId) {
+        return donacionesClient.asignarConductor(id, conductorId);
+    }
 }

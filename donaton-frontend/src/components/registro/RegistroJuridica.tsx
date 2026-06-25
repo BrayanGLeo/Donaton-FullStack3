@@ -23,6 +23,8 @@ const calculateIsDirty = (values: any) => Object.entries(values).some(([key, val
   return val !== '' && val !== undefined && val !== null;
 });
 
+import { RegionComunaInput } from '../common/RegionComunaInput';
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const isFieldInvalid = (field: string, getValues: any, errors: any, isSubmitted: boolean) => {
   const val = getValues(field);
@@ -155,6 +157,7 @@ export const RegistroJuridica: React.FC<Props> = ({ onSubmit, isLoading, onCance
                   options={REGIONES_CHILE.map(r => ({ value: r, label: r }))}
                   placeholder="Seleccione una región..."
                   isDisabled={isLoading}
+                  components={{ Input: RegionComunaInput }}
                   value={field.value ? { value: field.value, label: field.value } : null}
                   onChange={(option) => field.onChange(option?.value || '')}
                   styles={{
@@ -184,6 +187,7 @@ export const RegistroJuridica: React.FC<Props> = ({ onSubmit, isLoading, onCance
                   options={selectedRegion ? COMUNAS_POR_REGION[selectedRegion]?.map(c => ({ value: c, label: c })) : []}
                   placeholder="Seleccione una comuna..."
                   isDisabled={isLoading || !selectedRegion}
+                  components={{ Input: RegionComunaInput }}
                   value={field.value ? { value: field.value, label: field.value } : null}
                   onChange={(option) => field.onChange(option?.value || '')}
                   styles={{
@@ -395,3 +399,6 @@ const FileDropzone = () => {
     </Form.Group>
   );
 };
+
+
+

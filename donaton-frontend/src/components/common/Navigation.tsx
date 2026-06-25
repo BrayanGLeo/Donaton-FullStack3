@@ -1,7 +1,7 @@
 import React from 'react';
 import { Navbar, Nav, Container, Button } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 
 const Navigation: React.FC = () => {
   const { usuario, logout, isAuthenticated } = useAuth();
@@ -27,6 +27,7 @@ const Navigation: React.FC = () => {
             {!isAuthenticated && (
               <>
                 <Nav.Link as={Link as any} to="/">Inicio</Nav.Link>
+                <Nav.Link as={Link as any} to="/historial-acopio">Donaciones</Nav.Link>
                 <Nav.Link as={Link as any} to="/login">Iniciar Sesión</Nav.Link>
                 <Nav.Link as={Link as any} to="/registro">Registrarse</Nav.Link>
               </>
@@ -34,18 +35,20 @@ const Navigation: React.FC = () => {
 
             {isAuthenticated && usuario?.rol === 'DONANTE' && (
               <>
+                <Nav.Link as={Link as any} to="/">Inicio</Nav.Link>
+                <Nav.Link as={Link as any} to="/historial-acopio">Donaciones</Nav.Link>
                 <Nav.Link as={Link as any} to="/donar">Realizar Donación</Nav.Link>
                 <Nav.Link as={Link as any} to="/mis-donaciones">Mis Donaciones</Nav.Link>
-                <Nav.Link as={Link as any} to="/historial-acopio">Historial Acopio</Nav.Link>
+                <Nav.Link as={Link as any} to="/perfil">Mi Perfil</Nav.Link>
               </>
             )}
 
-            {isAuthenticated && usuario?.rol === 'LOGISTICA' && (
-              <>
-                <Nav.Link as={Link as any} to="/logistica">Panel Logístico</Nav.Link>
-                <Nav.Link as={Link as any} to="/recepcion">Recepción Acopio</Nav.Link>
-                <Nav.Link as={Link as any} to="/conductor">Panel Conductor</Nav.Link>
-              </>
+            {isAuthenticated && usuario?.rol === 'LOGISTICA' && usuario?.subRol === 'RECEPCIONISTA' && (
+              <Nav.Link as={Link as any} to="/admin-acopio">Panel Administrador Acopio</Nav.Link>
+            )}
+
+            {isAuthenticated && usuario?.rol === 'LOGISTICA' && usuario?.subRol === 'CONDUCTOR' && (
+              <Nav.Link as={Link as any} to="/panel-conductor">Panel de Conductor</Nav.Link>
             )}
 
             {isAuthenticated && usuario?.rol === 'COORDINADOR' && (
@@ -84,3 +87,4 @@ const Navigation: React.FC = () => {
 };
 
 export default Navigation;
+

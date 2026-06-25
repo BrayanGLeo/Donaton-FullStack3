@@ -2,6 +2,7 @@ package com.donaton.logistica.controller;
 
 import com.donaton.logistica.entity.Inventario;
 import com.donaton.logistica.service.DespachoService;
+import com.donaton.logistica.service.LogisticaService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -20,9 +21,12 @@ class InventarioControllerTest {
     @Mock
     private DespachoService despachoService;
 
+    @Mock
+    private LogisticaService logisticaService;
+
     @Test
     void testObtenerInventario() {
-        InventarioController controller = new InventarioController(despachoService);
+        InventarioController controller = new InventarioController(despachoService, logisticaService);
         Inventario inv = new Inventario("Agua", 100);
         when(despachoService.obtenerInventario()).thenReturn(Collections.singletonList(inv));
 

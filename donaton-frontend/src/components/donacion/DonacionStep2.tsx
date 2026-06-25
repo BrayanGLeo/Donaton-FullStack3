@@ -245,3 +245,6 @@ export const DonacionStep2: React.FC = () => {
     </div>
   );
 };
+
+
+

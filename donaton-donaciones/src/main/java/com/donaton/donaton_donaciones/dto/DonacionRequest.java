@@ -24,6 +24,7 @@ public class DonacionRequest {
     private Double longitudRetiro;
     private String visibilidad;
     private Long donanteId;
+    private Long conductorId;
     
     public DonacionRequest() {
         // Constructor vacío para serialización JSON
@@ -94,4 +95,7 @@ public class DonacionRequest {
 
     public String getVisibilidad() { return visibilidad; }
     public void setVisibilidad(String visibilidad) { this.visibilidad = visibilidad; }
+
+    public Long getConductorId() { return conductorId; }
+    public void setConductorId(Long conductorId) { this.conductorId = conductorId; }
 }

@@ -2,15 +2,15 @@ import React, { useState } from 'react';
 import { Card, Container, Row, Col, Alert, Modal, Button } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { registrarDonante } from '../services/usuarioService';
-import { useAuth } from '../context/AuthContext';
+import { registrarDonante } from '../../services/usuarioService';
+import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { HeartPulse, Building2, User } from 'lucide-react';
 
-import { RegistroNatural } from './registro/RegistroNatural';
-import { RegistroJuridica } from './registro/RegistroJuridica';
-import type { RegistroNaturalValues, RegistroJuridicaValues } from './registro/RegistroSchemas';
+import { RegistroNatural } from '../registro/RegistroNatural';
+import { RegistroJuridica } from '../registro/RegistroJuridica';
+import type { RegistroNaturalValues, RegistroJuridicaValues } from '../registro/RegistroSchemas';
 
 const Registro: React.FC = () => {
   const [tipoUsuario, setTipoUsuario] = useState<'NATURAL' | 'JURIDICA' | null>(null);
@@ -25,7 +25,7 @@ const Registro: React.FC = () => {
     setIsLoading(true);
 
     const payload = {
-      tipoDonante: 'NATURAL',
+      tipoPersona: 'NATURAL',
       email: data.email,
       password: data.password,
       codigoPais: data.codigoPais,
@@ -37,8 +37,7 @@ const Registro: React.FC = () => {
       direccionNumero: data.direccionNumero,
       latitud: data.latitud,
       longitud: data.longitud,
-      nombre: data.nombre,
-      apellido: data.apellido
+      nombreCompleto: `${data.nombre} ${data.apellido}`.trim()
     };
 
     try {
@@ -74,7 +73,7 @@ const Registro: React.FC = () => {
     setIsLoading(true);
 
     const payload = {
-      tipoDonante: 'JURIDICA',
+      tipoPersona: 'JURIDICA',
       email: data.email,
       password: data.password,
       codigoPais: data.codigoPais,
@@ -244,3 +243,5 @@ const Registro: React.FC = () => {
 };
 
 export default Registro;
+
+

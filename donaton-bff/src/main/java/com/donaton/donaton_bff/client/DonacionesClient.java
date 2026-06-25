@@ -19,4 +19,7 @@ public interface DonacionesClient {
 
     @PutMapping("/api/donaciones/{id}/estado")
     ResponseEntity<Object> actualizarEstado(@PathVariable("id") Long id, @RequestBody Object body);
+
+    @PutMapping("/api/donaciones/{id}/conductor/{conductorId}")
+    ResponseEntity<Object> asignarConductor(@PathVariable("id") Long id, @PathVariable("conductorId") Long conductorId);
 }

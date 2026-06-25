@@ -18,7 +18,7 @@ public class DataInitializer {
     @Bean
     CommandLineRunner initDatabase(UsuarioRepository repository, PasswordEncoder passwordEncoder, DonatonAdminProperties adminProps) {
         return args -> {
-            if (repository.count() == 0) {
+            if (repository.findByEmail("admin@gmail.com").isEmpty()) {
                 Usuario testUser = new Usuario();
                 testUser.setEmail("admin@gmail.com");
 

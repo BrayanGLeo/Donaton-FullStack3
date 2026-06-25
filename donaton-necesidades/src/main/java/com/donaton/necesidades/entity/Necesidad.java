@@ -23,15 +23,30 @@ public class Necesidad {
 
     private LocalDateTime fechaReporte;
 
+    private String estado = "Pendiente";
+
+    private String region;
+
+    private String comuna;
+
+    private String tipoEmergencia;
+
+    private Long conductorId;
+
+    private Long coordinadorId;
+
     public Necesidad() {
         // Constructor vacío requerido por JPA
     }
 
-    public Necesidad(String recursos, Double latitud, Double longitud, LocalDateTime fechaReporte) {
+    public Necesidad(String recursos, Double latitud, Double longitud, LocalDateTime fechaReporte, String region, String comuna, String tipoEmergencia) {
         this.recursos = recursos;
         this.latitud = latitud;
         this.longitud = longitud;
         this.fechaReporte = fechaReporte;
+        this.region = region;
+        this.comuna = comuna;
+        this.tipoEmergencia = tipoEmergencia;
     }
 
     public Long getId() {
@@ -72,5 +87,53 @@ public class Necesidad {
 
     public void setFechaReporte(LocalDateTime fechaReporte) {
         this.fechaReporte = fechaReporte;
+    }
+
+    public String getEstado() {
+        return estado;
+    }
+
+    public void setEstado(String estado) {
+        this.estado = estado;
+    }
+
+    public String getRegion() {
+        return region;
+    }
+
+    public void setRegion(String region) {
+        this.region = region;
+    }
+
+    public String getComuna() {
+        return comuna;
+    }
+
+    public void setComuna(String comuna) {
+        this.comuna = comuna;
+    }
+
+    public String getTipoEmergencia() {
+        return tipoEmergencia;
+    }
+
+    public void setTipoEmergencia(String tipoEmergencia) {
+        this.tipoEmergencia = tipoEmergencia;
+    }
+
+    public Long getConductorId() {
+        return conductorId;
+    }
+
+    public void setConductorId(Long conductorId) {
+        this.conductorId = conductorId;
+    }
+
+    public Long getCoordinadorId() {
+        return coordinadorId;
+    }
+
+    public void setCoordinadorId(Long coordinadorId) {
+        this.coordinadorId = coordinadorId;
     }
 }

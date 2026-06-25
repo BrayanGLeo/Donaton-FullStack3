@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import { Card, Form, Button, Container, Row, Col, InputGroup, Spinner } from 'react-bootstrap';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
-import type { Rol, Usuario } from '../context/AuthContext';
+import type { Rol, Usuario } from '../../context/AuthContext';
 import { Eye, EyeOff, HeartPulse, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import toast from 'react-hot-toast';
-import { formatNoSpaceInput, preventSpaceKeyDown } from '../utils/validators';
+import { formatNoSpaceInput, preventSpaceKeyDown } from '../../utils/validators';
 
 const loginSchema = z.object({
   email: z.string().regex(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, 'Debe ser un correo electrónico válido'),
@@ -87,8 +87,8 @@ const Login: React.FC = () => {
     } else if (rol === 'COORDINADOR') {
       navigate('/dashboard');
     } else if (rol === 'LOGISTICA') {
-      if (subRol === 'RECEPCIONISTA') navigate('/recepcionista');
-      else if (subRol === 'CONDUCTOR') navigate('/conductor');
+      if (subRol === 'RECEPCIONISTA') navigate('/admin-acopio');
+      else if (subRol === 'CONDUCTOR') navigate('/panel-conductor');
       else navigate('/logistica');
     } else {
       navigate('/mis-donaciones');
@@ -284,3 +284,4 @@ const Login: React.FC = () => {
 };
 
 export default Login;
+

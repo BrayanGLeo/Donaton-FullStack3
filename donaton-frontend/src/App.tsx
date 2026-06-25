@@ -1,22 +1,21 @@
 import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
-import Navigation from './components/Navigation';
-import LandingPage from './components/LandingPage';
-import Login from './components/Login';
-import Registro from './components/Registro';
-import RecuperarPassword from './components/RecuperarPassword';
-import ProtectedRoute from './components/ProtectedRoute';
-import { DonacionForm } from './components/DonacionForm';
-import { DonacionList } from './components/DonacionList';
-import PanelLogistico from './components/PanelLogistico';
-import DashboardCoordinador from './components/DashboardCoordinador';
-import ControlIngreso from './components/ControlIngreso';
-import { PanelConductor } from './components/PanelConductor';
-import HistorialAcopio from './components/HistorialAcopio';
-import IngresarNecesidad from './components/IngresarNecesidad';
-import AdminDashboard from './components/AdminDashboard';
-import DashboardRecepcionista from './components/DashboardRecepcionista';
+import Navigation from './components/common/Navigation';
+import LandingPage from './components/common/LandingPage';
+import Login from './components/auth/Login';
+import Registro from './components/auth/Registro';
+import RecuperarPassword from './components/auth/RecuperarPassword';
+import ProtectedRoute from './components/common/ProtectedRoute';
+import { DonacionForm } from './components/donante/DonacionForm';
+import { DonacionList } from './components/donante/DonacionList';
+import PerfilDonante from './components/donante/PerfilDonante';
+import DashboardCoordinador from './components/coordinador/DashboardCoordinador';
+import HistorialAcopio from './components/acopio/HistorialAcopio';
+import IngresarNecesidad from './components/coordinador/IngresarNecesidad';
+import AdminDashboard from './components/admin/AdminDashboard';
+import PanelAdminAcopio from './components/acopio/PanelAdminAcopio';
+import PanelConductor from './components/conductor/PanelConductor';
 import { Toaster } from 'react-hot-toast';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './index.css';
@@ -56,6 +55,11 @@ const App: React.FC = () => {
             <Route path="/login" element={<Login />} />
             <Route path="/registro" element={<Registro />} />
             <Route path="/recuperar-password" element={<RecuperarPassword />} />
+            <Route path="/historial-acopio" element={
+              <div className="container-fluid py-5 px-xl-5">
+                <HistorialAcopio />
+              </div>
+            } />
             
             {/* Rutas Protegidas - Solo DONANTE */}
             <Route path="/donar" element={
@@ -72,55 +76,33 @@ const App: React.FC = () => {
                 </div>
               </ProtectedRoute>
             } />
-            <Route path="/historial-acopio" element={
+            <Route path="/perfil" element={
               <ProtectedRoute rolesPermitidos={['DONANTE']}>
-                <div className="container py-5">
-                  <HistorialAcopio />
-                </div>
+                <PerfilDonante />
               </ProtectedRoute>
             } />
 
-            {/* Rutas Protegidas - Solo LOGISTICA */}
-            <Route path="/logistica" element={
-              <ProtectedRoute rolesPermitidos={['LOGISTICA']}>
-                <div className="container py-5">
-                  <PanelLogistico />
-                </div>
+            {/* Rutas Protegidas - Solo ADMINISTRADOR DE ACOPIO (LOGISTICA) */}
+            <Route path="/admin-acopio" element={
+              <ProtectedRoute rolesPermitidos={['LOGISTICA']} subRolesPermitidos={['RECEPCIONISTA']}>
+                <PanelAdminAcopio />
               </ProtectedRoute>
             } />
-            <Route path="/recepcion" element={
-              <ProtectedRoute rolesPermitidos={['LOGISTICA']}>
-                <div className="container py-5">
-                  <ControlIngreso />
-                </div>
-              </ProtectedRoute>
-            } />
-            <Route path="/recepcionista" element={
-              <ProtectedRoute rolesPermitidos={['LOGISTICA']}>
-                <DashboardRecepcionista />
-              </ProtectedRoute>
-            } />
-            <Route path="/conductor" element={
-              <ProtectedRoute rolesPermitidos={['LOGISTICA']}>
-                <div className="container py-5">
-                  <PanelConductor />
-                </div>
+            <Route path="/panel-conductor" element={
+              <ProtectedRoute rolesPermitidos={['LOGISTICA']} subRolesPermitidos={['CONDUCTOR']}>
+                <PanelConductor />
               </ProtectedRoute>
             } />
             
             {/* Rutas Protegidas - Solo COORDINADOR */}
             <Route path="/dashboard" element={
               <ProtectedRoute rolesPermitidos={['COORDINADOR']}>
-                <div className="container py-5">
-                  <DashboardCoordinador />
-                </div>
+                <DashboardCoordinador />
               </ProtectedRoute>
             } />
             <Route path="/ingresar-necesidad" element={
               <ProtectedRoute rolesPermitidos={['COORDINADOR']}>
-                <div className="container py-5">
-                  <IngresarNecesidad />
-                </div>
+                <IngresarNecesidad />
               </ProtectedRoute>
             } />
 
