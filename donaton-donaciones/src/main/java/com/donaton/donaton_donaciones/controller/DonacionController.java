@@ -27,16 +27,11 @@ public class DonacionController {
             @RequestBody DonacionRequest donacionReq,
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         Donacion donacion = new Donacion();
-        donacion.setRecurso(donacionReq.getRecurso());
-        donacion.setCantidad(donacionReq.getCantidad());
+        donacion.setNombreArticulo(donacionReq.getNombreArticulo());
+        donacion.setRecursos(donacionReq.getRecursos());
         donacion.setOrigen(donacionReq.getOrigen());
         donacion.setEstado(donacionReq.getEstado());
-        donacion.setCategoria(donacionReq.getCategoria());
         donacion.setDescripcion(donacionReq.getDescripcion());
-        donacion.setEstadoArticulo(donacionReq.getEstadoArticulo());
-        donacion.setFechaVencimiento(donacionReq.getFechaVencimiento());
-        donacion.setUnidadMedida(donacionReq.getUnidadMedida());
-        donacion.setPesoAproximado(donacionReq.getPesoAproximado());
         donacion.setFotoBase64(donacionReq.getFotoBase64());
         donacion.setModalidadEntrega(donacionReq.getModalidadEntrega());
         donacion.setCentroAcopioDestinoId(donacionReq.getCentroAcopioDestinoId());

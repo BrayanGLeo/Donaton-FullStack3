@@ -13,15 +13,13 @@ class DonacionTest {
         LocalDateTime fecha = LocalDateTime.now();
 
         donacion.setId(1L);
-        donacion.setRecurso("Agua Embotellada");
-        donacion.setCantidad(100);
+        donacion.setRecursos("[{\"recurso\":\"Agua Embotellada\",\"cantidad\":100}]");
         donacion.setOrigen("Santiago Centro");
         donacion.setEstado("Pendiente");
         donacion.setFechaRegistro(fecha);
 
         assertEquals(1L, donacion.getId());
-        assertEquals("Agua Embotellada", donacion.getRecurso());
-        assertEquals(100, donacion.getCantidad());
+        assertEquals("[{\"recurso\":\"Agua Embotellada\",\"cantidad\":100}]", donacion.getRecursos());
         assertEquals("Santiago Centro", donacion.getOrigen());
         assertEquals("Pendiente", donacion.getEstado());
         assertEquals(fecha, donacion.getFechaRegistro());
@@ -32,8 +30,7 @@ class DonacionTest {
         LocalDateTime ahora = LocalDateTime.now();
         Donacion donacionParametrizada = new Donacion();
         donacionParametrizada.setId(1L);
-        donacionParametrizada.setRecurso("Ropa");
-        donacionParametrizada.setCantidad(50);
+        donacionParametrizada.setRecursos("[{\"recurso\":\"Ropa\",\"cantidad\":50}]");
         donacionParametrizada.setOrigen("Sede Central");
         donacionParametrizada.setEstado("Pendiente");
         donacionParametrizada.setTrackingId("DON-123456");
@@ -41,8 +38,7 @@ class DonacionTest {
         donacionParametrizada.setAcopioRecepcion("Acopio Norte");
 
         assertEquals(1L, donacionParametrizada.getId());
-        assertEquals("Ropa", donacionParametrizada.getRecurso());
-        assertEquals(50, donacionParametrizada.getCantidad());
+        assertEquals("[{\"recurso\":\"Ropa\",\"cantidad\":50}]", donacionParametrizada.getRecursos());
         assertEquals("Sede Central", donacionParametrizada.getOrigen());
         assertEquals("Pendiente", donacionParametrizada.getEstado());
         assertEquals("DON-123456", donacionParametrizada.getTrackingId());
@@ -55,8 +51,7 @@ class DonacionTest {
         Donacion donacion = new Donacion();
 
         assertNull(donacion.getId());
-        assertNull(donacion.getRecurso());
-        assertNull(donacion.getCantidad());
+        assertNull(donacion.getRecursos());
         assertNull(donacion.getOrigen());
         assertNull(donacion.getEstado());
         assertNull(donacion.getFechaRegistro());

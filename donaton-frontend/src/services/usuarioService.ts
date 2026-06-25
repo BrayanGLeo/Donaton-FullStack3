@@ -146,7 +146,9 @@ export const actualizarEstadoMasivoUsuarios = async (ids: number[], activo: bool
 
 export const cambiarPassword = async (id: number, currentPassword: string, newPassword: string): Promise<void> => {
   try {
-    await axios.put(`/api/auth/usuarios/${id}/password`, { currentPassword, newPassword });
+    const token = localStorage.getItem('donaton_token') || sessionStorage.getItem('donaton_token');
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    await axios.put(`/api/auth/usuarios/${id}/password`, { currentPassword, newPassword }, { headers });
   } catch (error) {
     console.error(`Error al cambiar contraseña para el usuario ${id}:`, error);
     throw error;

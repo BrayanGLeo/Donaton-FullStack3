@@ -38,14 +38,12 @@ class DonacionServiceTest {
     @BeforeEach
     void setUp() {
         donacionEntrada = new Donacion();
-        donacionEntrada.setRecurso("Agua Embotellada");
-        donacionEntrada.setCantidad(100);
+        donacionEntrada.setRecursos("[{\"recurso\":\"Agua Embotellada\",\"cantidad\":100}]");
         donacionEntrada.setOrigen("Centro de Santiago");
 
         donacionGuardada = new Donacion();
         donacionGuardada.setId(1L);
-        donacionGuardada.setRecurso("Agua Embotellada");
-        donacionGuardada.setCantidad(100);
+        donacionGuardada.setRecursos("[{\"recurso\":\"Agua Embotellada\",\"cantidad\":100}]");
         donacionGuardada.setOrigen("Centro de Santiago");
         donacionGuardada.setEstado("Pendiente");
         donacionGuardada.setFechaRegistro(LocalDateTime.now());
@@ -79,7 +77,7 @@ class DonacionServiceTest {
 
         assertNotNull(resultado);
         assertEquals(1, resultado.size());
-        assertEquals("Agua Embotellada", resultado.get(0).getRecurso());
+        assertEquals("[{\"recurso\":\"Agua Embotellada\",\"cantidad\":100}]", resultado.get(0).getRecursos());
         
         verify(repository).findAll();
     }

@@ -141,8 +141,8 @@ export const DonacionList: React.FC<Props> = ({ refreshTrigger }) => {
                 <thead className="table-light">
                   <tr>
                     <th>ID de Seguimiento</th>
-                    <th>Subcategoría</th>
-                    <th>Cantidad</th>
+                    <th>Título / Nombre</th>
+                    <th>Recursos</th>
                     <th>Estado</th>
                     <th>Fecha de Registro</th>
                     <th>Detalle</th>
@@ -154,8 +154,17 @@ export const DonacionList: React.FC<Props> = ({ refreshTrigger }) => {
                       <td className="fw-bold font-monospace text-primary">
                         {canSeeTracking(usuario, donacion) ? (donacion.trackingId || '-') : <span className="text-muted fst-italic">No disponible</span>}
                       </td>
-                      <td>{donacion.recurso}</td>
-                      <td>{donacion.cantidad} {donacion.unidadMedida || ''}</td>
+                      <td>{donacion.nombreArticulo || 'Varias Donaciones'}</td>
+                      <td>{(() => {
+                        try {
+                          const recs = JSON.parse(donacion.recursos || '[]');
+                          if (!Array.isArray(recs) || recs.length === 0) return <span className="text-muted fst-italic">Sin recursos</span>;
+                          const subcats = recs.map((r: any) => r.subCategoria || r.recurso || r.categoria).filter(Boolean);
+                          return subcats.join(', ');
+                        } catch {
+                          return '-';
+                        }
+                      })()}</td>
                       <td>
                         <Badge bg={getEstadoBadge(donacion.estado)}>
                           {donacion.estado || 'REGISTRADA'}
@@ -226,14 +235,49 @@ export const DonacionList: React.FC<Props> = ({ refreshTrigger }) => {
                 {canSeeDonor(usuario) && selectedDonacion.donanteId && (
                   <DetailRow label="Donante" value={selectedDonacion.visibilidad === 'Privada' ? `${getDonanteName(selectedDonacion.donanteId)} (Anónimo en público)` : getDonanteName(selectedDonacion.donanteId)} />
                 )}
-                <DetailRow label="Categoría" value={selectedDonacion.categoria} />
-                <DetailRow label="Subcategoría" value={selectedDonacion.recurso} />
-                <DetailRow label="Descripción" value={selectedDonacion.descripcion} />
-                <DetailRow label="Estado del Artículo" value={selectedDonacion.estadoArticulo} />
-                <DetailRow label="Cantidad" value={`${selectedDonacion.cantidad} ${selectedDonacion.unidadMedida || ''}`} />
-                <DetailRow label="Peso Aproximado" value={selectedDonacion.pesoAproximado ? `${selectedDonacion.pesoAproximado} kg` : undefined} />
-                <DetailRow label="Fecha de Vencimiento" value={selectedDonacion.fechaVencimiento} />
+                <DetailRow label="Título de la Donación" value={selectedDonacion.nombreArticulo || 'Sin título'} />
+                <DetailRow label="Descripción General" value={selectedDonacion.descripcion} />
                 <DetailRow label="Requiere Transporte Especial" value={selectedDonacion.transporteEspecial} />
+                
+                <h6 className="mt-4 mb-2 fw-bold text-success">Recursos Donados</h6>
+                {(() => {
+                  try {
+                    const recs = JSON.parse(selectedDonacion.recursos || '[]');
+                    if (Array.isArray(recs)) {
+                      return (
+                        <div className="table-responsive">
+                          <Table size="sm" bordered hover className="bg-white">
+                            <thead className="table-success">
+                              <tr>
+                                <th>Categoría</th>
+                                <th>Recurso</th>
+                                <th>Estado</th>
+                                <th>Cant.</th>
+                                <th>Vencimiento</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {recs.map((r: any, idx: number) => (
+                                <tr key={`${r.categoria}-${r.subCategoria}-${idx}`}>
+                                  <td>{r.categoria}</td>
+                                  <td>{r.subCategoria}</td>
+                                  <td>{r.estadoArticulo}</td>
+                                  <td>{r.cantidad} {r.unidadMedida}</td>
+                                  <td>{r.fechaVencimiento || '-'}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </Table>
+                        </div>
+                      );
+                    } else {
+                      return <span className="text-muted fst-italic">No hay recursos en esta donación.</span>;
+                    }
+                  } catch (e) {
+                    console.error('Error parseando recursos:', e);
+                    return <span className="text-muted">Error al leer recursos</span>;
+                  }
+                })()}
               </div>
 
               {/* Entrega */}

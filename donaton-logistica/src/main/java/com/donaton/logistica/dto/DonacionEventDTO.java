@@ -3,8 +3,7 @@ package com.donaton.logistica.dto;
 public class DonacionEventDTO {
 
     private Long id;
-    private String recurso;
-    private Integer cantidad;
+    private String recursos;
     private String origen;
     private String estado;
 
@@ -22,20 +21,12 @@ public class DonacionEventDTO {
         this.id = id;
     }
 
-    public String getRecurso() {
-        return recurso;
+    public String getRecursos() {
+        return recursos;
     }
 
-    public void setRecurso(String recurso) {
-        this.recurso = recurso;
-    }
-
-    public Integer getCantidad() {
-        return cantidad;
-    }
-
-    public void setCantidad(Integer cantidad) {
-        this.cantidad = cantidad;
+    public void setRecursos(String recursos) {
+        this.recursos = recursos;
     }
 
     public String getOrigen() {

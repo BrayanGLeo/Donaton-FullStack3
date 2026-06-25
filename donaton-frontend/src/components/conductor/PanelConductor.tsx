@@ -44,6 +44,12 @@ const ViajeCard: React.FC<CardProps> = ({ d, subtab, actionLoading, centrosAcopi
   const destino = centrosAcopio.find(c => c.id === d.centroAcopioDestinoId) 
     || centrosAcopio.find(c => c.region === d.regionRetiro || c.region === d.origen);
 
+  let cantItems = 0;
+  try {
+    const recs = JSON.parse(d.recursos || '[]');
+    if (Array.isArray(recs)) cantItems = recs.reduce((s: number, r: any) => s + (r.cantidad || 0), 0);
+  } catch {}
+
   return (
     <Card className="border-0 shadow-sm mb-4" style={{ borderRadius: '16px', overflow: 'hidden' }}>
       <div style={{ height: '4px', backgroundColor: getBarColor(subtab) }} />
@@ -55,8 +61,8 @@ const ViajeCard: React.FC<CardProps> = ({ d, subtab, actionLoading, centrosAcopi
               {d.estado?.replace('_', ' ')}
             </Badge>
             <h5 className="fw-bold mb-1">
-              {d.recurso}
-              <span className="text-muted fw-normal fs-6"> ({d.cantidad} {d.unidadMedida})</span>
+              {d.nombreArticulo || 'Varias Donaciones'}
+              <span className="text-muted fw-normal fs-6"> ({cantItems} items)</span>
             </h5>
             <p className="text-muted small mb-0">
               <Clock size={14} className="me-1" />
@@ -234,10 +240,15 @@ const SubPanel: React.FC<SubPanelProps> = ({
               <tbody>
                 {paginatedItems.map(d => {
                   const destino = centrosAcopio.find(c => c.id === d.centroAcopioDestinoId) || centrosAcopio.find(c => c.region === d.regionRetiro || c.region === d.origen);
+                  let cantItems = 0;
+                  try {
+                    const recs = JSON.parse(d.recursos || '[]');
+                    if (Array.isArray(recs)) cantItems = recs.reduce((s: number, r: any) => s + (r.cantidad || 0), 0);
+                  } catch {}
                   return (
                     <tr key={d.id}>
-                      <td className="px-3 fw-semibold">{d.recurso}</td>
-                      <td>{d.cantidad} {d.unidadMedida}</td>
+                      <td className="px-3 fw-semibold">{d.nombreArticulo || 'Varias Donaciones'}</td>
+                      <td>{cantItems} items</td>
                       <td>{d.comunaRetiro || d.origen}</td>
                       <td>{esNecesidad ? 'Zona Necesidad' : destino?.nombre || 'Acopio'}</td>
                       <td><Badge bg={getBadgeColor(d.estado || '')}>{d.estado?.replace('_', ' ')}</Badge></td>

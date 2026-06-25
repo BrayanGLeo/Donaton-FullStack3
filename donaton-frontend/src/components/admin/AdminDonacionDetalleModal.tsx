@@ -49,10 +49,36 @@ export const AdminDonacionDetalleModal: React.FC<AdminDonacionDetalleModalProps>
           </Row>
 
           <div>
-            <strong className="text-primary d-block mb-1">Recurso y Detalles</strong>
+            <strong className="text-primary d-block mb-1">Título de la Donación</strong>
             <div className="bg-light p-2 rounded">
-              <span className="fw-semibold">{donacionDetalle.cantidad} {donacionDetalle.unidadMedida ? donacionDetalle.unidadMedida : 'x'}</span> de <strong>{donacionDetalle.recurso}</strong>
-              {Boolean(donacionDetalle.pesoAproximado) && <span className="ms-2 text-muted">({donacionDetalle.pesoAproximado} kg aprox.)</span>}
+              {donacionDetalle.nombreArticulo || 'Sin título'}
+            </div>
+          </div>
+
+          <div>
+            <strong className="text-primary d-block mb-1">Recursos Donados</strong>
+            <div className="bg-light p-2 rounded">
+              {(() => {
+                try {
+                  const recs = JSON.parse(donacionDetalle.recursos || '[]');
+                  if (Array.isArray(recs) && recs.length > 0) {
+                    return (
+                      <ul className="mb-0 ps-3">
+                        {recs.map((r: any, idx: number) => (
+                          <li key={`${r.categoria}-${r.subCategoria}-${idx}`}>
+                            <span className="fw-semibold">{r.cantidad} {r.unidadMedida || 'u.'}</span> de <strong>{r.subCategoria}</strong> <span className="text-muted">({r.categoria} - {r.estadoArticulo})</span>
+                            {r.pesoAproximado ? ` - ${r.pesoAproximado} kg aprox.` : ''}
+                          </li>
+                        ))}
+                      </ul>
+                    );
+                  } else {
+                    return <span className="text-muted fst-italic">No hay recursos especificados</span>;
+                  }
+                } catch {
+                  return <span className="text-danger">Error al cargar recursos.</span>;
+                }
+              })()}
             </div>
           </div>
 
@@ -62,15 +88,7 @@ export const AdminDonacionDetalleModal: React.FC<AdminDonacionDetalleModalProps>
           </div>
 
           <Row>
-            <Col md={4}>
-              <strong className="text-primary d-block mb-1">Categoría</strong>
-              <div className="bg-light p-2 rounded">{donacionDetalle.categoria || 'N/A'}</div>
-            </Col>
-            <Col md={4}>
-              <strong className="text-primary d-block mb-1">Estado Artículo</strong>
-              <div className="bg-light p-2 rounded">{donacionDetalle.estadoArticulo || 'N/A'}</div>
-            </Col>
-            <Col md={4}>
+            <Col md={12}>
               <strong className="text-primary d-block mb-1">Visibilidad</strong>
               <div className="bg-light p-2 rounded">{donacionDetalle.visibilidad || 'Pública'}</div>
             </Col>

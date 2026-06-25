@@ -51,8 +51,7 @@ class DonacionControllerTest {
         
         donacionMock = new Donacion();
         donacionMock.setId(1L);
-        donacionMock.setRecurso(RECURSO_MANTAS);
-        donacionMock.setCantidad(50);
+        donacionMock.setRecursos("[{\"recurso\":\"" + RECURSO_MANTAS + "\",\"cantidad\":50}]");
         donacionMock.setOrigen("Concepción");
         donacionMock.setEstado(ESTADO_PENDIENTE);
         donacionMock.setFechaRegistro(LocalDateTime.now());
@@ -63,8 +62,7 @@ class DonacionControllerTest {
         when(donacionService.registrarDonacion(any(Donacion.class))).thenReturn(donacionMock);
 
         com.donaton.donaton_donaciones.dto.DonacionRequest peticionNueva = new com.donaton.donaton_donaciones.dto.DonacionRequest();
-        peticionNueva.setRecurso(RECURSO_MANTAS);
-        peticionNueva.setCantidad(50);
+        peticionNueva.setRecursos("[{\"recurso\":\"" + RECURSO_MANTAS + "\",\"cantidad\":50}]");
         peticionNueva.setOrigen("Concepción");
 
         mockMvc.perform(post("/api/donaciones")
@@ -72,7 +70,7 @@ class DonacionControllerTest {
                 .content(objectMapper.writeValueAsString(peticionNueva)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.recurso").value(RECURSO_MANTAS))
+                .andExpect(jsonPath("$.recursos").value("[{\"recurso\":\"" + RECURSO_MANTAS + "\",\"cantidad\":50}]"))
                 .andExpect(jsonPath("$.estado").value(ESTADO_PENDIENTE));
     }
 
@@ -86,7 +84,7 @@ class DonacionControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$[0].id").value(1))
-                .andExpect(jsonPath("$[0].recurso").value(RECURSO_MANTAS))
+                .andExpect(jsonPath("$[0].recursos").value("[{\"recurso\":\"" + RECURSO_MANTAS + "\",\"cantidad\":50}]"))
                 .andExpect(jsonPath("$[0].estado").value(ESTADO_PENDIENTE));
     }
 
@@ -94,7 +92,7 @@ class DonacionControllerTest {
     void testActualizarEstadoEndpoint() throws Exception {
         Donacion donacionActualizada = new Donacion();
         donacionActualizada.setId(1L);
-        donacionActualizada.setRecurso(RECURSO_MANTAS);
+        donacionActualizada.setRecursos("[{\"recurso\":\"" + RECURSO_MANTAS + "\",\"cantidad\":50}]");
         donacionActualizada.setEstado("EN TRANSITO");
 
         when(donacionService.actualizarEstado(1L, "EN TRANSITO")).thenReturn(donacionActualizada);

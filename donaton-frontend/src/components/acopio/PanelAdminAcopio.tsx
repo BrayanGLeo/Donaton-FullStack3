@@ -150,8 +150,15 @@ const PanelAdminAcopio: React.FC = () => {
 
   const inventarioMap = new Map<string, number>();
   donacionesRecibidas.forEach(d => {
-    const key = `${d.categoria || 'Otros'}|${d.recurso || 'General'}|${d.unidadMedida || 'Unidades'}`;
-    inventarioMap.set(key, (inventarioMap.get(key) || 0) + (d.cantidad || 1));
+    try {
+      const recs = JSON.parse(d.recursos || '[]');
+      if (Array.isArray(recs)) {
+        recs.forEach((r: any) => {
+          const key = `${r.categoria || 'Otros'}|${r.subCategoria || 'General'}|${r.unidadMedida || r.unidad || 'Unidades'}`;
+          inventarioMap.set(key, (inventarioMap.get(key) || 0) + (r.cantidad || 1));
+        });
+      }
+    } catch {}
   });
   const inventarioLista = Array.from(inventarioMap.entries()).map(([key, cant]) => {
     const [cat, subcat, uni] = key.split('|');
@@ -263,7 +270,7 @@ const PanelAdminAcopio: React.FC = () => {
     const recursos = parseRecursos(necesidad.recursos);
     let suficientes = true;
     const detalles = recursos.map(rec => {
-      const inv = inventarioLista.find(i => i.categoria === rec.categoria && i.subcategoria === rec.subcategoria && i.unidadMedida === rec.unidad);
+      const inv = inventarioLista.find(i => i.categoria === rec.categoria && i.subcategoria === (rec.subcategoria || rec.subCategoria) && i.unidadMedida === rec.unidad);
       const cantInv = inv ? inv.cantidad : 0;
       if (cantInv < rec.cantidad) suficientes = false;
       return {
@@ -359,9 +366,18 @@ const PanelAdminAcopio: React.FC = () => {
                               return (
                                 <tr key={don.id}>
                                   <td><span className="fw-bold text-primary">#{don.id}</span></td>
-                                  <td><span className="fw-bold">{don.cantidad}</span> <small className="text-muted">{don.unidadMedida}</small></td>
-                                  <td>{don.recurso || 'N/A'}</td>
-                                  <td>{don.categoria}</td>
+                                  <td><span className="fw-bold">
+                                    {(() => {
+                                      let cant = 0;
+                                      try {
+                                        const recs = JSON.parse(don.recursos || '[]');
+                                        if (Array.isArray(recs)) cant = recs.reduce((s: number, r: any) => s + (r.cantidad || 0), 0);
+                                      } catch {}
+                                      return cant;
+                                    })()}
+                                  </span> items</td>
+                                  <td>{don.nombreArticulo || 'Varias Donaciones'}</td>
+                                  <td>Varias</td>
                                   <td>
                                     {don.transporteEspecial ? (
                                       <Badge bg="warning" className="soft-badge bg-opacity-10 text-warning border border-warning">Especial</Badge>
@@ -446,7 +462,7 @@ const PanelAdminAcopio: React.FC = () => {
                           <Marker key={`donmap-${don.id}`} position={[don.latitudRetiro, don.longitudRetiro]} icon={donacionMarkerIcon}>
                             <Popup className="custom-popup">
                               <div className="text-center p-1">
-                                <h6 className="mb-1 fw-bold">ID #{don.id} - {don.categoria}</h6>
+                                <h6 className="mb-1 fw-bold">ID #{don.id} - {don.nombreArticulo || 'Varias Donaciones'}</h6>
                                 <p className="text-muted small mb-0">{don.direccionRetiroCalle} {don.direccionRetiroNumero}</p>
                               </div>
                             </Popup>
@@ -476,8 +492,17 @@ const PanelAdminAcopio: React.FC = () => {
                     {paginatedDonacionesRecibidas.map(don => (
                       <tr key={don.id}>
                         <td><span className="fw-bold text-primary">#{don.id}</span></td>
-                        <td className="fw-semibold text-dark">{don.categoria}</td>
-                        <td className="text-muted">{don.cantidad || 1} {don.unidadMedida}</td>
+                        <td className="fw-semibold text-dark">{don.nombreArticulo || 'Varias Donaciones'}</td>
+                        <td className="text-muted">
+                          {(() => {
+                            let cant = 0;
+                            try {
+                              const recs = JSON.parse(don.recursos || '[]');
+                              if (Array.isArray(recs)) cant = recs.reduce((s: number, r: any) => s + (r.cantidad || 0), 0);
+                            } catch {}
+                            return `${cant} items`;
+                          })()}
+                        </td>
                         <td className="text-muted">{don.comunaRetiro || 'N/A'}</td>
                         <td>
                           <Badge bg={getBadgeColor(don.estado || '')} className={`soft-badge bg-opacity-10 text-${getBadgeColor(don.estado || '')} border border-${getBadgeColor(don.estado || '')}`}>
@@ -852,16 +877,22 @@ const PanelAdminAcopio: React.FC = () => {
               <Col md={6}>
                 <h6 className="fw-bold text-muted mb-3 border-bottom pb-2">Información General</h6>
                 <p className="mb-2"><strong>ID Tracking:</strong> #{donacionDetalle.id}</p>
-                <p className="mb-2"><strong>Categoría:</strong> {donacionDetalle.categoria}</p>
-                <p className="mb-2"><strong>Recurso:</strong> {donacionDetalle.recurso || 'No especificado'}</p>
-                <p className="mb-2"><strong>Cantidad:</strong> {donacionDetalle.cantidad} {donacionDetalle.unidadMedida}</p>
+                <p className="mb-2"><strong>Título:</strong> {donacionDetalle.nombreArticulo || 'Sin título'}</p>
+                <p className="mb-2"><strong>Recursos:</strong> {(() => {
+                  let cant = 0;
+                  try {
+                    const recs = JSON.parse(donacionDetalle.recursos || '[]');
+                    if (Array.isArray(recs)) cant = recs.reduce((s: number, r: any) => s + (r.cantidad || 0), 0);
+                  } catch {}
+                  return `${cant} items en total`;
+                })()}</p>
                 <p className="mb-2"><strong>Estado Actual:</strong> <Badge bg={getBadgeColor(donacionDetalle.estado || '')}>{donacionDetalle.estado}</Badge></p>
                 <p className="mb-2"><strong>Fecha Registro:</strong> {new Date(donacionDetalle.fechaRegistro).toLocaleString()}</p>
               </Col>
               <Col md={6}>
                 <h6 className="fw-bold text-muted mb-3 border-bottom pb-2">Logística</h6>
                 <p className="mb-2"><strong>Vehículo Especial:</strong> {donacionDetalle.transporteEspecial ? <Badge bg="warning">Sí</Badge> : 'No'}</p>
-                <p className="mb-2"><strong>Peso Aproximado:</strong> {donacionDetalle.pesoAproximado ? `${donacionDetalle.pesoAproximado} kg` : 'No especificado'}</p>
+
                 <p className="mb-2"><strong>Horario Disponible:</strong> {donacionDetalle.disponibilidadHoraria || 'Cualquier horario'}</p>
                 <p className="mb-2"><strong>Donante ID:</strong> {donacionDetalle.donanteId || 'No registrado'}</p>
                 <p className="mb-2"><strong>Conductor ID:</strong> {donacionDetalle.conductorId || 'No asignado'}</p>

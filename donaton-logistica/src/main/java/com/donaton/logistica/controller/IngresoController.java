@@ -19,8 +19,8 @@ public class IngresoController {
     }
 
     @PutMapping("/{trackingId}")
-    public ResponseEntity<Recepcion> confirmarIngreso(@PathVariable String trackingId) {
-        Recepcion recepcion = logisticaService.confirmarIngreso(trackingId);
-        return ResponseEntity.ok(recepcion);
+    public ResponseEntity<java.util.List<Recepcion>> confirmarIngreso(@PathVariable String trackingId) {
+        java.util.List<Recepcion> recepciones = logisticaService.confirmarIngreso(trackingId);
+        return ResponseEntity.ok(recepciones);
     }
 }

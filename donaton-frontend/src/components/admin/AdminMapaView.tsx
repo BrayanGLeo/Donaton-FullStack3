@@ -196,8 +196,9 @@ export const AdminMapaView: React.FC<AdminMapaViewProps> = ({
                           </Form.Select>
                         </div>
                         <p className="mb-1 fw-semibold text-dark" style={{ fontSize: '0.9rem' }}>
-                          {d.cantidad} {d.unidadMedida ? d.unidadMedida : 'x'} {d.recurso}
+                          {d.nombreArticulo || 'Varias Donaciones'}
                         </p>
+                        <div className="mb-1">{renderRecursos(d.recursos)}</div>
                         <small className="text-muted d-block"><Truck size={12} className="me-1"/>{d.direccionRetiro || (d.direccionRetiroCalle + ' ' + (d.direccionRetiroNumero ? '#' + d.direccionRetiroNumero : '')).trim()}, {d.comunaRetiro}, {d.regionRetiro}</small>
                         <div className="mt-2 text-end">
                           <Button variant="outline-primary" size="sm" style={{ fontSize: '0.75rem', padding: '0.2rem 0.6rem', borderRadius: '8px' }} onClick={() => setDonacionDetalle(d)}>Ver Detalles</Button>
@@ -268,8 +269,8 @@ export const AdminMapaView: React.FC<AdminMapaViewProps> = ({
                   {showDonaciones && donacionesLogistica.map(d => (
                     <Marker key={`don-marker-${d.id}`} position={[d.latitudRetiro || 0, d.longitudRetiro || 0]} icon={userIcon}>
                       <Popup>
-                        <strong>Donación #{d.id}</strong><br/>
-                        {d.cantidad}x {d.recurso}<br/>
+                        <strong>Donación #{d.id} - {d.nombreArticulo || 'Varias Donaciones'}</strong><br/>
+                        {renderRecursos(d.recursos)}
                         <Badge bg="info" className="mt-1">{d.estado}</Badge>
                       </Popup>
                     </Marker>

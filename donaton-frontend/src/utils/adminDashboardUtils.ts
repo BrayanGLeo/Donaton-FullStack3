@@ -63,7 +63,7 @@ export const filterDonaciones = (
     if (filtros.id && !d.id.toString().includes(filtros.id)) return false;
     if (filtros.region && !d.regionRetiro?.toLowerCase().includes(filtros.region.toLowerCase())) return false;
     if (filtros.comuna && !d.comunaRetiro?.toLowerCase().includes(filtros.comuna.toLowerCase())) return false;
-    if (filtros.categoria && !d.categoria?.toLowerCase().includes(filtros.categoria.toLowerCase())) return false;
+    if (filtros.categoria && !d.recursos?.toLowerCase().includes(filtros.categoria.toLowerCase())) return false;
     if (filtros.centroAcopio && d.centroAcopioDestinoId?.toString() !== filtros.centroAcopio) return false;
     if (filtros.donante) {
       const nombre = getDonanteNameFromMap(d.donanteId, usuariosMap).toLowerCase();

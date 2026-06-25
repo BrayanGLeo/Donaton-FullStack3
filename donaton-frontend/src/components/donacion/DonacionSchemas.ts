@@ -43,78 +43,92 @@ export const getMaxYearsForSubcategory = (subCategoria?: string): number => {
 
 export const donacionStep1Schema = z.object({
   nombreArticulo: z.string().min(1, 'El nombre es requerido').max(100, 'Máximo 100 caracteres'),
-  categoria: z.string().min(1, 'La categoría es requerida'),
-  subCategoria: z.string().optional(),
-  estadoArticulo: z.string().min(1, 'El estado es requerido'),
-  unidadMedida: z.string().min(1, 'La unidad es requerida'),
-  cantidad: z.number().or(z.nan())
-    .transform(val => Number.isNaN(val) ? 0 : val)
-    .pipe(
-      z.number()
-        .min(0.01, 'La cantidad es requerida')
-        .max(999999, 'Cantidad máxima de 6 dígitos excedida')
-    ),
-  pesoAproximado: z.number().or(z.nan()).optional()
-    .transform(val => (val === undefined || Number.isNaN(val)) ? undefined : val)
-    .pipe(
-      z.number()
-        .min(0.01, 'El peso debe ser mayor a 0')
-        .max(99999, 'Peso máximo de 5 dígitos excedido')
-        .optional()
-    ),
+  recursos: z.array(
+    z.object({
+      id: z.string().optional(),
+      categoria: z.string().min(1, 'La categoría es requerida'),
+      subCategoria: z.string().optional(),
+      estadoArticulo: z.string().min(1, 'El estado es requerido'),
+      unidadMedida: z.string().min(1, 'La unidad es requerida'),
+      cantidad: z.number().or(z.nan())
+        .transform(val => Number.isNaN(val) ? 0 : val)
+        .pipe(
+          z.number()
+            .min(0.01, 'La cantidad es requerida')
+            .max(999999, 'Cantidad máxima de 6 dígitos excedida')
+        ),
+      pesoAproximado: z.number().or(z.nan()).optional()
+        .transform(val => (val === undefined || Number.isNaN(val)) ? undefined : val)
+        .pipe(
+          z.number()
+            .min(0.01, 'El peso debe ser mayor a 0')
+            .max(99999, 'Peso máximo de 5 dígitos excedido')
+            .optional()
+        ),
+      fechaVencimiento: z.string().optional(),
+    })
+  ).min(1, "Debes agregar al menos un recurso a donar"),
   descripcion: z.string()
     .min(1, 'La descripción es requerida')
     .max(3000, 'La descripción no puede exceder 3000 caracteres'),
-  fechaVencimiento: z.string().optional(),
   fotoBase64: z.string().optional(),
   visibilidad: z.string({ message: 'Seleccione la visibilidad' }).min(1, 'Seleccione la visibilidad'),
 }).superRefine((data, ctx) => {
-  if (!data.subCategoria) {
-    ctx.addIssue({
-      code: "custom",
-      message: "Selecciona una subcategoría",
-      path: ["subCategoria"],
-    });
-  }
-
-  const requiresDate = ["Alimentos", "Agua e Hidratación", "Insumos Médicos", "Alimentos para Mascotas"].includes(data.categoria);
-  if (requiresDate) {
-    if (data.fechaVencimiento) {
-      const selectedDate = new Date(data.fechaVencimiento);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      if (selectedDate <= today) {
-        ctx.addIssue({
-          code: "custom",
-          message: "La fecha debe ser posterior a hoy",
-          path: ["fechaVencimiento"],
-        });
-      }
-      
-      const maxYears = getMaxYearsForSubcategory(data.subCategoria);
-      const maxDate = new Date();
-      maxDate.setFullYear(maxDate.getFullYear() + maxYears);
-      if (selectedDate > maxDate) {
-        ctx.addIssue({
-          code: "custom",
-          message: `La fecha no puede exceder los ${maxYears} años para esta subcategoría`,
-          path: ["fechaVencimiento"],
-        });
-      }
-    } else {
+  data.recursos.forEach((recurso, index) => {
+    if (!recurso.subCategoria) {
       ctx.addIssue({
         code: "custom",
-        message: "La fecha de vencimiento es requerida para esta categoría",
-        path: ["fechaVencimiento"],
+        message: "Selecciona una subcategoría",
+        path: ["recursos", index, "subCategoria"],
       });
     }
-  }
+
+    const requiresDate = ["Alimentos", "Agua e Hidratación", "Insumos Médicos", "Alimentos para Mascotas"].includes(recurso.categoria);
+    if (requiresDate) {
+      if (recurso.fechaVencimiento) {
+        const selectedDate = new Date(recurso.fechaVencimiento);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (selectedDate <= today) {
+          ctx.addIssue({
+            code: "custom",
+            message: "La fecha debe ser posterior a hoy",
+            path: ["recursos", index, "fechaVencimiento"],
+          });
+        }
+        
+        const maxYears = getMaxYearsForSubcategory(recurso.subCategoria);
+        const maxDate = new Date();
+        maxDate.setFullYear(maxDate.getFullYear() + maxYears);
+        if (selectedDate > maxDate) {
+          ctx.addIssue({
+            code: "custom",
+            message: `La fecha no puede exceder los ${maxYears} años para esta subcategoría`,
+            path: ["recursos", index, "fechaVencimiento"],
+          });
+        }
+      } else {
+        ctx.addIssue({
+          code: "custom",
+          message: "La fecha de vencimiento es requerida para esta categoría",
+          path: ["recursos", index, "fechaVencimiento"],
+        });
+      }
+    }
+  });
 }).superRefine((data, ctx) => {
   for (const [key, value] of Object.entries(data)) {
     if (typeof value === 'string' && value.startsWith(' ')) {
       ctx.addIssue({ code: "custom", message: "No puede empezar con un espacio", path: [key] });
     }
   }
+  data.recursos.forEach((recurso, index) => {
+    for (const [key, value] of Object.entries(recurso)) {
+      if (typeof value === 'string' && value.startsWith(' ')) {
+        ctx.addIssue({ code: "custom", message: "No puede empezar con un espacio", path: ["recursos", index, key] });
+      }
+    }
+  });
 });
 
 export const donacionStep2Schema = z.object({

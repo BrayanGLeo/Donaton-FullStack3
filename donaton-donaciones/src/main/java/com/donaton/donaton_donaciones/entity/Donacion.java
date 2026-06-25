@@ -15,23 +15,19 @@ public class Donacion {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String recurso;
-    private Integer cantidad;
+    @Column(length = 100)
+    private String nombreArticulo;
+    
+    @Column(columnDefinition = "LONGTEXT")
+    private String recursos;
     private String origen;
     private String estado;
     private String trackingId;
     private LocalDateTime fechaRegistro;
     private String acopioRecepcion;
 
-    private String categoria;
-    
     @Column(length = 1000)
     private String descripcion;
-    
-    private String estadoArticulo;
-    private String fechaVencimiento;
-    private String unidadMedida;
-    private Double pesoAproximado;
     
     @Column(columnDefinition = "LONGTEXT")
     private String fotoBase64;
@@ -60,11 +56,11 @@ public class Donacion {
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
-    public String getRecurso() { return recurso; }
-    public void setRecurso(String recurso) { this.recurso = recurso; }
+    public String getNombreArticulo() { return nombreArticulo; }
+    public void setNombreArticulo(String nombreArticulo) { this.nombreArticulo = nombreArticulo; }
 
-    public Integer getCantidad() { return cantidad; }
-    public void setCantidad(Integer cantidad) { this.cantidad = cantidad; }
+    public String getRecursos() { return recursos; }
+    public void setRecursos(String recursos) { this.recursos = recursos; }
 
     public String getOrigen() { return origen; }
     public void setOrigen(String origen) { this.origen = origen; }
@@ -81,23 +77,8 @@ public class Donacion {
     public String getAcopioRecepcion() { return acopioRecepcion; }
     public void setAcopioRecepcion(String acopioRecepcion) { this.acopioRecepcion = acopioRecepcion; }
 
-    public String getCategoria() { return categoria; }
-    public void setCategoria(String categoria) { this.categoria = categoria; }
-
     public String getDescripcion() { return descripcion; }
     public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
-
-    public String getEstadoArticulo() { return estadoArticulo; }
-    public void setEstadoArticulo(String estadoArticulo) { this.estadoArticulo = estadoArticulo; }
-
-    public String getFechaVencimiento() { return fechaVencimiento; }
-    public void setFechaVencimiento(String fechaVencimiento) { this.fechaVencimiento = fechaVencimiento; }
-
-    public String getUnidadMedida() { return unidadMedida; }
-    public void setUnidadMedida(String unidadMedida) { this.unidadMedida = unidadMedida; }
-
-    public Double getPesoAproximado() { return pesoAproximado; }
-    public void setPesoAproximado(Double pesoAproximado) { this.pesoAproximado = pesoAproximado; }
 
     public String getFotoBase64() { return fotoBase64; }
     public void setFotoBase64(String fotoBase64) { this.fotoBase64 = fotoBase64; }

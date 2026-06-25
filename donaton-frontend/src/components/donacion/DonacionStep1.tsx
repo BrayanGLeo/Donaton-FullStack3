@@ -1,6 +1,7 @@
-import React from 'react';
-import { Form, Row, Col } from 'react-bootstrap';
-import { useFormContext } from 'react-hook-form';
+import React, { useState } from 'react';
+import { Form, Row, Col, Button, Card, Table, Badge } from 'react-bootstrap';
+import { useFormContext, useFieldArray } from 'react-hook-form';
+import { Trash2, Plus } from 'lucide-react';
 import type { DonacionGlobalValues } from './DonacionSchemas';
 import { getMaxYearsForSubcategory } from './DonacionSchemas';
 
@@ -117,9 +118,83 @@ const SUBCATEGORIAS: Record<string, string[]> = {
   "Otro": []
 };
 
+const INITIAL_TEMP_RECURSO = {
+  categoria: '',
+  subCategoria: '',
+  estadoArticulo: '',
+  unidadMedida: '',
+  cantidad: '',
+  pesoAproximado: '',
+  fechaVencimiento: ''
+};
+
+const validateFechaVencimiento = (tempRecurso: typeof INITIAL_TEMP_RECURSO, errs: Record<string, string>) => {
+  const requiresDate = ["Alimentos", "Agua e Hidratación", "Insumos Médicos", "Alimentos para Mascotas"].includes(tempRecurso.categoria);
+  
+  if (!requiresDate) return;
+
+  if (!tempRecurso.fechaVencimiento) {
+    errs.fechaVencimiento = "La fecha de vencimiento es obligatoria para esta categoría";
+    return;
+  }
+
+  const today = new Date().toISOString().split('T')[0];
+  if (tempRecurso.fechaVencimiento < today) {
+    errs.fechaVencimiento = "La fecha de vencimiento no puede estar en el pasado";
+    return;
+  }
+
+  const maxYears = getMaxYearsForSubcategory(tempRecurso.subCategoria);
+  const maxD = new Date();
+  maxD.setFullYear(maxD.getFullYear() + maxYears);
+  const maxDate = maxD.toISOString().split('T')[0];
+  
+  if (tempRecurso.fechaVencimiento > maxDate) {
+    errs.fechaVencimiento = `La fecha de vencimiento no puede exceder los próximos ${maxYears} años`;
+  }
+};
+
+const validateRecursoLocal = (tempRecurso: typeof INITIAL_TEMP_RECURSO) => {
+  const errs: Record<string, string> = {};
+
+  if (!tempRecurso.categoria) errs.categoria = "La categoría es obligatoria";
+  if (!tempRecurso.subCategoria) errs.subCategoria = "La subcategoría es obligatoria";
+  
+  const hideEstado = [
+    "Agua e Hidratación",
+    "Artículos de Higiene Personal",
+    "Insumos Médicos"
+  ].includes(tempRecurso.categoria) || tempRecurso.categoria.toLowerCase().includes("alimento");
+
+  if (!hideEstado && !tempRecurso.estadoArticulo) {
+    errs.estadoArticulo = "El estado del artículo es obligatorio";
+  }
+
+  if (!tempRecurso.unidadMedida) errs.unidadMedida = "La unidad de medida es obligatoria";
+  
+  const cantidadNum = Number(tempRecurso.cantidad);
+  if (!tempRecurso.cantidad || Number.isNaN(cantidadNum) || cantidadNum <= 0) {
+    errs.cantidad = "Debe ingresar una cantidad válida mayor a 0";
+  }
+
+  validateFechaVencimiento(tempRecurso, errs);
+
+  return { errs, hideEstado, cantidadNum };
+};
+
 export const DonacionStep1: React.FC = () => {
-  const { register, watch, setValue, formState: { errors } } = useFormContext<DonacionGlobalValues>();
+  const { register, control, watch, setValue, trigger, formState: { errors } } = useFormContext<DonacionGlobalValues>();
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "recursos"
+  });
+
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const [tempRecurso, setTempRecurso] = useState(INITIAL_TEMP_RECURSO);
+  const [localErrors, setLocalErrors] = useState<Record<string, string>>({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 50;
 
   const blockInvalidNumberKeys = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (['e', 'E', '+', '-'].includes(e.key)) {
@@ -127,51 +202,8 @@ export const DonacionStep1: React.FC = () => {
     }
   };
 
-  const watchCategoria = watch('categoria');
-  const watchSubCategoria = watch('subCategoria');
   const watchFoto = watch('fotoBase64');
   const watchDescripcion = watch('descripcion') || "";
-  
-  const maxDateStr = React.useMemo(() => {
-    const maxYears = getMaxYearsForSubcategory(watchSubCategoria);
-    const d = new Date();
-    d.setFullYear(d.getFullYear() + maxYears);
-    return d.toISOString().split('T')[0];
-  }, [watchSubCategoria]);
-  
-  const requiresDate = ["Alimentos", "Agua e Hidratación", "Insumos Médicos", "Alimentos para Mascotas"].includes(watchCategoria);
-  
-  const hideEstado = [
-    "Agua e Hidratación",
-    "Artículos de Higiene Personal",
-    "Insumos Médicos"
-  ].includes(watchCategoria) || watchCategoria?.toLowerCase().includes("alimento");
-
-  const unidadesDisponibles = watchCategoria ? (UNIDADES_POR_CATEGORIA[watchCategoria] || UNIDADES_POR_CATEGORIA["Otro"]) : [];
-
-  React.useEffect(() => {
-    if (hideEstado) {
-      setValue('estadoArticulo', 'Nuevo', { shouldValidate: true });
-    }
-  }, [hideEstado, setValue]);
-
-  React.useEffect(() => {
-    const unidadActual = watch('unidadMedida');
-    if (unidadActual && watchCategoria && !unidadesDisponibles.includes(unidadActual)) {
-      setValue('unidadMedida', '', { shouldValidate: true });
-    }
-  }, [watchCategoria, unidadesDisponibles, setValue, watch]);
-
-  React.useEffect(() => {
-    if (watchSubCategoria && watchSubCategoria !== 'Otro') {
-      setValue('nombreArticulo', watchSubCategoria, { shouldValidate: true });
-    } else if (watchSubCategoria === 'Otro') {
-      setValue('nombreArticulo', '', { shouldValidate: true });
-    }
-  }, [watchSubCategoria, setValue]);
-
-  const opcionesSubCategoria = watchCategoria ? [...(SUBCATEGORIAS[watchCategoria] || []), "Otro"] : [];
-  const showNombreInput = watchSubCategoria === 'Otro' || watchCategoria === 'Otro';
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -193,136 +225,67 @@ export const DonacionStep1: React.FC = () => {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  const handleAgregarRecurso = async () => {
+    const { errs, hideEstado, cantidadNum } = validateRecursoLocal(tempRecurso);
+
+    if (Object.keys(errs).length > 0) {
+      setLocalErrors(errs);
+      return;
+    }
+
+    // Validacion correcta, agregar al fieldArray
+    append({
+      categoria: tempRecurso.categoria,
+      subCategoria: tempRecurso.subCategoria,
+      estadoArticulo: hideEstado ? 'Nuevo' : tempRecurso.estadoArticulo,
+      unidadMedida: tempRecurso.unidadMedida,
+      cantidad: cantidadNum,
+      pesoAproximado: tempRecurso.pesoAproximado ? Number(tempRecurso.pesoAproximado) : undefined,
+      fechaVencimiento: tempRecurso.fechaVencimiento || undefined
+    });
+
+    // Limpiar form temporal y errores
+    setTempRecurso(INITIAL_TEMP_RECURSO);
+    setLocalErrors({});
+    
+    // Limpiar error root de validación del schema si había uno
+    trigger('recursos');
+  };
+
+  const unidadesDisponibles = tempRecurso.categoria ? (UNIDADES_POR_CATEGORIA[tempRecurso.categoria] || UNIDADES_POR_CATEGORIA["Otro"]) : [];
+  const opcionesSubCategoria = tempRecurso.categoria ? [...(SUBCATEGORIAS[tempRecurso.categoria] || []), "Otro"] : [];
+  
+  const hideEstadoLocal = [
+    "Agua e Hidratación",
+    "Artículos de Higiene Personal",
+    "Insumos Médicos"
+  ].includes(tempRecurso.categoria) || tempRecurso.categoria.toLowerCase().includes("alimento");
+
+  const requiresDateLocal = ["Alimentos", "Agua e Hidratación", "Insumos Médicos", "Alimentos para Mascotas"].includes(tempRecurso.categoria);
+
+  const maxDateStrLocal = (() => {
+    const maxYears = getMaxYearsForSubcategory(tempRecurso.subCategoria);
+    const d = new Date();
+    d.setFullYear(d.getFullYear() + maxYears);
+    return d.toISOString().split('T')[0];
+  })();
+
   return (
     <div>
-      <h4 className="fw-bold text-primary mb-4 border-bottom pb-2">Detalles del Artículo</h4>
+      <h4 className="fw-bold text-primary mb-4 border-bottom pb-2">Detalles Generales de la Donación</h4>
 
       <Row>
-        <Col md={6}>
+        <Col md={12}>
           <Form.Group className="mb-4">
-            <Form.Label className="fw-semibold">Categoría <span className="text-danger">*</span></Form.Label>
-            <Form.Select 
-              {...register('categoria')} 
-              isInvalid={!!errors.categoria}
-              onChange={(e) => {
-                setValue('categoria', e.target.value, { shouldValidate: true });
-                setValue('subCategoria', '', { shouldValidate: true });
-              }}
-            >
-              <option value="">Selecciona una categoría</option>
-              {CATEGORIAS_DONACION.map(c => <option key={c} value={c}>{c}</option>)}
-            </Form.Select>
-            <Form.Control.Feedback type="invalid">{errors.categoria?.message}</Form.Control.Feedback>
-          </Form.Group>
-        </Col>
-
-        {watchCategoria && (
-          <Col md={6}>
-            <Form.Group className="mb-4">
-              <Form.Label className="fw-semibold">Subcategoría (Tipo de Artículo) <span className="text-danger">*</span></Form.Label>
-              <Form.Select {...register('subCategoria')} isInvalid={!!errors.subCategoria}>
-                <option value="">Selecciona una opción</option>
-                {opcionesSubCategoria.map(a => <option key={a} value={a}>{a}</option>)}
-              </Form.Select>
-              <Form.Control.Feedback type="invalid">{errors.subCategoria?.message}</Form.Control.Feedback>
-            </Form.Group>
-          </Col>
-        )}
-
-        {showNombreInput && (
-          <Col md={12}>
-            <Form.Group className="mb-4">
-              <Form.Label className="fw-semibold">Especifique el Nombre del Artículo <span className="text-danger">*</span></Form.Label>
-              <Form.Control 
-                type="text" 
-                placeholder="Ej. Paracetamol 500mg, Fideos Carozzi 400g, etc." 
-                maxLength={100}
-                {...register('nombreArticulo')} 
-                isInvalid={!!errors.nombreArticulo} 
-              />
-              <Form.Control.Feedback type="invalid">{errors.nombreArticulo?.message}</Form.Control.Feedback>
-            </Form.Group>
-          </Col>
-        )}
-
-        {!hideEstado && (
-          <Col md={6}>
-            <Form.Group className="mb-4">
-              <Form.Label className="fw-semibold">Estado del Artículo <span className="text-danger">*</span></Form.Label>
-              <Form.Select {...register('estadoArticulo')} isInvalid={!!errors.estadoArticulo}>
-                <option value="">Selecciona el estado</option>
-                <option value="Nuevo">Nuevo (Sin abrir/Sin uso)</option>
-                <option value="Buen Estado">Buen Estado (Usado pero funcional)</option>
-                <option value="Para Reparar">Para Reparar (Requiere arreglos menores)</option>
-              </Form.Select>
-              <Form.Control.Feedback type="invalid">{errors.estadoArticulo?.message}</Form.Control.Feedback>
-            </Form.Group>
-          </Col>
-        )}
-      </Row>
-
-      <Row>
-        <Col md={6}>
-          <Form.Group className="mb-4">
-            <Form.Label className="fw-semibold">Unidad de Medida <span className="text-danger">*</span></Form.Label>
-            <Form.Select {...register('unidadMedida')} isInvalid={!!errors.unidadMedida} disabled={!watchCategoria}>
-              <option value="">Selecciona la unidad</option>
-              {unidadesDisponibles.map(u => <option key={u} value={u}>{u}</option>)}
-            </Form.Select>
-            <Form.Control.Feedback type="invalid">{errors.unidadMedida?.message}</Form.Control.Feedback>
-          </Form.Group>
-        </Col>
-        <Col md={6}>
-          <Form.Group className="mb-4">
-            <Form.Label className="fw-semibold">Cantidad <span className="text-danger">*</span></Form.Label>
+            <Form.Label className="fw-semibold">Título de la Donación <span className="text-danger">*</span></Form.Label>
             <Form.Control 
-              type="number" 
-              step="any" 
-              min="0.01" 
-              max="999999"
-              onKeyDown={blockInvalidNumberKeys}
-              onInput={(e) => {
-                if (Number(e.currentTarget.value) > 999999) {
-                  e.currentTarget.value = '999999';
-                }
-              }}
-              {...register('cantidad', { valueAsNumber: true })} 
-              isInvalid={!!errors.cantidad} 
+              type="text" 
+              placeholder="Ej. Donación de ropa y alimentos, Kit de primeros auxilios, etc." 
+              maxLength={100}
+              {...register('nombreArticulo')} 
+              isInvalid={!!errors.nombreArticulo} 
             />
-            <Form.Control.Feedback type="invalid">{errors.cantidad?.message}</Form.Control.Feedback>
-          </Form.Group>
-        </Col>
-      </Row>
-
-      <Row>
-        {requiresDate && (
-          <Col md={6}>
-            <Form.Group className="mb-4">
-              <Form.Label className="fw-semibold">Fecha de Vencimiento <span className="text-danger">*</span></Form.Label>
-              <Form.Control type="date" max={maxDateStr} {...register('fechaVencimiento')} isInvalid={!!errors.fechaVencimiento} />
-              <Form.Control.Feedback type="invalid">{errors.fechaVencimiento?.message}</Form.Control.Feedback>
-              <Form.Text className="text-muted">Requerido para alimentos o insumos médicos.</Form.Text>
-            </Form.Group>
-          </Col>
-        )}
-        <Col md={requiresDate ? 6 : 12}>
-          <Form.Group className="mb-4">
-            <Form.Label className="fw-semibold">Peso Aproximado (kg) <span className="text-muted">(Opcional)</span></Form.Label>
-            <Form.Control 
-              type="number" 
-              step="any" 
-              min="0.01" 
-              max="99999"
-              onKeyDown={blockInvalidNumberKeys}
-              onInput={(e) => {
-                if (Number(e.currentTarget.value) > 99999) {
-                  e.currentTarget.value = '99999';
-                }
-              }}
-              {...register('pesoAproximado', { valueAsNumber: true })} 
-              isInvalid={!!errors.pesoAproximado} 
-            />
-            <Form.Control.Feedback type="invalid">{errors.pesoAproximado?.message}</Form.Control.Feedback>
+            <Form.Control.Feedback type="invalid">{errors.nombreArticulo?.message}</Form.Control.Feedback>
           </Form.Group>
         </Col>
       </Row>
@@ -333,7 +296,7 @@ export const DonacionStep1: React.FC = () => {
           as="textarea" 
           rows={3} 
           maxLength={3000}
-          placeholder="Describe el artículo, marca, modelo, características..." 
+          placeholder="Describe la donación, marcas, modelos, características importantes..." 
           {...register('descripcion')} 
           isInvalid={!!errors.descripcion} 
         />
@@ -347,8 +310,262 @@ export const DonacionStep1: React.FC = () => {
         </div>
       </Form.Group>
 
+      <h4 className="fw-bold text-primary mb-4 border-bottom pb-2 mt-5">Añadir Recurso a Donar</h4>
+      {errors.recursos?.root && (
+        <div className="alert alert-danger p-2 mb-4">
+          {errors.recursos.root.message}
+        </div>
+      )}
+      {fields.length === 0 && !errors.recursos?.root && (
+        <div className="alert alert-warning p-2 mb-4 small">
+          Debes añadir al menos un recurso a la donación.
+        </div>
+      )}
+
+      {/* Formulario Local de Recurso */}
+      <Card className="mb-4 shadow-sm border-0 bg-light">
+        <Card.Body>
+          <Row>
+            <Col md={6}>
+              <Form.Group className="mb-3">
+                <Form.Label className="fw-semibold small">Categoría <span className="text-danger">*</span></Form.Label>
+                <Form.Select 
+                  value={tempRecurso.categoria}
+                  isInvalid={!!localErrors.categoria}
+                  onChange={(e) => {
+                    setTempRecurso({
+                      ...tempRecurso,
+                      categoria: e.target.value,
+                      subCategoria: '',
+                      unidadMedida: '',
+                      estadoArticulo: ''
+                    });
+                    setLocalErrors({ ...localErrors, categoria: '' });
+                  }}
+                >
+                  <option value="">Selecciona una categoría</option>
+                  {CATEGORIAS_DONACION.map(c => <option key={c} value={c}>{c}</option>)}
+                </Form.Select>
+                <Form.Control.Feedback type="invalid">{localErrors.categoria}</Form.Control.Feedback>
+              </Form.Group>
+            </Col>
+
+            {tempRecurso.categoria && (
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label className="fw-semibold small">Subcategoría <span className="text-danger">*</span></Form.Label>
+                  <Form.Select 
+                    value={tempRecurso.subCategoria}
+                    isInvalid={!!localErrors.subCategoria}
+                    onChange={(e) => {
+                      setTempRecurso({ ...tempRecurso, subCategoria: e.target.value });
+                      setLocalErrors({ ...localErrors, subCategoria: '' });
+                    }}
+                  >
+                    <option value="">Selecciona una opción</option>
+                    {opcionesSubCategoria.map(a => <option key={a} value={a}>{a}</option>)}
+                  </Form.Select>
+                  <Form.Control.Feedback type="invalid">{localErrors.subCategoria}</Form.Control.Feedback>
+                </Form.Group>
+              </Col>
+            )}
+
+            {!hideEstadoLocal && tempRecurso.categoria && (
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label className="fw-semibold small">Estado <span className="text-danger">*</span></Form.Label>
+                  <Form.Select 
+                    value={tempRecurso.estadoArticulo}
+                    isInvalid={!!localErrors.estadoArticulo}
+                    onChange={(e) => {
+                      setTempRecurso({ ...tempRecurso, estadoArticulo: e.target.value });
+                      setLocalErrors({ ...localErrors, estadoArticulo: '' });
+                    }}
+                  >
+                    <option value="">Selecciona el estado</option>
+                    <option value="Nuevo">Nuevo (Sin abrir/Sin uso)</option>
+                    <option value="Buen Estado">Buen Estado (Usado pero funcional)</option>
+                    <option value="Para Reparar">Para Reparar (Requiere arreglos menores)</option>
+                  </Form.Select>
+                  <Form.Control.Feedback type="invalid">{localErrors.estadoArticulo}</Form.Control.Feedback>
+                </Form.Group>
+              </Col>
+            )}
+          </Row>
+
+          <Row>
+            <Col md={6}>
+              <Form.Group className="mb-3">
+                <Form.Label className="fw-semibold small">Unidad de Medida <span className="text-danger">*</span></Form.Label>
+                <Form.Select 
+                  value={tempRecurso.unidadMedida}
+                  isInvalid={!!localErrors.unidadMedida}
+                  disabled={!tempRecurso.categoria}
+                  onChange={(e) => {
+                    setTempRecurso({ ...tempRecurso, unidadMedida: e.target.value });
+                    setLocalErrors({ ...localErrors, unidadMedida: '' });
+                  }}
+                >
+                  <option value="">Selecciona la unidad</option>
+                  {unidadesDisponibles.map(u => <option key={u} value={u}>{u}</option>)}
+                </Form.Select>
+                <Form.Control.Feedback type="invalid">{localErrors.unidadMedida}</Form.Control.Feedback>
+              </Form.Group>
+            </Col>
+            <Col md={6}>
+              <Form.Group className="mb-3">
+                <Form.Label className="fw-semibold small">Cantidad <span className="text-danger">*</span></Form.Label>
+                <Form.Control 
+                  type="number" 
+                  step="any" 
+                  min="0.01" 
+                  max="999999"
+                  onKeyDown={blockInvalidNumberKeys}
+                  value={tempRecurso.cantidad}
+                  isInvalid={!!localErrors.cantidad}
+                  onChange={(e) => {
+                    let val = e.target.value;
+                    if (Number(val) > 999999) val = '999999';
+                    setTempRecurso({ ...tempRecurso, cantidad: val });
+                    setLocalErrors({ ...localErrors, cantidad: '' });
+                  }}
+                />
+                <Form.Control.Feedback type="invalid">{localErrors.cantidad}</Form.Control.Feedback>
+              </Form.Group>
+            </Col>
+          </Row>
+
+          <Row>
+            {requiresDateLocal && (
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label className="fw-semibold small">Fecha de Vencimiento <span className="text-danger">*</span></Form.Label>
+                  <Form.Control 
+                    type="date" 
+                    min={new Date().toISOString().split('T')[0]}
+                    max={maxDateStrLocal} 
+                    value={tempRecurso.fechaVencimiento}
+                    isInvalid={!!localErrors.fechaVencimiento}
+                    onChange={(e) => {
+                      setTempRecurso({ ...tempRecurso, fechaVencimiento: e.target.value });
+                      setLocalErrors({ ...localErrors, fechaVencimiento: '' });
+                    }}
+                  />
+                  <Form.Control.Feedback type="invalid">{localErrors.fechaVencimiento}</Form.Control.Feedback>
+                </Form.Group>
+              </Col>
+            )}
+            <Col md={requiresDateLocal ? 6 : 12}>
+              <Form.Group className="mb-3">
+                <Form.Label className="fw-semibold small">Peso Aproximado (kg) <span className="text-muted">(Opcional)</span></Form.Label>
+                <Form.Control 
+                  type="number" 
+                  step="any" 
+                  min="0.01" 
+                  max="99999"
+                  onKeyDown={blockInvalidNumberKeys}
+                  value={tempRecurso.pesoAproximado}
+                  isInvalid={!!localErrors.pesoAproximado}
+                  onChange={(e) => {
+                    let val = e.target.value;
+                    if (Number(val) > 99999) val = '99999';
+                    setTempRecurso({ ...tempRecurso, pesoAproximado: val });
+                    setLocalErrors({ ...localErrors, pesoAproximado: '' });
+                  }}
+                />
+                <Form.Control.Feedback type="invalid">{localErrors.pesoAproximado}</Form.Control.Feedback>
+              </Form.Group>
+            </Col>
+          </Row>
+          
+          <div className="text-end mt-3">
+            <Button variant="primary" className="fw-semibold px-4" onClick={handleAgregarRecurso}>
+              <Plus size={18} className="me-2" />
+              Añadir a la lista
+            </Button>
+          </div>
+        </Card.Body>
+      </Card>
+
+      {/* Tabla de Recursos Añadidos */}
+      {fields.length > 0 && (() => {
+        const totalPages = Math.ceil(fields.length / ITEMS_PER_PAGE);
+        // Asegurar que la página actual sea válida si se eliminan elementos
+        if (currentPage > totalPages && totalPages > 0) setCurrentPage(totalPages);
+        const paginatedFields = fields.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
+        return (
+          <div className="mb-5">
+            <h6 className="fw-bold mb-3">Recursos en esta donación ({fields.length}):</h6>
+            <div className="table-responsive bg-white rounded shadow-sm" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+              <Table hover className="align-middle mb-0" style={{ minWidth: '600px' }}>
+                <thead className="bg-light sticky-top">
+                  <tr>
+                    <th className="py-3 px-3">Categoría</th>
+                    <th className="py-3 px-3">Recurso</th>
+                    <th className="py-3 px-3">Cant.</th>
+                    <th className="py-3 px-3 text-end">Acción</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedFields.map((item, localIndex) => {
+                    const absoluteIndex = (currentPage - 1) * ITEMS_PER_PAGE + localIndex;
+                    return (
+                      <tr key={item.id}>
+                        <td className="px-3">
+                          <div className="fw-semibold text-dark">{item.categoria}</div>
+                          {item.estadoArticulo && <Badge bg="secondary" className="fw-normal">{item.estadoArticulo}</Badge>}
+                        </td>
+                        <td className="px-3">
+                          <div>{item.subCategoria}</div>
+                          {item.fechaVencimiento && (
+                            <small className="text-muted d-block">Vence: {new Date(item.fechaVencimiento).toLocaleDateString()}</small>
+                          )}
+                        </td>
+                        <td className="px-3">
+                          <span className="fw-bold">{item.cantidad}</span> <span className="text-muted small">{item.unidadMedida}</span>
+                          {item.pesoAproximado && <div className="text-muted small">Peso: {item.pesoAproximado} kg</div>}
+                        </td>
+                        <td className="text-end px-3">
+                          <Button variant="outline-danger" size="sm" onClick={() => remove(absoluteIndex)} title="Eliminar recurso">
+                            <Trash2 size={16} />
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </Table>
+            </div>
+            {totalPages > 1 && (
+              <div className="d-flex justify-content-center mt-3">
+                <Button 
+                  variant="outline-secondary" 
+                  size="sm" 
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                >
+                  Anterior
+                </Button>
+                <span className="mx-3 align-self-center small text-muted">
+                  Página {currentPage} de {totalPages}
+                </span>
+                <Button 
+                  variant="outline-secondary" 
+                  size="sm" 
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                >
+                  Siguiente
+                </Button>
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
       <Form.Group className="mb-4">
-        <Form.Label className="fw-semibold">Fotografía del Artículo <span className="text-muted">(Opcional)</span></Form.Label>
+        <Form.Label className="fw-semibold">Fotografía General <span className="text-muted">(Opcional)</span></Form.Label>
         {watchFoto ? (
           <div className="position-relative d-inline-block">
             <img src={watchFoto} alt="Preview" className="img-thumbnail" style={{ maxHeight: '200px' }} />
@@ -398,6 +615,3 @@ export const DonacionStep1: React.FC = () => {
     </div>
   );
 };
-
-
-

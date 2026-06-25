@@ -99,14 +99,30 @@ const HistorialAcopio: React.FC = () => {
   });
 
   // KPIs
-  const totalArticulos = filteredDonaciones.reduce((acc, curr) => acc + (curr.cantidad || 0), 0);
+  const totalArticulos = filteredDonaciones.reduce((acc, curr) => {
+    let cant = 0;
+    try {
+      const recs = JSON.parse(curr.recursos || '[]');
+      if (Array.isArray(recs)) {
+        cant = recs.reduce((sum: number, r: any) => sum + (r.cantidad || 0), 0);
+      }
+    } catch {}
+    return acc + cant;
+  }, 0);
   const donantesUnicos = new Set(filteredDonaciones.map(d => d.donanteId).filter(Boolean)).size;
 
   // Chart Data
   const categoryMap: Record<string, number> = {};
   filteredDonaciones.forEach(d => {
-    const cat = d.categoria || 'Otros';
-    categoryMap[cat] = (categoryMap[cat] || 0) + (d.cantidad || 0);
+    try {
+      const recs = JSON.parse(d.recursos || '[]');
+      if (Array.isArray(recs)) {
+        recs.forEach((r: any) => {
+          const cat = r.categoria || 'Otros';
+          categoryMap[cat] = (categoryMap[cat] || 0) + (r.cantidad || 0);
+        });
+      }
+    } catch {}
   });
   const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
   const chartData = Object.entries(categoryMap).map(([name, value], index) => ({
@@ -119,7 +135,12 @@ const HistorialAcopio: React.FC = () => {
   const donantesMap: Record<number, number> = {};
   filteredDonaciones.forEach(d => {
     if (d.donanteId && d.visibilidad === 'Publica') {
-      donantesMap[d.donanteId] = (donantesMap[d.donanteId] || 0) + (d.cantidad || 0);
+      let cant = 0;
+      try {
+        const recs = JSON.parse(d.recursos || '[]');
+        if (Array.isArray(recs)) cant = recs.reduce((sum: number, r: any) => sum + (r.cantidad || 0), 0);
+      } catch {}
+      donantesMap[d.donanteId] = (donantesMap[d.donanteId] || 0) + cant;
     }
   });
   const topDonantes = Object.entries(donantesMap)
@@ -243,8 +264,8 @@ const HistorialAcopio: React.FC = () => {
                       <tr>
                         <th>ID</th>
                         <th>Donante</th>
-                        <th>Subcategoría</th>
-                        <th>Cantidad</th>
+                        <th>Título</th>
+                        <th>Recursos</th>
                         <th>Fecha</th>
                         <th>Detalles</th>
                       </tr>
@@ -252,6 +273,11 @@ const HistorialAcopio: React.FC = () => {
                     <tbody>
                       {currentData.map((donacion) => {
                         const esPrivada = donacion.visibilidad === 'Privada';
+                        let totalItems = 0;
+                        try {
+                          const recs = JSON.parse(donacion.recursos || '[]');
+                          if (Array.isArray(recs)) totalItems = recs.reduce((s: number, r: any) => s + (r.cantidad || 0), 0);
+                        } catch {}
                         return (
                           <tr key={donacion.id}>
                             <td className="fw-bold font-monospace text-primary small">
@@ -264,10 +290,10 @@ const HistorialAcopio: React.FC = () => {
                                 <span className="fw-semibold">{getDonanteName(donacion.donanteId)}</span>
                               )}
                             </td>
-                            <td className="small">{donacion.recurso}</td>
+                            <td className="small">{donacion.nombreArticulo || 'Donación'}</td>
                             <td>
                               <Badge bg="primary" pill>
-                                {donacion.cantidad} {donacion.unidadMedida || ''}
+                                {totalItems} items
                               </Badge>
                             </td>
                             <td className="small">
@@ -386,16 +412,44 @@ const HistorialAcopio: React.FC = () => {
                 <hr />
 
                 <div className="d-flex justify-content-between mb-2">
-                  <span className="text-muted fw-semibold">Categoría:</span>
-                  <span>{selectedDonacion.categoria}</span>
+                  <span className="text-muted fw-semibold">Título de Donación:</span>
+                  <span>{selectedDonacion.nombreArticulo || 'Varias Donaciones'}</span>
                 </div>
-                <div className="d-flex justify-content-between mb-2">
-                  <span className="text-muted fw-semibold">Subcategoría:</span>
-                  <span>{selectedDonacion.recurso}</span>
-                </div>
-                <div className="d-flex justify-content-between mb-2">
-                  <span className="text-muted fw-semibold">Cantidad:</span>
-                  <span>{selectedDonacion.cantidad} {selectedDonacion.unidadMedida || ''}</span>
+
+                <div className="mt-3">
+                  <span className="text-muted fw-semibold d-block mb-1">Recursos:</span>
+                  {(() => {
+                    try {
+                      const recs = JSON.parse(selectedDonacion.recursos || '[]');
+                      if (Array.isArray(recs)) {
+                        return (
+                          <div className="table-responsive mt-2">
+                            <Table size="sm" bordered hover className="bg-white">
+                              <thead className="table-light">
+                                <tr>
+                                  <th>Categoría</th>
+                                  <th>Recurso</th>
+                                  <th>Estado</th>
+                                  <th>Cant.</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {recs.map((r: any, idx: number) => (
+                                  <tr key={`${r.categoria}-${r.subCategoria}-${idx}`}>
+                                    <td>{r.categoria}</td>
+                                    <td>{r.subCategoria}</td>
+                                    <td>{r.estadoArticulo}</td>
+                                    <td>{r.cantidad} {r.unidadMedida}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </Table>
+                          </div>
+                        );
+                      }
+                    } catch {}
+                    return null;
+                  })()}
                 </div>
 
                 <div className="mt-3">

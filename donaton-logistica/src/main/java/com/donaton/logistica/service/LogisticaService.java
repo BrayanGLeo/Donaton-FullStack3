@@ -7,6 +7,10 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
+import java.util.List;
+import java.util.Map;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +19,7 @@ import org.slf4j.LoggerFactory;
 public class LogisticaService {
 
     private static final Logger logger = LoggerFactory.getLogger(LogisticaService.class);
+    private static final String KEY_CANTIDAD = "cantidad";
 
     private final InventarioRepository inventarioRepository;
     private final com.donaton.logistica.repository.RecepcionRepository recepcionRepository;
@@ -29,14 +34,26 @@ public class LogisticaService {
     @org.springframework.transaction.annotation.Transactional
     public void procesarDonacion(DonacionEventDTO evento) {
         String trackingId = evento.getTrackingId() != null ? evento.getTrackingId() : "TRK-DON-" + evento.getId();
-        com.donaton.logistica.entity.Recepcion recepcion = new com.donaton.logistica.entity.Recepcion(
-                trackingId,
-                evento.getRecurso(),
-                evento.getCantidad(),
-                "Pendiente de recepción");
-        recepcionRepository.save(recepcion);
-        logger.info("Donación registrada para recepción: TrackingId={}, Recurso={}", trackingId,
-                recepcion.getRecurso());
+        try {
+            if (evento.getRecursos() != null) {
+                ObjectMapper mapper = new ObjectMapper();
+                List<Map<String, Object>> recursosList = mapper.readValue(evento.getRecursos(), new TypeReference<List<Map<String, Object>>>() {});
+                for (Map<String, Object> item : recursosList) {
+                    String recursoNombre = (String) item.get("recurso");
+                    Integer cantidad = item.get(KEY_CANTIDAD) != null ? Integer.valueOf(item.get(KEY_CANTIDAD).toString()) : 0;
+                    
+                    com.donaton.logistica.entity.Recepcion recepcion = new com.donaton.logistica.entity.Recepcion(
+                            trackingId,
+                            recursoNombre,
+                            cantidad,
+                            "Pendiente de recepción");
+                    recepcionRepository.save(recepcion);
+                }
+            }
+        } catch (Exception e) {
+            logger.error("Error procesando donación: {}", e.getMessage());
+        }
+        logger.info("Donación registrada para recepción: TrackingId={}", trackingId);
     }
 
     @RabbitListener(queues = "donacion_recibida_queue")
@@ -48,43 +65,60 @@ public class LogisticaService {
             logger.info("Donación recibida confirmada en inventario: TrackingId={}", trackingId);
         } catch (Exception e) {
             logger.error("Error al confirmar ingreso de donación: TrackingId={}, Error={}", trackingId, e.getMessage());
-            com.donaton.logistica.entity.Recepcion recepcion = new com.donaton.logistica.entity.Recepcion(
-                    trackingId,
-                    evento.getRecurso(),
-                    evento.getCantidad(),
-                    "Pendiente de recepción");
-            recepcionRepository.save(recepcion);
+            try {
+                if (evento.getRecursos() != null) {
+                    ObjectMapper mapper = new ObjectMapper();
+                    List<Map<String, Object>> recursosList = mapper.readValue(evento.getRecursos(), new TypeReference<List<Map<String, Object>>>() {});
+                    for (Map<String, Object> item : recursosList) {
+                        String recursoNombre = (String) item.get("recurso");
+                        Integer cantidad = item.get(KEY_CANTIDAD) != null ? Integer.valueOf(item.get(KEY_CANTIDAD).toString()) : 0;
+                        com.donaton.logistica.entity.Recepcion recepcion = new com.donaton.logistica.entity.Recepcion(
+                                trackingId,
+                                recursoNombre,
+                                cantidad,
+                                "Pendiente de recepción");
+                        recepcionRepository.save(recepcion);
+                    }
+                }
+            } catch (Exception ex) {
+                logger.error("Error procesando fallback de donación: {}", ex.getMessage());
+            }
             doConfirmarIngreso(trackingId);
         }
     }
 
     @org.springframework.transaction.annotation.Transactional
-    public com.donaton.logistica.entity.Recepcion confirmarIngreso(String trackingId) {
+    public List<com.donaton.logistica.entity.Recepcion> confirmarIngreso(String trackingId) {
         return doConfirmarIngreso(trackingId);
     }
 
-    private com.donaton.logistica.entity.Recepcion doConfirmarIngreso(String trackingId) {
-        com.donaton.logistica.entity.Recepcion recepcion = recepcionRepository.findByTrackingId(trackingId)
-                .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("Donación no encontrada"));
-
-        if ("Disponible".equals(recepcion.getEstado())) {
-            return recepcion;
+    private List<com.donaton.logistica.entity.Recepcion> doConfirmarIngreso(String trackingId) {
+        List<com.donaton.logistica.entity.Recepcion> recepciones = recepcionRepository.findByTrackingId(trackingId);
+        
+        if (recepciones == null || recepciones.isEmpty()) {
+            throw new jakarta.persistence.EntityNotFoundException("Donación no encontrada");
         }
 
-        recepcion.setEstado("Disponible");
-        recepcionRepository.save(recepcion);
+        for (com.donaton.logistica.entity.Recepcion recepcion : recepciones) {
+            if ("Disponible".equals(recepcion.getEstado())) {
+                continue;
+            }
 
-        Optional<Inventario> inventarioOpt = inventarioRepository.findByRecurso(recepcion.getRecurso());
-        Inventario inventario;
-        if (inventarioOpt.isPresent()) {
-            inventario = inventarioOpt.get();
-            inventario.setCantidadTotal(inventario.getCantidadTotal() + recepcion.getCantidad());
-        } else {
-            inventario = new Inventario(recepcion.getRecurso(), recepcion.getCantidad());
+            recepcion.setEstado("Disponible");
+            recepcionRepository.save(recepcion);
+
+            Optional<Inventario> inventarioOpt = inventarioRepository.findByRecurso(recepcion.getRecurso());
+            Inventario inventario;
+            if (inventarioOpt.isPresent()) {
+                inventario = inventarioOpt.get();
+                inventario.setCantidadTotal(inventario.getCantidadTotal() + recepcion.getCantidad());
+            } else {
+                inventario = new Inventario(recepcion.getRecurso(), recepcion.getCantidad());
+            }
+            inventarioRepository.save(inventario);
         }
-        inventarioRepository.save(inventario);
 
-        return recepcion;
+        return recepciones;
     }
 
     @org.springframework.transaction.annotation.Transactional

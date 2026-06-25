@@ -1,16 +1,11 @@
 import axios from 'axios';
 
 export interface DonacionPayload {
-  recurso?: string;
-  cantidad?: number;
+  nombreArticulo?: string;
+  recursos?: string; // JSON string
   origen?: string;
   estado?: string;
-  categoria?: string;
   descripcion?: string;
-  estadoArticulo?: string;
-  fechaVencimiento?: string;
-  unidadMedida?: string;
-  pesoAproximado?: number;
   fotoBase64?: string;
   modalidadEntrega?: string;
   centroAcopioDestinoId?: number;

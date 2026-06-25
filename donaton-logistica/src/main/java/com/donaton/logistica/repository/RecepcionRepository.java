@@ -2,8 +2,8 @@ package com.donaton.logistica.repository;
 
 import com.donaton.logistica.entity.Recepcion;
 import org.springframework.data.jpa.repository.JpaRepository;
-import java.util.Optional;
+import java.util.List;
 
 public interface RecepcionRepository extends JpaRepository<Recepcion, Long> {
-    Optional<Recepcion> findByTrackingId(String trackingId);
+    List<Recepcion> findByTrackingId(String trackingId);
 }
