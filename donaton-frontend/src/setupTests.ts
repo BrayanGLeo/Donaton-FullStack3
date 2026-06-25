@@ -10,11 +10,11 @@ const localStorageMock = (function () {
   };
 })();
 
-Object.defineProperty(window, 'localStorage', { value: localStorageMock });
-Object.defineProperty(window, 'sessionStorage', { value: localStorageMock });
+Object.defineProperty(globalThis, 'localStorage', { value: localStorageMock });
+Object.defineProperty(globalThis, 'sessionStorage', { value: localStorageMock });
 
-(window as any).ResizeObserver = class ResizeObserver {
-  observe() {}
-  unobserve() {}
-  disconnect() {}
+(globalThis as any).ResizeObserver = class ResizeObserver {
+  observe() { /* mock */ }
+  unobserve() { /* mock */ }
+  disconnect() { /* mock */ }
 };

@@ -4,7 +4,7 @@ import {
   registroJuridicaSchema,
   adminUserSchema
 } from './RegistroSchemas';
-import * as usuarioService from '../../services/usuarioService';
+
 
 vi.mock('../../services/usuarioService', () => ({
   verificarEmailDisponible: vi.fn().mockResolvedValue(true),
