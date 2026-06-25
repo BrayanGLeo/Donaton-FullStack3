@@ -1,0 +1,16 @@
+services:
+  donaton-auth:
+    build:
+      context: ../../donaton-auth
+      dockerfile: Dockerfile
+    container_name: donaton-auth
+    restart: always
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://donaton-mysql-auth:3306/donaton_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://donaton-eureka-server:8761/eureka/
+    networks:
+      - donaton-network
+
+networks:
+  donaton-network:
+    external: true

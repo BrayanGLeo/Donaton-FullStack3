@@ -1,0 +1,26 @@
+services:
+  mysql-auth:
+    image: mysql:8.0
+    container_name: donaton-mysql-auth
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password_123
+      MYSQL_DATABASE: donaton_db
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-auth-data:/var/lib/mysql
+    networks:
+      - donaton-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot_password_123"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  donaton-network:
+    external: true
+
+volumes:
+  mysql-auth-data:

@@ -1,0 +1,20 @@
+services:
+  donaton-eureka-server:
+    build:
+      context: ../../donaton-eureka-server
+      dockerfile: Dockerfile
+    container_name: donaton-eureka-server
+    restart: always
+    ports:
+      - "8761:8761"
+    networks:
+      - donaton-network
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8761/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  donaton-network:
+    external: true
