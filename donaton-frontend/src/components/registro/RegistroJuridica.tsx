@@ -35,8 +35,12 @@ const isFieldInvalid = (field: string, getValues: any, errors: any, isSubmitted:
 export const RegistroJuridica: React.FC<Props> = ({ onSubmit, isLoading, onCancel }) => {
   const { register, handleSubmit, watch, getValues, control, setValue, formState: { errors, isSubmitted } } = useForm<RegistroJuridicaValues>({
     resolver: zodResolver(registroJuridicaSchema),
-    defaultValues: { codigoPais: '+56' },
-    mode: 'onBlur'
+    defaultValues: { 
+      codigoPais: '+56',
+      region: '',
+      comuna: ''
+    },
+    mode: 'onTouched'
   });
 
   const values = watch();
