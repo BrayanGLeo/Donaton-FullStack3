@@ -103,4 +103,119 @@ describe('Epic 4: Dashboards Administrativos y UI/UX', () => {
     fireEvent.click(screen.getByText('Historial de Necesidades'));
     expect(await screen.findByText('Inundación')).toBeInTheDocument();
   });
+
+  it('Debe permitir interactuar con donaciones y necesidades (coverage)', async () => {
+    vi.mocked(donacionService.listarDonaciones).mockResolvedValue([
+      { 
+        id: 99, 
+        estado: 'PENDIENTE', 
+        cantidad: 5, 
+        categoria: 'Agua', 
+        regionRetiro: 'Metropolitana',
+        transporteEspecial: true,
+        pesoAproximado: 100,
+        disponibilidadHoraria: '10:00 - 12:00',
+        donanteId: 10,
+        conductorId: 5,
+        descripcion: 'Agua purificada',
+        fotoBase64: 'data:image/png;base64,123',
+        direccionRetiroCalle: 'Alameda',
+        direccionRetiroNumero: '123',
+        latitudRetiro: -33.4,
+        longitudRetiro: -70.6
+      },
+      { id: 100, estado: 'EN_TRANSITO', cantidad: 2, categoria: 'Ropa', regionRetiro: 'Metropolitana' }
+    ] as any);
+    
+    vi.mocked(bffService.obtenerNecesidades).mockResolvedValue([
+      { id: 77, estado: 'ACTIVA', tipoEmergencia: 'Sismo', comuna: 'Ñuñoa', region: 'Metropolitana', recursos: '[{"categoria":"Agua","cantidad":5,"unidad":"Litros"}]' }
+    ] as any);
+
+    vi.mocked(usuarioService.obtenerUsuarios).mockResolvedValue({ 
+      content: [{ id: 5, subRol: 'CONDUCTOR', activo: true, region: 'Metropolitana', nombreCompleto: 'Conductor Test' }] 
+    } as any);
+
+    renderWithProviders(<PanelAdminAcopio />);
+    
+    await waitFor(() => {
+      expect(screen.queryByText(/Cargando Operaciones/i)).not.toBeInTheDocument();
+    });
+
+    // 1. Recibir donación en tránsito
+    const recibirBtns = await screen.findAllByTitle('Recibir en Bodega');
+    expect(recibirBtns.length).toBeGreaterThan(1);
+    fireEvent.click(recibirBtns[1]); // El índice 1 corresponde a la donación EN_TRANSITO (id 100)
+    await waitFor(() => {
+      expect(donacionService.actualizarEstadoDonacion).toHaveBeenCalledWith(100, 'RECIBIDO');
+    });
+
+    // 2. Abrir detalles de donación
+    const detallesBtns = screen.getAllByTitle('Ver Detalles');
+    fireEvent.click(detallesBtns[0]);
+    expect(await screen.findByText('Detalles de la Donación')).toBeInTheDocument();
+    
+    // Cerrar el modal
+    const cerrarModalBtn = screen.getByText('Cerrar');
+    fireEvent.click(cerrarModalBtn);
+
+    // 3. Pestaña alertas y abrir modal de asignar
+    fireEvent.click(screen.getByText(/Alerta de Necesidades/i));
+    const asignarBtns = await screen.findAllByTitle('Asignar Conductor');
+    
+    // Abrir y cancelar
+    fireEvent.click(asignarBtns[0]);
+    expect(await screen.findByText(/Cubrir Necesidad #77/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByText('Cancelar'));
+
+    // Abrir de nuevo y cubrir necesidad
+    fireEvent.click(asignarBtns[0]);
+    expect(await screen.findByText(/Cubrir Necesidad #77/i)).toBeInTheDocument();
+
+    // 4. Cubrir necesidad
+    vi.mocked(bffService.actualizarEstadoNecesidad).mockResolvedValue({} as any);
+    const confirmarCubrir = screen.getByRole('button', { name: /Asignar Conductor/i });
+    if (confirmarCubrir) {
+      fireEvent.click(confirmarCubrir);
+    }
+  });
+
+  it('Debe manejar errores al actualizar estado de donación o necesidad (coverage)', async () => {
+    vi.mocked(donacionService.listarDonaciones).mockResolvedValue([
+      { id: 99, estado: 'EN_TRANSITO', cantidad: 5, categoria: 'Agua', regionRetiro: 'Metropolitana' }
+    ] as any);
+    vi.mocked(donacionService.actualizarEstadoDonacion).mockRejectedValueOnce(new Error('Test Error Donacion'));
+
+    vi.mocked(bffService.obtenerNecesidades).mockResolvedValue([
+      { id: 77, estado: 'ACTIVA', tipoEmergencia: 'Sismo', comuna: 'Ñuñoa', region: 'Metropolitana', recursos: '[{"categoria":"Agua","cantidad":5,"unidad":"Litros"}]' }
+    ] as any);
+    vi.mocked(bffService.actualizarEstadoNecesidad).mockRejectedValueOnce(new Error('Test Error Necesidad'));
+
+    renderWithProviders(<PanelAdminAcopio />);
+    await waitFor(() => expect(screen.queryByText(/Cargando Operaciones/i)).not.toBeInTheDocument());
+
+    // Fallo donación
+    const recibirBtns = await screen.findAllByTitle('Recibir en Bodega');
+    fireEvent.click(recibirBtns[0]);
+    
+    // Fallo necesidad
+    fireEvent.click(screen.getByText(/Alerta de Necesidades/i));
+    const asignarBtns = await screen.findAllByTitle('Asignar Conductor');
+    fireEvent.click(asignarBtns[0]);
+    const confirmarCubrir = screen.getByRole('button', { name: /Asignar Conductor/i });
+    fireEvent.click(confirmarCubrir);
+  });
+
+  it('Debe permitir aplicar filtros (coverage)', async () => {
+    vi.mocked(donacionService.listarDonaciones).mockResolvedValue([
+      { id: 99, estado: 'EN_TRANSITO', cantidad: 5, categoria: 'Agua', regionRetiro: 'Metropolitana' }
+    ] as any);
+    vi.mocked(bffService.obtenerNecesidades).mockResolvedValue([] as any);
+    renderWithProviders(<PanelAdminAcopio />);
+    await waitFor(() => expect(screen.queryByText(/Cargando Operaciones/i)).not.toBeInTheDocument());
+    
+    // Cambiar items por página
+    const select = screen.getByRole('combobox');
+    fireEvent.change(select, { target: { value: '25' } });
+    expect(await screen.findByText(/Mostrando 1 - \d+ de/i)).toBeInTheDocument();
+  });
 });

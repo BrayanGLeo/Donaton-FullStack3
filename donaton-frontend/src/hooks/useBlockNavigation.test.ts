@@ -102,4 +102,28 @@ describe('useBlockNavigation', () => {
     expect(mockNavigate).toHaveBeenCalledWith('/some-other-path');
     document.body.removeChild(mockLink);
   });
+
+  it('debería manejar beforeunload correctamente', () => {
+    renderHook(() => useBlockNavigation(true, false, mockOnCancelForm));
+    const event = new Event('beforeunload', { cancelable: true });
+    globalThis.dispatchEvent(event);
+    expect(event.defaultPrevented).toBe(true);
+  });
+
+  it('debería manejar popstate correctamente y luego back', () => {
+    const { result } = renderHook(() => useBlockNavigation(true, false, mockOnCancelForm));
+    const event = new Event('popstate');
+    
+    act(() => {
+      globalThis.dispatchEvent(event);
+    });
+    
+    expect(result.current.showExitModal).toBe(true);
+
+    act(() => {
+      result.current.handleConfirmExit();
+    });
+
+    expect(globalThis.history.go).toHaveBeenCalledWith(-2);
+  });
 });
