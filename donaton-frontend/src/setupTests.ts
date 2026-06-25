@@ -10,10 +10,10 @@ const localStorageMock = (function () {
   };
 })();
 
-Object.defineProperty(global, 'localStorage', { value: localStorageMock });
-Object.defineProperty(global, 'sessionStorage', { value: localStorageMock });
+Object.defineProperty(window, 'localStorage', { value: localStorageMock });
+Object.defineProperty(window, 'sessionStorage', { value: localStorageMock });
 
-global.ResizeObserver = class ResizeObserver {
+(window as any).ResizeObserver = class ResizeObserver {
   observe() {}
   unobserve() {}
   disconnect() {}
