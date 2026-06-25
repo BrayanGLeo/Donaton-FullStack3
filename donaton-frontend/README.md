@@ -69,6 +69,8 @@ En este directorio, puedes utilizar las siguientes herramientas de la CLI:
 | `npm run build` | Compila la aplicación para producción. Los archivos minificados se generan en la carpeta `dist`. |
 | `npm run lint` | Ejecuta ESLint para encontrar problemas de sintaxis o código según las reglas configuradas. |
 | `npm run preview` | Inicia un servidor estático para previsualizar y probar localmente la build de producción generada en `dist`. |
+| `npm run test` | Ejecuta la suite de pruebas unitarias usando Vitest y React Testing Library. Útil para desarrollo continuo. |
+| `npm run coverage` | Ejecuta las pruebas y genera un reporte detallado de cobertura (Statements, Branches, Functions, Lines) mediante el proveedor V8. |
 
 ---
 

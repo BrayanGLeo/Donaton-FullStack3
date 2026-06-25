@@ -109,7 +109,7 @@ npm run dev
 
 La plataforma estará lista y accesible desde tu navegador en `http://localhost:5173`.
 
-### Paso 3: Ejecución de Pruebas y Análisis en SonarQube
+### Paso 3: Ejecución de Pruebas y Análisis en SonarQube (Backend)
 
 Para ejecutar las pruebas unitarias y enviar el reporte de cobertura y calidad de código a SonarQube (que corre localmente en `http://localhost:9000`), puedes utilizar Maven desde la raíz de cada microservicio.
 
@@ -121,6 +121,13 @@ Primero asegúrate de que el contenedor de SonarQube esté en ejecución (se lev
 ./mvnw sonar:sonar -Dsonar.projectKey=donaton-logistica -Dsonar.projectName='donaton-logistica' -Dsonar.host.url=http://localhost:9000 -Dsonar.token=tu_token_generado_aqui
 ```
 *(Nota: Debes generar un token en el panel de SonarQube local e ingresarlo en el comando).*
+
+### Paso 4: Pruebas Unitarias del Frontend
+
+El cliente web utiliza **Vitest** y **React Testing Library** para asegurar la calidad de la interfaz. Dentro de la carpeta `donaton-frontend`, puedes ejecutar:
+
+- `npm run test`: Para correr las pruebas en modo rápido y verificar el estado.
+- `npm run coverage`: Para ejecutar todas las pruebas y generar un reporte de cobertura en consola (asegurando el >60% estipulado).
 
 ---
 <div align="center">
