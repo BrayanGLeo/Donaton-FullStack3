@@ -12,7 +12,6 @@ import { obtenerUsuarios } from '../../services/usuarioService';
 import { obtenerCentrosAcopio, type CentroAcopio } from '../../services/logisticaService';
 import './PanelAdminAcopio.css';
 
-// Fix Leaflet icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
@@ -70,13 +69,11 @@ const PanelAdminAcopio: React.FC = () => {
   const [activeTab, setActiveTab] = useState('donaciones');
   const [mapCenter, setMapCenter] = useState<[number, number]>([-33.4489, -70.6693]);
 
-  // Data
   const [miCentro, setMiCentro] = useState<CentroAcopio | null>(null);
   const [donaciones, setDonaciones] = useState<DonacionResponse[]>([]);
   const [necesidades, setNecesidades] = useState<Necesidad[]>([]);
   const [conductores, setConductores] = useState<{ value: number; label: string }[]>([]);
 
-  // Pagination
   const [page, setPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
@@ -84,20 +81,16 @@ const PanelAdminAcopio: React.FC = () => {
     setPage(1);
   }, [activeTab]);
 
-  // Modals & Actions
   const [actionLoading, setActionLoading] = useState<number | null>(null);
 
-  // Modal Asignar Conductor (Confirmación)
   const [showConfirmAsignar, setShowConfirmAsignar] = useState(false);
   const [donacionAConfirmar, setDonacionAConfirmar] = useState<DonacionResponse | null>(null);
   const [conductorAConfirmar, setConductorAConfirmar] = useState<number | null>(null);
 
-  // Modal Cubrir Necesidad
   const [showNecesidadModal, setShowNecesidadModal] = useState(false);
   const [necesidadSeleccionada, setNecesidadSeleccionada] = useState<Necesidad | null>(null);
   const [conductorSeleccionadoNec, setConductorSeleccionadoNec] = useState<number | null>(null);
 
-  // Modal Detalles de Donación
   const [showDetallesDonacion, setShowDetallesDonacion] = useState(false);
   const [donacionDetalle, setDonacionDetalle] = useState<DonacionResponse | null>(null);
 
@@ -138,7 +131,6 @@ const PanelAdminAcopio: React.FC = () => {
     fetchData();
   }, []);
 
-  // Filter Data logically
   const regionUser = miCentro?.region || usuario?.region;
   
   const misDonaciones = donaciones.filter(d => d.regionRetiro === regionUser);
@@ -156,7 +148,6 @@ const PanelAdminAcopio: React.FC = () => {
   });
   const necesidadesCubiertas = misNecesidades.filter(n => ['CUBIERTA', 'ENTREGADO'].includes(n.estado?.toUpperCase() || ''));
 
-  // Inventario agrupado
   const inventarioMap = new Map<string, number>();
   donacionesRecibidas.forEach(d => {
     const key = `${d.categoria || 'Otros'}|${d.recurso || 'General'}|${d.unidadMedida || 'Unidades'}`;
@@ -167,7 +158,6 @@ const PanelAdminAcopio: React.FC = () => {
     return { categoria: cat, subcategoria: subcat, unidadMedida: uni, cantidad: cant };
   });
 
-  // Pagination calculation
   const startIndex = (page - 1) * itemsPerPage;
   const endIndex = page * itemsPerPage;
 
@@ -207,7 +197,6 @@ const PanelAdminAcopio: React.FC = () => {
     );
   };
 
-  // Handlers
   const centrarMapa = (lat?: number | null, lng?: number | null) => {
     if (lat && lng) setMapCenter([lat, lng]);
   };
@@ -217,7 +206,6 @@ const PanelAdminAcopio: React.FC = () => {
     setActionLoading(donacionAConfirmar.id);
     try {
       await asignarConductor(donacionAConfirmar.id, conductorAConfirmar);
-      // Actualización optimista para que la interfaz reaccione al instante
       setDonaciones(prev => prev.map(d => 
         d.id === donacionAConfirmar.id ? { ...d, conductorId: conductorAConfirmar, estado: 'ASIGNADO' } : d
       ));
@@ -271,7 +259,6 @@ const PanelAdminAcopio: React.FC = () => {
     );
   }
 
-  // Helpers para la vista de necesidades vs inventario
   const chequearInventario = (necesidad: Necesidad) => {
     const recursos = parseRecursos(necesidad.recursos);
     let suficientes = true;

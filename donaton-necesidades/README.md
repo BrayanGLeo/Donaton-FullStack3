@@ -16,6 +16,7 @@
 Microservicio dedicado exclusivamente a mapear la demanda. Se encarga de procesar los reportes de desastre, calcular los requerimientos de ayuda por zonas y devolver coordenadas espaciales.
 
 Esta data es vital para que el frontend pueda pintar los mapas interactivos con *Leaflet*, permitiendo una toma de decisiones informada sobre qué recursos (médicos, alimenticios) enviar a cada coordenada geográfica.
+Adicionalmente, se encarga de la trazabilidad y persistencia de las necesidades a lo largo del tiempo, almacenándolas en el **Historial de Necesidades** una vez han sido completadas o cubiertas en su totalidad, permitiendo generar reportes post-desastre.
 
 ---
 
