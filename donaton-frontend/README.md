@@ -18,8 +18,11 @@
 Este directorio contiene el código fuente del cliente web para el **Sistema Donatón**. Construido con tecnologías modernas del ecosistema frontend, está enfocado en ofrecer una experiencia de usuario (UX) fluida, robusta y accesible en entornos críticos.
 
 La interfaz permite a los usuarios interactuar con los microservicios (BFF), ofreciendo características clave como:
+*   📊 **Dashboards Modulares:** Paneles de administración independientes (Acopio, Coordinación, Conducción, y Admin Global) altamente cohesivos.
+*   ✅ **Validaciones Robustas:** Formularios estrictos con prevención inteligente de errores y control unificado de campos.
 *   🗺️ **Mapas Interactivos:** Visualización de emergencias y rutas logísticas en tiempo real usando Leaflet.
-*   ⚡ **Rendimiento Óptimo:** Empaquetado ultrarrápido y Hot-Module Replacement gracias a Vite y React 18.
+*   📦 **Inventario Dinámico:** Seguimiento de donaciones y recursos utilizando una agrupación exacta por Subcategorías.
+*   ⚡ **Rendimiento Óptimo:** Empaquetado ultrarrápido y Hot-Module Replacement gracias a Vite y React 18, junto a un sistema de paginación transversal altamente eficiente.
 *   🛡️ **Tipado Estricto:** Código robusto, escalable y más fácil de mantener con TypeScript.
 *   📱 **Diseño Responsivo:** Completamente adaptado para dispositivos móviles, tablets y escritorios usando React Bootstrap.
 

@@ -57,6 +57,8 @@ Nuestra plataforma está diseñada para resolver desafíos críticos de logísti
 *   📨 **Orquestación Asíncrona (RabbitMQ):** Desacoplamiento de procesos pesados mediante mensajería por eventos. Garantiza notificaciones inmediatas y consistencia transaccional distribuida entre servicios.
 *   🛡️ **Resiliencia y Tolerancia a Fallos:** Implementación nativa del patrón **Circuit Breaker** (vía Resilience4j) en el BFF para aislar fallos, evitar caídas en cascada y asegurar respuestas rápidas incluso en degradación.
 *   🧠 **Algoritmos Core de Asignación en Tiempo Real:** Lógica de negocio avanzada para la validación inteligente de stock de donaciones y asignación automatizada de vehículos de transporte basada en capacidad y urgencia.
+*   📊 **Dashboards Administrativos Unificados:** Interfaces completas y estandarizadas (Acopio, Conductor y Administración Global) con sistemas de paginación consistentes, controles de formulario estrictos (separación natural/jurídica) y UX avanzada.
+*   📦 **Logística de Inventario por Subcategoría:** Agrupación y emparejamiento milimétrico de recursos mediante "Subcategorías" (ej. Fideos vs simplemente Alimentos) para una mayor precisión en los centros de acopio.
 *   🗺️ **Mapping y Geolocalización Interactivo:** Integración con *Leaflet* para presentar un mapa dinámico de emergencias. Facilita la toma de decisiones espaciales con un sólido *fallback* a vistas tabulares de datos para garantizar accesibilidad en caso de fallo del DOM o conectividad limitada.
 *   📱 **Trazabilidad PWA (Offline Support):** Integración de características de Progressive Web App (Service Workers y Storage API) para asegurar la trazabilidad de la última milla, permitiendo operaciones en campo sin conexión a internet constante.
 

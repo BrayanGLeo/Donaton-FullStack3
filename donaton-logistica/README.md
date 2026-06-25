@@ -14,7 +14,9 @@
 
 ## 📖 Descripción del Servicio
 
-Este microservicio se encarga de la capa física de transporte: gestionar flotas de vehículos, asignar rutas, tracking GPS y proveer la trazabilidad hacia las zonas de necesidad.
+Este microservicio se encarga de la capa física del proyecto:
+1. **Transporte:** Gestionar flotas de vehículos, asignar rutas, tracking GPS y proveer la trazabilidad hacia las zonas de necesidad.
+2. **Control de Acopio (Inventarios):** Centraliza las existencias físicas de las donaciones despachadas, permitiendo el descuento, agrupamiento por subcategorías y reportabilidad de stock en tiempo real mediante el `InventarioController`.
 
 ### Consumo de Eventos
 Este servicio es un **Consumer** clave en el *Event Bus*. Está suscrito a colas en **RabbitMQ** esperando alertas desde el servicio de Donaciones. En cuanto una carga es notificada, los algoritmos internos de Logística buscan y reservan el vehículo más óptimo para su transporte.
