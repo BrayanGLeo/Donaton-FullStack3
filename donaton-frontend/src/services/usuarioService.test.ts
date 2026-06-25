@@ -94,4 +94,74 @@ describe('usuarioService', () => {
     await cambiarPassword(1, 'old', 'new');
     expect(mockedAxios.put).toHaveBeenCalled();
   });
+
+  // PRUEBAS DE ERROR
+  it('maneja errores en obtenerUsuarios', async () => {
+    mockedAxios.get.mockRejectedValueOnce(new Error('Network error'));
+    await expect(obtenerUsuarios()).rejects.toThrow('Network error');
+  });
+
+  it('maneja errores en obtenerUsuariosStats', async () => {
+    mockedAxios.get.mockRejectedValueOnce(new Error('Network error'));
+    await expect(obtenerUsuariosStats()).rejects.toThrow('Network error');
+  });
+
+  it('maneja errores en registrarUsuarioAdmin', async () => {
+    mockedAxios.post.mockRejectedValueOnce(new Error('Network error'));
+    await expect(registrarUsuarioAdmin({})).rejects.toThrow('Network error');
+  });
+
+  it('maneja errores en registrarDonante', async () => {
+    mockedAxios.post.mockRejectedValueOnce(new Error('Network error'));
+    await expect(registrarDonante({})).rejects.toThrow('Network error');
+  });
+
+  it('maneja errores en verificarEmailDisponible (409)', async () => {
+    mockedAxios.get.mockRejectedValueOnce({ response: { status: 409 } });
+    const data = await verificarEmailDisponible('test');
+    expect(data).toBe(false);
+  });
+
+  it('maneja errores en verificarEmailDisponible (otro)', async () => {
+    mockedAxios.get.mockRejectedValueOnce(new Error('Network error'));
+    const data = await verificarEmailDisponible('test');
+    expect(data).toBe(true);
+  });
+
+  it('maneja errores en verificarRutDisponible (409)', async () => {
+    mockedAxios.get.mockRejectedValueOnce({ response: { status: 409 } });
+    const data = await verificarRutDisponible('rut');
+    expect(data).toBe(false);
+  });
+
+  it('maneja errores en verificarRutDisponible (otro)', async () => {
+    mockedAxios.get.mockRejectedValueOnce(new Error('Network error'));
+    const data = await verificarRutDisponible('rut');
+    expect(data).toBe(true);
+  });
+
+  it('maneja errores en actualizarUsuario', async () => {
+    mockedAxios.put.mockRejectedValueOnce(new Error('Network error'));
+    await expect(actualizarUsuario(1, {})).rejects.toThrow('Network error');
+  });
+
+  it('maneja errores en eliminarUsuario', async () => {
+    mockedAxios.delete.mockRejectedValueOnce(new Error('Network error'));
+    await expect(eliminarUsuario(1)).rejects.toThrow('Network error');
+  });
+
+  it('maneja errores en reactivarUsuario', async () => {
+    mockedAxios.put.mockRejectedValueOnce(new Error('Network error'));
+    await expect(reactivarUsuario(1)).rejects.toThrow('Network error');
+  });
+
+  it('maneja errores en actualizarEstadoMasivoUsuarios', async () => {
+    mockedAxios.put.mockRejectedValueOnce(new Error('Network error'));
+    await expect(actualizarEstadoMasivoUsuarios([1], true)).rejects.toThrow('Network error');
+  });
+
+  it('maneja errores en cambiarPassword', async () => {
+    mockedAxios.put.mockRejectedValueOnce(new Error('Network error'));
+    await expect(cambiarPassword(1, 'old', 'new')).rejects.toThrow('Network error');
+  });
 });

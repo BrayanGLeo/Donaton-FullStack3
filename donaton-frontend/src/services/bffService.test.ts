@@ -28,10 +28,14 @@ describe('bffService', () => {
     expect(data).toEqual({ id: 1 });
   });
 
-  it('actualizarEstadoNecesidad', async () => {
-    mockedAxios.put.mockResolvedValueOnce({ data: { success: true } });
-    const data = await actualizarEstadoNecesidad(1, 'EN_PROCESO');
-    expect(data).toEqual({ success: true });
+  it('actualizarEstadoNecesidad con centroAcopio y conductor', async () => {
+    mockedAxios.put.mockResolvedValueOnce({ data: { id: 1, estado: 'ACTUALIZADO' } });
+    const data = await actualizarEstadoNecesidad(1, 'ACTUALIZADO', 99, 100);
+    expect(mockedAxios.put).toHaveBeenCalledWith(
+      '/api/bff/necesidades/1/estado',
+      { estado: 'ACTUALIZADO', centroAcopioId: '99', conductorId: '100' }
+    );
+    expect(data).toEqual({ id: 1, estado: 'ACTUALIZADO' });
   });
 
   it('consumirInventario', async () => {
@@ -44,5 +48,31 @@ describe('bffService', () => {
     mockedAxios.get.mockResolvedValueOnce({ data: [{ id: 1 }] });
     const data = await obtenerHistorialNecesidades();
     expect(data).toEqual([{ id: 1 }]);
+  });
+
+  // PRUEBAS DE ERROR
+  it('maneja errores en obtenerNecesidades', async () => {
+    mockedAxios.get.mockRejectedValueOnce(new Error('Network error'));
+    await expect(obtenerNecesidades()).rejects.toThrow('Network error');
+  });
+
+  it('maneja errores en ingresarNecesidad', async () => {
+    mockedAxios.post.mockRejectedValueOnce(new Error('Network error'));
+    await expect(ingresarNecesidad({} as any)).rejects.toThrow('Network error');
+  });
+
+  it('maneja errores en actualizarEstadoNecesidad', async () => {
+    mockedAxios.put.mockRejectedValueOnce(new Error('Network error'));
+    await expect(actualizarEstadoNecesidad(1, 'EN_PROCESO')).rejects.toThrow('Network error');
+  });
+
+  it('maneja errores en consumirInventario', async () => {
+    mockedAxios.post.mockRejectedValueOnce(new Error('Network error'));
+    await expect(consumirInventario('Agua', 10)).rejects.toThrow('Network error');
+  });
+
+  it('maneja errores en obtenerHistorialNecesidades', async () => {
+    mockedAxios.get.mockRejectedValueOnce(new Error('Network error'));
+    await expect(obtenerHistorialNecesidades()).rejects.toThrow('Network error');
   });
 });

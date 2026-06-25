@@ -103,7 +103,7 @@ export const RegistroNatural: React.FC<Props> = ({ onSubmit, isLoading, onCancel
             <InputGroup>
               <Form.Select {...register('codigoPais')} disabled={isLoading} style={{ maxWidth: '120px' }}>
                 {COUNTRY_CODES.map((country) => (
-                  <option key={country.code} value={country.code}>{country.code}</option>
+                  <option key={country.name} value={country.code}>{country.code}</option>
                 ))}
               </Form.Select>
               <Form.Control type="text" placeholder="912345678" {...register('telefono')} maxLength={15} isInvalid={checkInvalid('telefono')} disabled={isLoading} onInput={formatPhoneInput} onKeyDown={preventPhoneKeyDown} />
