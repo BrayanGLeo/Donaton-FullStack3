@@ -7,6 +7,52 @@ import { obtenerCentrosAcopioPorRegion, obtenerUsuarios, type CentroAcopio } fro
 import { REGIONES_CHILE } from '../../utils/chileData';
 import { useAuth, type Usuario } from '../../context/AuthContext';
 import { RecursosDetalleTable } from '../common/RecursosDetalleTable';
+import { flattenResourceUnit, SUBCATEGORIAS } from '../../utils/unidadesLogic';
+
+const matchesCentroAcopio = (d: DonacionResponse, centroSeleccionado: string, regionSeleccionada: string, centrosAcopio: CentroAcopio[]): boolean => {
+  if (centroSeleccionado && d.centroAcopioDestinoId?.toString() !== centroSeleccionado) return false;
+  if (regionSeleccionada && !centroSeleccionado) {
+    const centrosIds = centrosAcopio.map(c => c.id);
+    if (!centrosIds.includes(d.centroAcopioDestinoId!)) return false;
+  }
+  return true;
+};
+
+const matchesSearchTerm = (d: DonacionResponse, searchTerm: string): boolean => {
+  if (!searchTerm) return true;
+  if (d.visibilidad === 'Privada') return false;
+  return d.trackingId?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false;
+};
+
+const matchesCategoria = (d: DonacionResponse, categoriaFiltro: string, subcategoriaFiltro: string): boolean => {
+  if (!categoriaFiltro && !subcategoriaFiltro) return true;
+  try {
+    const recs = JSON.parse(d.recursos || '[]');
+    if (!Array.isArray(recs)) return false;
+    return recs.some((r: any) => {
+      const catMatch = categoriaFiltro ? r.categoria === categoriaFiltro : true;
+      const subMatch = subcategoriaFiltro ? (r.subCategoria || r.subcategoria) === subcategoriaFiltro : true;
+      return catMatch && subMatch;
+    });
+  } catch {
+    return false;
+  }
+};
+
+const isDonacionValid = (
+  d: DonacionResponse,
+  centroSeleccionado: string,
+  regionSeleccionada: string,
+  centrosAcopio: CentroAcopio[],
+  searchTerm: string,
+  categoriaFiltro: string,
+  subcategoriaFiltro: string
+): boolean => {
+  if (!matchesCentroAcopio(d, centroSeleccionado, regionSeleccionada, centrosAcopio)) return false;
+  if (!matchesSearchTerm(d, searchTerm)) return false;
+  if (!matchesCategoria(d, categoriaFiltro, subcategoriaFiltro)) return false;
+  return true;
+};
 
 const HistorialAcopio: React.FC = () => {
   const { usuario } = useAuth();
@@ -21,6 +67,8 @@ const HistorialAcopio: React.FC = () => {
   const [usuariosMap, setUsuariosMap] = useState<Record<number, Usuario>>({});
 
   const [searchTerm, setSearchTerm] = useState('');
+  const [categoriaFiltro, setCategoriaFiltro] = useState('');
+  const [subcategoriaFiltro, setSubcategoriaFiltro] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
 
@@ -74,7 +122,7 @@ const HistorialAcopio: React.FC = () => {
     return u.nombre || 'Solidario/a';
   };
 
-  useEffect(() => { setCurrentPage(1); }, [regionSeleccionada, centroSeleccionado, searchTerm]);
+  useEffect(() => { setCurrentPage(1); }, [regionSeleccionada, centroSeleccionado, searchTerm, categoriaFiltro, subcategoriaFiltro]);
 
   if (loading) {
     return (
@@ -86,18 +134,9 @@ const HistorialAcopio: React.FC = () => {
   }
 
   // Filtrado general
-  const filteredDonaciones = donaciones.filter(d => {
-    if (centroSeleccionado && d.centroAcopioDestinoId?.toString() !== centroSeleccionado) return false;
-    if (regionSeleccionada && !centroSeleccionado) {
-      const centrosIds = centrosAcopio.map(c => c.id);
-      if (!centrosIds.includes(d.centroAcopioDestinoId!)) return false;
-    }
-    if (searchTerm) {
-      if (d.visibilidad === 'Privada') return false; // Privadas no tienen tracking ID visible publicamente
-      if (!d.trackingId?.toLowerCase().includes(searchTerm.toLowerCase())) return false;
-    }
-    return true;
-  });
+  const filteredDonaciones = donaciones.filter(d => 
+    isDonacionValid(d, centroSeleccionado, regionSeleccionada, centrosAcopio, searchTerm, categoriaFiltro, subcategoriaFiltro)
+  );
 
   // KPIs
   const totalArticulos = filteredDonaciones.reduce((acc, curr) => {
@@ -113,20 +152,25 @@ const HistorialAcopio: React.FC = () => {
   const donantesUnicos = new Set(filteredDonaciones.map(d => d.donanteId).filter(Boolean)).size;
 
   // Chart Data
-  const categoryMap: Record<string, number> = {};
+  const subcategoriaMap: Record<string, number> = {};
   filteredDonaciones.forEach(d => {
     try {
       const recs = JSON.parse(d.recursos || '[]');
       if (Array.isArray(recs)) {
+        // Usamos un Set para no contar la misma subcategoría dos veces en una sola donación
+        const subsInDonacion = new Set<string>();
         recs.forEach((r: any) => {
-          const cat = r.categoria || 'Otros';
-          categoryMap[cat] = (categoryMap[cat] || 0) + (r.cantidad || 0);
+          const s = r.subCategoria || r.subcategoria || 'Otros';
+          subsInDonacion.add(s);
+        });
+        subsInDonacion.forEach(s => {
+          subcategoriaMap[s] = (subcategoriaMap[s] || 0) + 1;
         });
       }
     } catch {}
   });
   const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
-  const chartData = Object.entries(categoryMap).map(([name, value], index) => ({
+  const chartData = Object.entries(subcategoriaMap).map(([name, value], index) => ({
     name,
     value,
     fill: COLORS[index % COLORS.length]
@@ -222,27 +266,45 @@ const HistorialAcopio: React.FC = () => {
           <Card className="border-0 shadow-sm bg-white">
             <Card.Body className="p-3">
               <Row className="g-3 align-items-end">
-                <Col md={4}>
+                <Col md={3}>
                   <Form.Group>
-                    <Form.Label className="small text-muted mb-1 fw-semibold"><Search size={14} className="me-1 text-primary" /> Región Destino</Form.Label>
+                    <Form.Label className="small text-muted mb-1 fw-semibold"><Search size={14} className="me-1 text-primary" /> Región</Form.Label>
                     <Form.Select size="sm" value={regionSeleccionada} onChange={(e) => setRegionSeleccionada(e.target.value)}>
-                      <option value="">Todas las regiones...</option>
+                      <option value="">Todas...</option>
                       {REGIONES_CHILE.map(r => <option key={r} value={r}>{r}</option>)}
                     </Form.Select>
                   </Form.Group>
                 </Col>
-                <Col md={4}>
+                <Col md={3}>
                   <Form.Group>
-                    <Form.Label className="small text-muted mb-1 fw-semibold">Centro de Acopio</Form.Label>
+                    <Form.Label className="small text-muted mb-1 fw-semibold">Centro Acopio</Form.Label>
                     <Form.Select size="sm" value={centroSeleccionado} onChange={(e) => setCentroSeleccionado(e.target.value)} disabled={!regionSeleccionada || centrosAcopio.length === 0}>
-                      <option value="">{regionSeleccionada ? 'Todos los centros...' : 'Selecciona región...'}</option>
+                      <option value="">{regionSeleccionada ? 'Todos...' : 'Selecciona región...'}</option>
                       {centrosAcopio.map(c => <option key={c.id} value={c.id.toString()}>{c.nombre}</option>)}
                     </Form.Select>
                   </Form.Group>
                 </Col>
-                <Col md={4}>
+                <Col md={2}>
                   <Form.Group>
-                    <Form.Label className="small text-muted mb-1 fw-semibold">Buscar por ID</Form.Label>
+                    <Form.Label className="small text-muted mb-1 fw-semibold">Categoría</Form.Label>
+                    <Form.Select size="sm" value={categoriaFiltro} onChange={(e) => { setCategoriaFiltro(e.target.value); setSubcategoriaFiltro(''); }}>
+                      <option value="">Todas...</option>
+                      {Object.keys(SUBCATEGORIAS).map(c => <option key={c} value={c}>{c}</option>)}
+                    </Form.Select>
+                  </Form.Group>
+                </Col>
+                <Col md={2}>
+                  <Form.Group>
+                    <Form.Label className="small text-muted mb-1 fw-semibold">Subcategoría</Form.Label>
+                    <Form.Select size="sm" value={subcategoriaFiltro} onChange={(e) => setSubcategoriaFiltro(e.target.value)} disabled={!categoriaFiltro || !SUBCATEGORIAS[categoriaFiltro]}>
+                      <option value="">Todas...</option>
+                      {(SUBCATEGORIAS[categoriaFiltro] || []).map(s => <option key={s} value={s}>{s}</option>)}
+                    </Form.Select>
+                  </Form.Group>
+                </Col>
+                <Col md={2}>
+                  <Form.Group>
+                    <Form.Label className="small text-muted mb-1 fw-semibold">ID / Buscar</Form.Label>
                     <Form.Control size="sm" placeholder="Ej. DON-1234" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                   </Form.Group>
                 </Col>
@@ -266,7 +328,8 @@ const HistorialAcopio: React.FC = () => {
                         <th>ID</th>
                         <th>Donante</th>
                         <th>Título</th>
-                        <th>Recursos</th>
+                        <th>Recurso</th>
+                        <th>Cantidad</th>
                         <th>Fecha</th>
                         <th>Detalles</th>
                       </tr>
@@ -275,9 +338,30 @@ const HistorialAcopio: React.FC = () => {
                       {currentData.map((donacion) => {
                         const esPrivada = donacion.visibilidad === 'Privada';
                         let totalItems = 0;
+                        let unidadLabel = 'unidades';
+                        let recursosList: { cat: string, subs: string[] }[] = [];
                         try {
                           const recs = JSON.parse(donacion.recursos || '[]');
-                          if (Array.isArray(recs)) totalItems = recs.reduce((s: number, r: any) => s + (r.cantidad || 0), 0);
+                          if (Array.isArray(recs) && recs.length > 0) {
+                            totalItems = recs.reduce((s: number, r: any) => s + flattenResourceUnit(r, r.cantidad || 0).finalCantidad, 0);
+                            unidadLabel = flattenResourceUnit(recs[0], recs[0].cantidad || 0).finalUnidad.toLowerCase();
+                            
+                            const categoriasMap = new Map<string, Set<string>>();
+                            recs.forEach((r: any) => {
+                                const c = r.categoria || 'Otros';
+                                const s = r.subCategoria || r.subcategoria || '';
+                                if (!categoriasMap.has(c)) {
+                                    categoriasMap.set(c, new Set());
+                                }
+                                if (s) {
+                                    categoriasMap.get(c)!.add(s);
+                                }
+                            });
+                            
+                            categoriasMap.forEach((subs, cat) => {
+                                recursosList.push({ cat, subs: Array.from(subs) });
+                            });
+                          }
                         } catch {}
                         return (
                           <tr key={donacion.id}>
@@ -292,9 +376,23 @@ const HistorialAcopio: React.FC = () => {
                               )}
                             </td>
                             <td className="small">{donacion.nombreArticulo || 'Donación'}</td>
+                            <td className="small">
+                              {recursosList.length > 0 ? recursosList.map((recItem, idx) => (
+                                <div key={recItem.cat} className={idx < recursosList.length - 1 ? "mb-2" : ""}>
+                                  <span className="fw-semibold text-dark d-block" style={{ lineHeight: '1.2' }}>{recItem.cat}</span>
+                                  {recItem.subs.length > 0 && (
+                                    <span className="text-muted d-block" style={{ fontSize: '0.75rem', lineHeight: '1.2' }}>
+                                      {recItem.subs.join(', ')}
+                                    </span>
+                                  )}
+                                </div>
+                              )) : (
+                                <span className="text-muted">Sin detalles</span>
+                              )}
+                            </td>
                             <td>
                               <Badge bg="primary" pill>
-                                {totalItems} items
+                                {totalItems} {unidadLabel}
                               </Badge>
                             </td>
                             <td className="small">
@@ -357,7 +455,7 @@ const HistorialAcopio: React.FC = () => {
         <Col lg={3} xl={2}>
           <Card className="border-0 shadow-sm h-100">
             <Card.Body className="p-3 d-flex flex-column">
-              <h6 className="fw-bold text-secondary mb-4 text-center"><PackageCheck size={16} className="me-1 text-primary" />Categorías</h6>
+              <h6 className="fw-bold text-secondary mb-4 text-center" style={{ fontSize: '0.85rem' }}><PackageCheck size={16} className="me-1 text-primary" />Subcategorías</h6>
               <div style={{ flex: 1, minHeight: '300px' }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
