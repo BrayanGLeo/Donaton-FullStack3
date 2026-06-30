@@ -35,33 +35,44 @@ const UNIDADES_POR_CATEGORIA: Record<string, string[]> = {
 
 const SUBCATEGORIAS: Record<string, string[]> = {
   "Alimentos": [
-    "Frutas y Verduras",
+    "Frutas",
+    "Verduras",
     "Comida Preparada",
-    "Lácteos/Refrigerados",
-    "Panadería/Pastelería"
+    "Lácteos",
+    "Refrigerados",
+    "Panadería",
+    "Pastelería"
   ],
   "Alimentos imperecederos": [
     "Arroz",
-    "Fideos/Pastas",
+    "Fideos",
+    "Pastas",
     "Legumbres",
     "Aceite",
     "Salsa de Tomate",
-    "Atún/Jurel en Conserva",
-    "Leche (Polvo/Caja larga vida)",
+    "Atún en Conserva",
+    "Jurel en Conserva",
+    "Leche en Polvo",
+    "Leche (Caja larga vida)",
     "Harina",
     "Azúcar",
     "Sal",
-    "Té/Café",
-    "Avena/Cereales"
+    "Té",
+    "Café",
+    "Avena",
+    "Cereales"
   ],
   "Ropa y Calzado": [
-    "Poleras/Camisas",
-    "Pantalones/Jeans",
-    "Chaquetas/Abrigos",
+    "Poleras",
+    "Camisas",
+    "Pantalones",
+    "Jeans",
+    "Chaquetas",
+    "Abrigos",
     "Ropa Interior (Nueva)",
-    "Zapatos/Zapatillas",
-    "Ropa de Bebé/Niño",
-    "Ropa de Cama"
+    "Zapatos",
+    "Zapatillas",
+    "Ropa de Bebé"
   ],
   "Agua e Hidratación": [
     "Agua Embotellada (Bidón)",
@@ -70,43 +81,83 @@ const SUBCATEGORIAS: Record<string, string[]> = {
     "Jugos en Caja"
   ],
   "Artículos de Higiene Personal": [
-    "Jabón/Gel de Ducha",
-    "Shampoo/Acondicionador",
-    "Pasta y Cepillo Dental",
+    "Jabón",
+    "Gel de Ducha",
+    "Shampoo",
+    "Acondicionador",
+    "Pasta Dental",
+    "Cepillo Dental",
     "Papel Higiénico",
     "Toallas Higiénicas",
-    "Pañales (Bebé/Adulto)",
+    "Pañales (Bebé)",
+    "Pañales (Adulto)",
     "Desodorante"
   ],
   "Insumos Médicos": [
     "Mascarillas",
-    "Guantes de Látex/Nitrilo",
-    "Alcohol/Alcohol Gel",
-    "Gasas/Vendas",
-    "Paracetamol/Ibuprofeno",
+    "Guantes de Látex",
+    "Guantes de Nitrilo",
+    "Alcohol",
+    "Alcohol Gel",
+    "Gasas",
+    "Vendas",
+    "Paracetamol",
+    "Ibuprofeno",
     "Suero",
     "Jeringas"
   ],
   "Materiales de Construcción": [
-    "Madera/Tablas",
-    "Clavos/Tornillos",
+    "Madera",
+    "Tablas",
+    "Clavos",
+    "Tornillos",
     "Cemento",
-    "Zinc/Calaminas",
+    "Zinc",
+    "Calaminas",
     "Pintura",
-    "Cables Eléctricos"
+    "Cables Eléctricos",
+    "Ladrillos",
+    "Arena",
+    "Grava",
+    "Yeso",
+    "Tubos de PVC",
+    "Fierro/Acero",
+    "Planchas OSB",
+    "Aislante Térmico"
   ],
   "Herramientas": [
-    "Martillo/Serrucho",
-    "Palas/Picos",
+    "Martillo",
+    "Serrucho",
+    "Palas",
+    "Picos",
     "Taladro",
-    "Destornilladores/Alicates"
+    "Destornilladores",
+    "Alicates",
+    "Huincha de Medir",
+    "Llave Inglesa",
+    "Carretilla",
+    "Esmeril",
+    "Sierra Circular",
+    "Hacha",
+    "Brochas",
+    "Rodillos"
   ],
   "Muebles y Enseres": [
-    "Camas/Colchones",
-    "Mesas/Sillas",
-    "Cocina/Estufa",
+    "Camas",
+    "Colchones",
+    "Mesas",
+    "Sillas",
+    "Cocina",
+    "Estufa",
     "Refrigerador",
-    "Muebles de Guardado"
+    "Muebles de Guardado",
+    "Sillones",
+    "Estantes",
+    "Escritorios",
+    "Lavadora",
+    "Microondas",
+    "Televisor",
+    "Sábanas y Frazadas"
   ],
   "Alimentos para Mascotas": [
     "Comida para Perros (Seca)",
@@ -125,7 +176,12 @@ const INITIAL_TEMP_RECURSO = {
   unidadMedida: '',
   cantidad: '',
   pesoAproximado: '',
-  fechaVencimiento: ''
+  fechaVencimiento: '',
+  genero: '',
+  talla: '',
+  tamano: '',
+  etapa: '',
+  restriccionDietetica: ''
 };
 
 const validateFechaVencimiento = (tempRecurso: typeof INITIAL_TEMP_RECURSO, errs: Record<string, string>) => {
@@ -179,7 +235,38 @@ const validateRecursoLocal = (tempRecurso: typeof INITIAL_TEMP_RECURSO) => {
 
   validateFechaVencimiento(tempRecurso, errs);
 
+  if (tempRecurso.categoria === "Ropa y Calzado") {
+    if (!tempRecurso.genero) errs.genero = "El género es obligatorio para ropa/calzado";
+    if (!tempRecurso.talla) errs.talla = "La talla es obligatoria para ropa/calzado";
+  }
+
   return { errs, hideEstado, cantidadNum };
+};
+
+const renderTallaOptions = (subCategoria: string) => {
+  if (subCategoria === 'Ropa de Bebé') {
+    return ["0-3 meses", "3-6 meses", "6-9 meses", "9-12 meses", "12-18 meses", "18-24 meses", "2-3 años"].map(t => (
+      <option key={t} value={t}>{t}</option>
+    ));
+  }
+  if (subCategoria === 'Zapatos' || subCategoria === 'Zapatillas') {
+    return Array.from({length: 33}, (_, i) => i + 18).map(t => (
+      <option key={t} value={t.toString()}>{t}</option>
+    ));
+  }
+  if (subCategoria === 'Pañales (Bebé)') {
+    return ["RN", "P", "M", "G", "XG", "XXG"].map(t => (
+      <option key={t} value={t}>{t}</option>
+    ));
+  }
+  if (subCategoria === 'Pañales (Adulto)' || subCategoria === 'Guantes de Látex' || subCategoria === 'Guantes de Nitrilo') {
+    return ["S", "M", "L", "XL"].map(t => (
+      <option key={t} value={t}>{t}</option>
+    ));
+  }
+  return ["XS", "S", "M", "L", "XL", "XXL", "Única"].map(t => (
+    <option key={t} value={t}>{t}</option>
+  ));
 };
 
 export const DonacionStep1: React.FC = () => {
@@ -366,6 +453,150 @@ export const DonacionStep1: React.FC = () => {
                     {opcionesSubCategoria.map(a => <option key={a} value={a}>{a}</option>)}
                   </Form.Select>
                   <Form.Control.Feedback type="invalid">{localErrors.subCategoria}</Form.Control.Feedback>
+                </Form.Group>
+              </Col>
+            )}
+
+            {tempRecurso.categoria === "Ropa y Calzado" && (
+              <>
+                <Col md={6}>
+                  <Form.Group className="mb-3">
+                    <Form.Label className="fw-semibold small">Género <span className="text-danger">*</span></Form.Label>
+                    <Form.Select 
+                      value={tempRecurso.genero || ''}
+                      isInvalid={!!localErrors.genero}
+                      onChange={(e) => {
+                        setTempRecurso({ ...tempRecurso, genero: e.target.value });
+                        setLocalErrors({ ...localErrors, genero: '' });
+                      }}
+                    >
+                      <option value="">Selecciona el género</option>
+                      {tempRecurso.subCategoria === 'Ropa de Bebé' ? (
+                        <>
+                          <option value="Niño">Niño</option>
+                          <option value="Niña">Niña</option>
+                          <option value="Unisex">Unisex</option>
+                        </>
+                      ) : (
+                        <>
+                          <option value="Hombre">Hombre</option>
+                          <option value="Mujer">Mujer</option>
+                          <option value="Unisex">Unisex</option>
+                          <option value="Niño">Niño</option>
+                          <option value="Niña">Niña</option>
+                        </>
+                      )}
+                    </Form.Select>
+                    <Form.Control.Feedback type="invalid">{localErrors.genero}</Form.Control.Feedback>
+                  </Form.Group>
+                </Col>
+
+                <Col md={6}>
+                  <Form.Group className="mb-3">
+                    <Form.Label className="fw-semibold small">Talla <span className="text-danger">*</span></Form.Label>
+                    <Form.Select 
+                      value={tempRecurso.talla || ''}
+                      isInvalid={!!localErrors.talla}
+                      onChange={(e) => {
+                        setTempRecurso({ ...tempRecurso, talla: e.target.value });
+                        setLocalErrors({ ...localErrors, talla: '' });
+                      }}
+                    >
+                      <option value="">Selecciona la talla</option>
+                      {renderTallaOptions(tempRecurso.subCategoria)}
+                    </Form.Select>
+                    <Form.Control.Feedback type="invalid">{localErrors.talla}</Form.Control.Feedback>
+                  </Form.Group>
+                </Col>
+              </>
+            )}
+
+            {(tempRecurso.subCategoria === "Pañales (Bebé)" || 
+              tempRecurso.subCategoria === "Pañales (Adulto)" || 
+              tempRecurso.subCategoria === "Guantes de Látex" || 
+              tempRecurso.subCategoria === "Guantes de Nitrilo") && (
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label className="fw-semibold small">Talla <span className="text-danger">*</span></Form.Label>
+                  <Form.Select 
+                    size="sm"
+                    value={tempRecurso.talla || ''}
+                    isInvalid={!!localErrors.talla}
+                    onChange={(e) => {
+                      setTempRecurso({ ...tempRecurso, talla: e.target.value });
+                      setLocalErrors({ ...localErrors, talla: '' });
+                    }}
+                  >
+                    <option value="">Selecciona la talla</option>
+                    {renderTallaOptions(tempRecurso.subCategoria)}
+                  </Form.Select>
+                  <Form.Control.Feedback type="invalid">{localErrors.talla}</Form.Control.Feedback>
+                </Form.Group>
+              </Col>
+            )}
+
+            {(tempRecurso.subCategoria === "Camas" || 
+              tempRecurso.subCategoria === "Colchones" || 
+              tempRecurso.subCategoria === "Sábanas y Frazadas") && (
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label className="fw-semibold small">Tamaño <span className="text-danger">*</span></Form.Label>
+                  <Form.Select 
+                    size="sm"
+                    value={tempRecurso.tamano || ''}
+                    isInvalid={!!localErrors.tamano}
+                    onChange={(e) => {
+                      setTempRecurso({ ...tempRecurso, tamano: e.target.value });
+                      setLocalErrors({ ...localErrors, tamano: '' });
+                    }}
+                  >
+                    <option value="">Selecciona el tamaño</option>
+                    {["1 Plaza", "1.5 Plazas", "2 Plazas", "King", "Super King"].map(t => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </Form.Select>
+                  <Form.Control.Feedback type="invalid">{localErrors.tamano}</Form.Control.Feedback>
+                </Form.Group>
+              </Col>
+            )}
+
+            {tempRecurso.categoria === "Alimentos para Mascotas" && (
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label className="fw-semibold small">Etapa/Edad <span className="text-danger">*</span></Form.Label>
+                  <Form.Select 
+                    size="sm"
+                    value={tempRecurso.etapa || ''}
+                    isInvalid={!!localErrors.etapa}
+                    onChange={(e) => {
+                      setTempRecurso({ ...tempRecurso, etapa: e.target.value });
+                      setLocalErrors({ ...localErrors, etapa: '' });
+                    }}
+                  >
+                    <option value="">Selecciona la etapa</option>
+                    {["Cachorro/Gatito", "Adulto", "Senior", "Todas las edades"].map(t => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </Form.Select>
+                  <Form.Control.Feedback type="invalid">{localErrors.etapa}</Form.Control.Feedback>
+                </Form.Group>
+              </Col>
+            )}
+
+            {(tempRecurso.categoria === "Alimentos" || tempRecurso.categoria === "Alimentos imperecederos") && (
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label className="fw-semibold small text-muted">Restricción Dietética (Opcional)</Form.Label>
+                  <Form.Select 
+                    size="sm"
+                    value={tempRecurso.restriccionDietetica || ''}
+                    onChange={(e) => setTempRecurso({ ...tempRecurso, restriccionDietetica: e.target.value })}
+                  >
+                    <option value="">Ninguna</option>
+                    {["Sin Gluten", "Sin Lactosa", "Vegano/Vegetariano", "Para Diabéticos"].map(t => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </Form.Select>
                 </Form.Group>
               </Col>
             )}

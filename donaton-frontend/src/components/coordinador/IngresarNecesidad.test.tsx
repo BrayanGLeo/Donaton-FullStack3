@@ -35,7 +35,7 @@ describe('Epic 3: Coordinación de Emergencias', () => {
     const { container } = renderWithProviders(<IngresarNecesidad />);
 
     const selects = container.querySelectorAll('select');
-    const categoriaSelect = selects[0] as HTMLSelectElement;
+    const categoriaSelect = selects[0];
     
     fireEvent.change(categoriaSelect, { target: { value: 'Alimentos imperecederos' } });
 
@@ -43,10 +43,10 @@ describe('Epic 3: Coordinación de Emergencias', () => {
       expect(container.querySelectorAll('select').length).toBeGreaterThan(1);
     });
     
-    const subcategoriaSelect = container.querySelectorAll('select')[1] as HTMLSelectElement;
+    const subcategoriaSelect = container.querySelectorAll('select')[1];
 
     expect(screen.getByText('Arroz')).toBeInTheDocument();
-    expect(screen.getByText('Fideos/Pastas')).toBeInTheDocument();
+    expect(screen.getByText('Fideos')).toBeInTheDocument();
     expect(screen.getByText('Otro (Especificar)')).toBeInTheDocument();
 
     fireEvent.change(subcategoriaSelect, { target: { value: 'Otro' } });
@@ -59,11 +59,11 @@ describe('Epic 3: Coordinación de Emergencias', () => {
 
     // Añadir recurso
     const selects = container.querySelectorAll('select');
-    const categoriaSelect = selects[0] as HTMLSelectElement;
+    const categoriaSelect = selects[0];
     fireEvent.change(categoriaSelect, { target: { value: 'Agua e Hidratación' } });
 
     await waitFor(() => expect(container.querySelectorAll('select').length).toBeGreaterThan(1));
-    const subcategoriaSelect = container.querySelectorAll('select')[1] as HTMLSelectElement;
+    const subcategoriaSelect = container.querySelectorAll('select')[1];
     fireEvent.change(subcategoriaSelect, { target: { value: 'Agua Embotellada (Bidón)' } });
 
     const cantidadInput = container.querySelector('input[type="number"]') as HTMLInputElement;

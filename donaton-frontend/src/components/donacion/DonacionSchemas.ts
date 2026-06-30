@@ -5,17 +5,22 @@ export const getMaxYearsForSubcategory = (subCategoria?: string): number => {
 
   const limites: Record<string, number> = {
     // Alimentos
-    "Fideos/Pastas": 3,
+    "Fideos": 3,
+    "Pastas": 3,
     "Legumbres": 3,
     "Aceite": 2,
     "Salsa de Tomate": 2,
-    "Atún/Jurel en Conserva": 5,
-    "Leche (Polvo/Caja larga vida)": 2,
+    "Atún en Conserva": 5,
+    "Jurel en Conserva": 5,
+    "Leche en Polvo": 2,
+    "Leche (Caja larga vida)": 2,
     "Harina": 1,
     "Azúcar": 5,
     "Sal": 5,
-    "Té/Café": 2,
-    "Avena/Cereales": 1,
+    "Té": 2,
+    "Café": 2,
+    "Avena": 1,
+    "Cereales": 1,
     // Agua e Hidratación
     "Agua Embotellada (Bidón)": 2,
     "Agua Embotellada (Individual)": 2,
@@ -23,10 +28,14 @@ export const getMaxYearsForSubcategory = (subCategoria?: string): number => {
     "Jugos en Caja": 1,
     // Insumos Médicos
     "Mascarillas": 5,
-    "Guantes de Látex/Nitrilo": 5,
-    "Alcohol/Alcohol Gel": 3,
-    "Gasas/Vendas": 5,
-    "Paracetamol/Ibuprofeno": 5,
+    "Guantes de Látex": 5,
+    "Guantes de Nitrilo": 5,
+    "Alcohol": 3,
+    "Alcohol Gel": 3,
+    "Gasas": 5,
+    "Vendas": 5,
+    "Paracetamol": 5,
+    "Ibuprofeno": 5,
     "Suero": 3,
     "Jeringas": 5,
     // Alimentos para Mascotas
@@ -66,6 +75,11 @@ export const donacionStep1Schema = z.object({
             .optional()
         ),
       fechaVencimiento: z.string().optional(),
+      genero: z.string().optional(),
+      talla: z.string().optional(),
+      tamano: z.string().optional(),
+      etapa: z.string().optional(),
+      restriccionDietetica: z.string().optional(),
     })
   ).min(1, "Debes agregar al menos un recurso a donar"),
   descripcion: z.string()

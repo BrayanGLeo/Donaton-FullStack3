@@ -27,7 +27,7 @@ describe('DonacionSchemas', () => {
     const result = donacionStep1Schema.safeParse({
       nombreArticulo: 'Fideos',
       categoria: 'Alimentos',
-      subCategoria: 'Fideos/Pastas',
+      subCategoria: 'Fideos',
       descripcion: 'Comida no perecible',
       cantidad: 1,
       unidadMedida: 'Unidad',

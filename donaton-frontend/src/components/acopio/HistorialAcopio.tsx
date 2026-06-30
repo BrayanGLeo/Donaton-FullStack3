@@ -421,6 +421,7 @@ const HistorialAcopio: React.FC = () => {
                                 <th>Recurso</th>
                                 <th>Estado</th>
                                 <th>Cant.</th>
+                                <th>Detalles Adicionales</th>
                                 <th>Vencimiento</th>
                               </tr>
                             </thead>
@@ -431,6 +432,18 @@ const HistorialAcopio: React.FC = () => {
                                   <td>{r.subCategoria}</td>
                                   <td>{r.estadoArticulo}</td>
                                   <td>{r.cantidad} {r.unidadMedida}</td>
+                                  <td>
+                                    {(() => {
+                                      const extras = [
+                                        r.genero && `G: ${r.genero}`,
+                                        r.talla && `T: ${r.talla}`,
+                                        r.tamano && `Tam: ${r.tamano}`,
+                                        r.etapa && `Ed: ${r.etapa}`,
+                                        r.restriccionDietetica && `Diet: ${r.restriccionDietetica}`
+                                      ].filter(Boolean);
+                                      return extras.length > 0 ? extras.join(' | ') : '-';
+                                    })()}
+                                  </td>
                                   <td>{r.fechaVencimiento || '-'}</td>
                                 </tr>
                               ))}

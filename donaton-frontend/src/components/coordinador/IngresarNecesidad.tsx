@@ -28,6 +28,11 @@ export interface ItemNecesidad {
   subcategoria: string;
   cantidad: number | '';
   unidad: string;
+  genero?: string;
+  talla?: string;
+  tamano?: string;
+  etapa?: string;
+  restriccionDietetica?: string;
 }
 
 const CATEGORIAS_DISPONIBLES = [
@@ -56,33 +61,44 @@ const UNIDADES_DISPONIBLES = [
 
 const SUBCATEGORIAS: Record<string, string[]> = {
   "Alimentos": [
-    "Frutas y Verduras",
+    "Frutas",
+    "Verduras",
     "Comida Preparada",
-    "Lácteos/Refrigerados",
-    "Panadería/Pastelería"
+    "Lácteos",
+    "Refrigerados",
+    "Panadería",
+    "Pastelería"
   ],
   "Alimentos imperecederos": [
     "Arroz",
-    "Fideos/Pastas",
+    "Fideos",
+    "Pastas",
     "Legumbres",
     "Aceite",
     "Salsa de Tomate",
-    "Atún/Jurel en Conserva",
-    "Leche (Polvo/Caja larga vida)",
+    "Atún en Conserva",
+    "Jurel en Conserva",
+    "Leche en Polvo",
+    "Leche (Caja larga vida)",
     "Harina",
     "Azúcar",
     "Sal",
-    "Té/Café",
-    "Avena/Cereales"
+    "Té",
+    "Café",
+    "Avena",
+    "Cereales"
   ],
   "Ropa y Calzado": [
-    "Poleras/Camisas",
-    "Pantalones/Jeans",
-    "Chaquetas/Abrigos",
+    "Poleras",
+    "Camisas",
+    "Pantalones",
+    "Jeans",
+    "Chaquetas",
+    "Abrigos",
     "Ropa Interior (Nueva)",
-    "Zapatos/Zapatillas",
-    "Ropa de Bebé/Niño",
-    "Ropa de Cama"
+    "Zapatos",
+    "Zapatillas",
+    "Ropa de Bebé"
   ],
   "Agua e Hidratación": [
     "Agua Embotellada (Bidón)",
@@ -91,43 +107,83 @@ const SUBCATEGORIAS: Record<string, string[]> = {
     "Jugos en Caja"
   ],
   "Artículos de Higiene Personal": [
-    "Jabón/Gel de Ducha",
-    "Shampoo/Acondicionador",
-    "Pasta y Cepillo Dental",
+    "Jabón",
+    "Gel de Ducha",
+    "Shampoo",
+    "Acondicionador",
+    "Pasta Dental",
+    "Cepillo Dental",
     "Papel Higiénico",
     "Toallas Higiénicas",
-    "Pañales (Bebé/Adulto)",
+    "Pañales (Bebé)",
+    "Pañales (Adulto)",
     "Desodorante"
   ],
   "Insumos Médicos": [
     "Mascarillas",
-    "Guantes de Látex/Nitrilo",
-    "Alcohol/Alcohol Gel",
-    "Gasas/Vendas",
-    "Paracetamol/Ibuprofeno",
+    "Guantes de Látex",
+    "Guantes de Nitrilo",
+    "Alcohol",
+    "Alcohol Gel",
+    "Gasas",
+    "Vendas",
+    "Paracetamol",
+    "Ibuprofeno",
     "Suero",
     "Jeringas"
   ],
   "Materiales de Construcción": [
-    "Madera/Tablas",
-    "Clavos/Tornillos",
+    "Madera",
+    "Tablas",
+    "Clavos",
+    "Tornillos",
     "Cemento",
-    "Zinc/Calaminas",
+    "Zinc",
+    "Calaminas",
     "Pintura",
-    "Cables Eléctricos"
+    "Cables Eléctricos",
+    "Ladrillos",
+    "Arena",
+    "Grava",
+    "Yeso",
+    "Tubos de PVC",
+    "Fierro/Acero",
+    "Planchas OSB",
+    "Aislante Térmico"
   ],
   "Herramientas": [
-    "Martillo/Serrucho",
-    "Palas/Picos",
+    "Martillo",
+    "Serrucho",
+    "Palas",
+    "Picos",
     "Taladro",
-    "Destornilladores/Alicates"
+    "Destornilladores",
+    "Alicates",
+    "Huincha de Medir",
+    "Llave Inglesa",
+    "Carretilla",
+    "Esmeril",
+    "Sierra Circular",
+    "Hacha",
+    "Brochas",
+    "Rodillos"
   ],
   "Muebles y Enseres": [
-    "Camas/Colchones",
-    "Mesas/Sillas",
-    "Cocina/Estufa",
+    "Camas",
+    "Colchones",
+    "Mesas",
+    "Sillas",
+    "Cocina",
+    "Estufa",
     "Refrigerador",
-    "Muebles de Guardado"
+    "Muebles de Guardado",
+    "Sillones",
+    "Estantes",
+    "Escritorios",
+    "Lavadora",
+    "Microondas",
+    "Televisor",
+    "Sábanas y Frazadas"
   ],
   "Alimentos para Mascotas": [
     "Comida para Perros (Seca)",
@@ -141,10 +197,36 @@ const SUBCATEGORIAS: Record<string, string[]> = {
 
 // No map utils needed here
 
+const renderTallaOptions = (subCategoria: string) => {
+  if (subCategoria === 'Ropa de Bebé') {
+    return ["0-3 meses", "3-6 meses", "6-9 meses", "9-12 meses", "12-18 meses", "18-24 meses", "2-3 años"].map(t => (
+      <option key={t} value={t}>{t}</option>
+    ));
+  }
+  if (subCategoria === 'Zapatos' || subCategoria === 'Zapatillas') {
+    return Array.from({length: 33}, (_, i) => i + 18).map(t => (
+      <option key={t} value={t.toString()}>{t}</option>
+    ));
+  }
+  if (subCategoria === 'Pañales (Bebé)') {
+    return ["RN", "P", "M", "G", "XG", "XXG"].map(t => (
+      <option key={t} value={t}>{t}</option>
+    ));
+  }
+  if (subCategoria === 'Pañales (Adulto)' || subCategoria === 'Guantes de Látex' || subCategoria === 'Guantes de Nitrilo') {
+    return ["S", "M", "L", "XL"].map(t => (
+      <option key={t} value={t}>{t}</option>
+    ));
+  }
+  return ["XS", "S", "M", "L", "XL", "XXL", "Única"].map(t => (
+    <option key={t} value={t}>{t}</option>
+  ));
+};
+
 const IngresarNecesidad: React.FC = () => {
   const { usuario } = useAuth();
   const [items, setItems] = useState<ItemNecesidad[]>([]);
-  const [currentItem, setCurrentItem] = useState<ItemNecesidad>({ id: crypto.randomUUID(), categoria: '', subcategoria: '', cantidad: '', unidad: 'Unidades' });
+  const [currentItem, setCurrentItem] = useState<ItemNecesidad>({ id: crypto.randomUUID(), categoria: '', subcategoria: '', cantidad: '', unidad: 'Unidades', genero: '', talla: '' });
   const [otroSubcategoria, setOtroSubcategoria] = useState('');
   const [tipoEmergencia, setTipoEmergencia] = useState('');
   const [latitud, setLatitud] = useState<number | ''>('');
@@ -190,8 +272,13 @@ const IngresarNecesidad: React.FC = () => {
       return;
     }
 
+    if (currentItem.categoria === 'Ropa y Calzado' && (!currentItem.genero || !currentItem.talla)) {
+      alert("Por favor, selecciona género y talla para la ropa o calzado.");
+      return;
+    }
+
     setItems([...items, { ...currentItem, subcategoria: finalSubcategoria }]);
-    setCurrentItem({ id: crypto.randomUUID(), categoria: '', subcategoria: '', cantidad: '', unidad: 'Unidades' });
+    setCurrentItem({ id: crypto.randomUUID(), categoria: '', subcategoria: '', cantidad: '', unidad: 'Unidades', genero: '', talla: '' });
     setOtroSubcategoria('');
   };
 
@@ -331,6 +418,131 @@ const IngresarNecesidad: React.FC = () => {
                                 </Form.Group>
                               </Col>
                             )}
+
+                            {currentItem.categoria === 'Ropa y Calzado' && (
+                              <>
+                                <Col md={6}>
+                                  <Form.Group>
+                                    <Form.Label className="small mb-1">Género</Form.Label>
+                                    <Form.Select
+                                      value={currentItem.genero || ''}
+                                      onChange={(e) => setCurrentItem({ ...currentItem, genero: e.target.value })}
+                                      disabled={isLoading}
+                                    >
+                                      <option value="">Selecciona...</option>
+                                      {currentItem.subcategoria === 'Ropa de Bebé' ? (
+                                        <>
+                                          <option value="Niño">Niño</option>
+                                          <option value="Niña">Niña</option>
+                                          <option value="Unisex">Unisex</option>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <option value="Hombre">Hombre</option>
+                                          <option value="Mujer">Mujer</option>
+                                          <option value="Unisex">Unisex</option>
+                                          <option value="Niño">Niño</option>
+                                          <option value="Niña">Niña</option>
+                                        </>
+                                      )}
+                                    </Form.Select>
+                                  </Form.Group>
+                                </Col>
+                                <Col md={6}>
+                                  <Form.Group>
+                                    <Form.Label className="small mb-1">Talla</Form.Label>
+                                    <Form.Select
+                                      value={currentItem.talla || ''}
+                                      onChange={(e) => setCurrentItem({ ...currentItem, talla: e.target.value })}
+                                      disabled={isLoading}
+                                    >
+                                      <option value="">Selecciona...</option>
+                                      {renderTallaOptions(currentItem.subcategoria)}
+                                    </Form.Select>
+                                  </Form.Group>
+                                </Col>
+                              </>
+                            )}
+
+                              {(currentItem.subcategoria === "Pañales (Bebé)" || 
+                                currentItem.subcategoria === "Pañales (Adulto)" || 
+                                currentItem.subcategoria === "Guantes de Látex" || 
+                                currentItem.subcategoria === "Guantes de Nitrilo") && (
+                                <Col md={6}>
+                                  <Form.Group>
+                                    <Form.Label className="small mb-1">Talla</Form.Label>
+                                    <Form.Select
+                                      size="sm"
+                                      value={currentItem.talla || ''}
+                                      onChange={(e) => setCurrentItem({ ...currentItem, talla: e.target.value })}
+                                      disabled={isLoading}
+                                    >
+                                      <option value="">Selecciona...</option>
+                                      {renderTallaOptions(currentItem.subcategoria)}
+                                    </Form.Select>
+                                  </Form.Group>
+                                </Col>
+                              )}
+
+                              {(currentItem.subcategoria === "Camas" || 
+                                currentItem.subcategoria === "Colchones" || 
+                                currentItem.subcategoria === "Sábanas y Frazadas") && (
+                                <Col md={6}>
+                                  <Form.Group>
+                                    <Form.Label className="small mb-1">Tamaño</Form.Label>
+                                    <Form.Select
+                                      size="sm"
+                                      value={currentItem.tamano || ''}
+                                      onChange={(e) => setCurrentItem({ ...currentItem, tamano: e.target.value })}
+                                      disabled={isLoading}
+                                    >
+                                      <option value="">Selecciona...</option>
+                                      {["1 Plaza", "1.5 Plazas", "2 Plazas", "King", "Super King"].map(t => (
+                                        <option key={t} value={t}>{t}</option>
+                                      ))}
+                                    </Form.Select>
+                                  </Form.Group>
+                                </Col>
+                              )}
+
+                              {currentItem.categoria === "Alimentos para Mascotas" && (
+                                <Col md={6}>
+                                  <Form.Group>
+                                    <Form.Label className="small mb-1">Etapa/Edad</Form.Label>
+                                    <Form.Select
+                                      size="sm"
+                                      value={currentItem.etapa || ''}
+                                      onChange={(e) => setCurrentItem({ ...currentItem, etapa: e.target.value })}
+                                      disabled={isLoading}
+                                    >
+                                      <option value="">Selecciona...</option>
+                                      {["Cachorro/Gatito", "Adulto", "Senior", "Todas las edades"].map(t => (
+                                        <option key={t} value={t}>{t}</option>
+                                      ))}
+                                    </Form.Select>
+                                  </Form.Group>
+                                </Col>
+                              )}
+
+                              {(currentItem.categoria === "Alimentos" || currentItem.categoria === "Alimentos imperecederos") && (
+                                <Col md={6}>
+                                  <Form.Group>
+                                    <Form.Label className="small mb-1 text-muted">Restricción Dietética</Form.Label>
+                                    <Form.Select
+                                      size="sm"
+                                      value={currentItem.restriccionDietetica || ''}
+                                      onChange={(e) => setCurrentItem({ ...currentItem, restriccionDietetica: e.target.value })}
+                                      disabled={isLoading}
+                                    >
+                                      <option value="">Ninguna</option>
+                                      {["Sin Gluten", "Sin Lactosa", "Vegano/Vegetariano", "Para Diabéticos"].map(t => (
+                                        <option key={t} value={t}>{t}</option>
+                                      ))}
+                                    </Form.Select>
+                                  </Form.Group>
+                                </Col>
+                              )}
+
                             <Col md={6}>
                               <Form.Group>
                                 <Form.Label className="small mb-1">Cantidad</Form.Label>
@@ -382,6 +594,7 @@ const IngresarNecesidad: React.FC = () => {
                                 <div>
                                   <strong className="text-dark d-block">{item.subcategoria}</strong>
                                   <small className="text-muted">{item.categoria}</small>
+                                  {item.genero && <small className="text-muted ms-2">({item.genero} - {item.talla})</small>}
                                   <span className="ms-2 text-primary fw-semibold">{item.cantidad} {item.unidad}</span>
                                 </div>
                                 <Button 

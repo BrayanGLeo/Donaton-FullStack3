@@ -67,6 +67,18 @@ export const AdminDonacionDetalleModal: React.FC<AdminDonacionDetalleModalProps>
                         {recs.map((r: any, idx: number) => (
                           <li key={`${r.categoria}-${r.subCategoria}-${idx}`}>
                             <span className="fw-semibold">{r.cantidad} {r.unidadMedida || 'u.'}</span> de <strong>{r.subCategoria}</strong> <span className="text-muted">({r.categoria} - {r.estadoArticulo})</span>
+                            {(() => {
+                              const extras = [
+                                r.genero && `Género: ${r.genero}`,
+                                r.talla && `Talla: ${r.talla}`,
+                                r.tamano && `Tamaño: ${r.tamano}`,
+                                r.etapa && `Etapa: ${r.etapa}`,
+                                r.restriccionDietetica && `Restricción: ${r.restriccionDietetica}`
+                              ].filter(Boolean);
+                              return extras.length > 0 ? (
+                                <span className="ms-1 text-primary fw-bold d-block d-sm-inline">[{extras.join(' | ')}]</span>
+                              ) : null;
+                            })()}
                             {r.pesoAproximado ? ` - ${r.pesoAproximado} kg aprox.` : ''}
                           </li>
                         ))}

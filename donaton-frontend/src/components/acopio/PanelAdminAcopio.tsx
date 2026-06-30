@@ -925,6 +925,7 @@ const PanelAdminAcopio: React.FC = () => {
                                 <th>Recurso</th>
                                 <th>Estado</th>
                                 <th>Cant.</th>
+                                <th>Género/Talla</th>
                                 <th>Vencimiento</th>
                               </tr>
                             </thead>
@@ -935,6 +936,7 @@ const PanelAdminAcopio: React.FC = () => {
                                   <td>{r.subCategoria}</td>
                                   <td>{r.estadoArticulo}</td>
                                   <td>{r.cantidad} {r.unidadMedida}</td>
+                                  <td>{r.genero || r.talla ? `${r.genero || '-'} / ${r.talla || '-'}` : '-'}</td>
                                   <td>{r.fechaVencimiento || '-'}</td>
                                 </tr>
                               ))}
