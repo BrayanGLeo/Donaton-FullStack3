@@ -6,6 +6,7 @@ import L from 'leaflet';
 import Select from 'react-select';
 import { Package, CheckCircle, Navigation, Archive, Info, MapPin, Map as MapIcon, Filter, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { toast } from 'react-hot-toast';
 import { listarDonaciones, asignarConductor, actualizarEstadoDonacion, type DonacionResponse } from '../../services/donacionService';
 import { obtenerNecesidades, actualizarEstadoNecesidad, type Necesidad } from '../../services/bffService';
 import { obtenerUsuarios } from '../../services/usuarioService';
@@ -90,6 +91,7 @@ const getCategoriaOptions = (items: any[]) => {
 };
 
 const getSubcategoriaOptions = (items: any[], categoriaFiltro: string) => {
+  if (!categoriaFiltro) return [];
   const set = new Set<string>();
   items.forEach(p => {
     try {
@@ -136,6 +138,13 @@ const filterItems = (items: any[], filters: any, isDonacion: boolean) => {
   });
 };
 
+const atributosClave = ['genero', 'talla', 'tamano', 'etapa', 'restriccionDietetica', 'dimensiones', 'litros', 'formatoQueso', 'formatoSupermercado', 'tipoLeche', 'tipoYogur', 'capacidadBandeja', 'pesoQueso'];
+const labelsAtributos: Record<string, string> = {
+  genero: 'Género', talla: 'Talla', tamano: 'Tamaño', etapa: 'Etapa', restriccionDietetica: 'Restricción',
+  dimensiones: 'Medidas', litros: 'Capacidad', formatoQueso: 'Formato', formatoSupermercado: 'Formato',
+  tipoLeche: 'Leche', tipoYogur: 'Yogur', capacidadBandeja: 'Bandeja', pesoQueso: 'Peso'
+};
+
 const calcularInventarioLista = (donacionesRecibidas: any[]) => {
   const inventarioMap = new Map<string, number>();
   donacionesRecibidas.forEach(d => {
@@ -144,15 +153,16 @@ const calcularInventarioLista = (donacionesRecibidas: any[]) => {
       if (Array.isArray(recs)) {
         recs.forEach((r: any) => {
           const { finalCantidad, finalUnidad } = flattenResourceUnit(r, r.cantidad || 1);
-          const key = `${r.categoria || 'Otros'}|${r.subCategoria || 'General'}|${finalUnidad || 'Unidades'}`;
+          const detalles = atributosClave.filter(k => r[k]).map(k => `${labelsAtributos[k]}: ${r[k]}`).join(';');
+          const key = `${r.categoria || 'Otros'}|${r.subCategoria || r.subcategoria || 'General'}|${finalUnidad || 'Unidades'}|${detalles}`;
           inventarioMap.set(key, (inventarioMap.get(key) || 0) + finalCantidad);
         });
       }
     } catch { }
   });
   return Array.from(inventarioMap.entries()).map(([key, cant]) => {
-    const [cat, subcat, uni] = key.split('|');
-    return { categoria: cat, subcategoria: subcat, unidadMedida: uni, cantidad: cant };
+    const [cat, subcat, uni, det] = key.split('|');
+    return { categoria: cat, subcategoria: subcat, unidadMedida: uni, cantidad: cant, detalles: det };
   });
 };
 
@@ -160,17 +170,21 @@ const calcularInventarioLista = (donacionesRecibidas: any[]) => {
 const renderDonacionCantidadText = (don: any) => {
   try {
     const recs = JSON.parse(don.recursos || '[]');
-    if (Array.isArray(recs) && recs.length === 1) {
-      const { finalCantidad, finalUnidad } = flattenResourceUnit(recs[0], recs[0].cantidad || 0);
+    if (Array.isArray(recs) && recs.length > 0) {
+      const unitMap: Record<string, number> = {};
+      recs.forEach((r: any) => {
+        const { finalCantidad, finalUnidad } = flattenResourceUnit(r, r.cantidad || 0);
+        unitMap[finalUnidad] = (unitMap[finalUnidad] || 0) + finalCantidad;
+      });
       return (
-        <>
-          <span className="fw-bold">{finalCantidad}</span> <small className="text-muted">{finalUnidad}</small>
-        </>
+        <div className="d-flex flex-column gap-1">
+          {Object.entries(unitMap).map(([uni, cant]) => (
+            <div key={uni} style={{ lineHeight: '1.2' }}>
+              <span className="fw-bold">{cant}</span> <small className="text-muted">{uni}</small>
+            </div>
+          ))}
+        </div>
       );
-    }
-    if (Array.isArray(recs) && recs.length > 1) {
-      const cant = recs.reduce((s: number, r: any) => s + (r.cantidad || 0), 0);
-      return <><span className="fw-bold">{cant}</span> <small className="text-muted">items en total</small></>;
     }
   } catch { }
   return <><span className="fw-bold">0</span> <small className="text-muted">items</small></>;
@@ -202,10 +216,11 @@ const renderDonacionCategoriaText = (don: any) => {
     if (Array.isArray(recs) && recs.length > 1) {
       const cats = Array.from(new Set(recs.map((r: any) => r.categoria).filter(Boolean)));
       if (cats.length === 1) {
+        const subcats = Array.from(new Set(recs.map((r: any) => r.subCategoria || r.subcategoria).filter(Boolean)));
         return (
           <div className="d-flex flex-column">
             <span>{cats[0]}</span>
-            <small className="text-muted">Múltiples subcategorías</small>
+            {subcats.length > 0 && <small className="text-muted">{subcats.join(', ')}</small>}
           </div>
         );
       }
@@ -230,10 +245,11 @@ const renderDonacionRecibidaCategoriaText = (don: any) => {
     if (Array.isArray(recs) && recs.length > 1) {
       const cats = Array.from(new Set(recs.map((r: any) => r.categoria).filter(Boolean)));
       if (cats.length === 1) {
+        const subcats = Array.from(new Set(recs.map((r: any) => r.subCategoria || r.subcategoria).filter(Boolean)));
         return (
           <div className="d-flex flex-column">
             <span className="fw-semibold text-dark">{cats[0]}</span>
-            <small className="text-muted">Múltiples subcategorías</small>
+            {subcats.length > 0 && <small className="text-muted">{subcats.join(', ')}</small>}
           </div>
         );
       }
@@ -245,17 +261,21 @@ const renderDonacionRecibidaCategoriaText = (don: any) => {
 const renderDonacionRecibidaCantidadText = (don: any) => {
   try {
     const recs = JSON.parse(don.recursos || '[]');
-    if (Array.isArray(recs) && recs.length === 1) {
-      const { finalCantidad, finalUnidad } = flattenResourceUnit(recs[0], recs[0].cantidad || 0);
+    if (Array.isArray(recs) && recs.length > 0) {
+      const unitMap: Record<string, number> = {};
+      recs.forEach((r: any) => {
+        const { finalCantidad, finalUnidad } = flattenResourceUnit(r, r.cantidad || 0);
+        unitMap[finalUnidad] = (unitMap[finalUnidad] || 0) + finalCantidad;
+      });
       return (
-        <>
-          <span className="fw-bold text-dark">{finalCantidad}</span> <small>{finalUnidad}</small>
-        </>
+        <div className="d-flex flex-column gap-1">
+          {Object.entries(unitMap).map(([uni, cant]) => (
+            <div key={uni} style={{ lineHeight: '1.2' }}>
+              <span className="fw-bold text-dark">{cant}</span> <small>{uni}</small>
+            </div>
+          ))}
+        </div>
       );
-    }
-    if (Array.isArray(recs) && recs.length > 1) {
-      const cant = recs.reduce((s: number, r: any) => s + (r.cantidad || 0), 0);
-      return <><span className="fw-bold text-dark">{cant}</span> <small>items en total</small></>;
     }
   } catch { }
   return <><span className="fw-bold text-dark">0</span> <small>items</small></>;
@@ -286,7 +306,13 @@ const chequearInventarioHelper = (necesidad: Necesidad, inventarioLista: any[]) 
   let suficientes = true;
   const detalles = recursos.map(rec => {
     const { finalCantidad, finalUnidad } = flattenResourceUnit(rec, rec.cantidad || 1);
-    const inv = inventarioLista.find(i => i.categoria === rec.categoria && i.subcategoria === (rec.subcategoria || rec.subCategoria) && i.unidadMedida === finalUnidad);
+    const reqDetalles = atributosClave.filter(k => rec[k]).map(k => `${labelsAtributos[k]}: ${rec[k]}`).join(';');
+    const inv = inventarioLista.find(i => 
+      i.categoria === rec.categoria && 
+      i.subcategoria === (rec.subcategoria || rec.subCategoria) && 
+      i.unidadMedida === finalUnidad &&
+      (i.detalles || '') === reqDetalles
+    );
     const cantInv = inv ? inv.cantidad : 0;
     if (cantInv < finalCantidad) suficientes = false;
     return {
@@ -294,7 +320,8 @@ const chequearInventarioHelper = (necesidad: Necesidad, inventarioLista: any[]) 
       cantidad: finalCantidad,
       unidad: finalUnidad,
       disponible: cantInv,
-      alcanza: cantInv >= finalCantidad
+      alcanza: cantInv >= finalCantidad,
+      detallesStr: reqDetalles
     };
   });
   return { suficientes, detalles };
@@ -407,13 +434,13 @@ const DonacionPendienteRow = ({ don, conductores, setDonacionAConfirmar, setCond
   );
 };
 
-const NecesidadActivaRow = ({ nec, centrarMapa, setNecesidadSeleccionada, setShowNecesidadModal }: any) => {
-  const { recInfo, finalCant, finalUni } = getNecesidadResourceInfo(nec);
+const NecesidadActivaRow = ({ nec, centrarMapa, setNecesidadSeleccionada, setShowNecesidadModal, setNecesidadDetalle, setShowDetallesNecesidad }: any) => {
+  const { finalCant, finalUni } = getNecesidadResourceInfo(nec);
   return (
     <tr>
       <td><span className="fw-bold text-danger">#{nec.id}</span></td>
       <td><span className="fw-bold">{nec.tipoEmergencia || 'Alerta General'}</span></td>
-      <td><span className="text-muted">{recInfo?.categoria || 'No especificado'}</span></td>
+      <td>{renderDonacionCategoriaText(nec)}</td>
       <td><span className="fw-bold">{finalCant}</span> <small className="text-muted">{finalUni}</small></td>
       <td><span className="text-muted">{nec.comuna}</span></td>
       <td>
@@ -423,6 +450,15 @@ const NecesidadActivaRow = ({ nec, centrarMapa, setNecesidadSeleccionada, setSho
       </td>
       <td>
         <div className="d-flex gap-1">
+          <Button
+            variant="outline-info"
+            size="sm"
+            onClick={() => { setNecesidadDetalle(nec); setShowDetallesNecesidad(true); }}
+            title="Ver Detalles"
+            className="d-flex align-items-center"
+          >
+            <Info size={14} />
+          </Button>
           <Button variant="outline-secondary" size="sm" onClick={() => centrarMapa(nec.latitud, nec.longitud)} title="Ir al mapa">
             <MapIcon size={14} />
           </Button>
@@ -507,6 +543,7 @@ const GenericFilterBar = ({ filters, setFilters, comunaOptions, estadoOptions, c
           options={subcategoriaOptions}
           placeholder="Subcategoría..."
           isClearable
+          isDisabled={!filters.categoria}
           components={{ Input: RegionComunaInput }}
           value={filters.subcategoria ? { value: filters.subcategoria, label: filters.subcategoria } : null}
           onChange={(opt: any) => setFilters((prev: any) => ({ ...prev, subcategoria: opt?.value || '' }))}
@@ -544,6 +581,7 @@ const InventarioFilterBar = ({ filters, setFilters, categoriaOptions, subcategor
           options={subcategoriaOptions}
           placeholder="Subcategoría..."
           isClearable
+          isDisabled={!filters.categoria}
           components={{ Input: RegionComunaInput }}
           value={filters.subcategoria ? { value: filters.subcategoria, label: filters.subcategoria } : null}
           onChange={(opt: any) => setFilters((prev: any) => ({ ...prev, subcategoria: opt?.value || '' }))}
@@ -604,25 +642,41 @@ const NecesidadCubiertaRow = ({ nec }: any) => {
   );
 };
 
-const InventarioRow = ({ inv }: any) => (
-  <tr>
-    <td className="fw-semibold text-dark">
-      <Package size={16} className="me-2 text-muted" />
-      <span className="d-block">{inv.subcategoria}</span>
-      <small className="text-muted fw-normal">{inv.categoria}</small>
-    </td>
-    <td className="text-muted fw-bold">{inv.cantidad}</td>
-    <td className="text-muted">{inv.unidadMedida}</td>
-    <td>
-      <Badge bg="success" className="soft-badge bg-opacity-10 text-success border border-success">
-        <CheckCircle size={12} className="me-1" /> En Stock
-      </Badge>
-    </td>
-  </tr>
-);
+const InventarioRow = ({ inv }: any) => {
+  const extras = inv.detalles ? inv.detalles.split(';').filter(Boolean) : [];
+  return (
+    <tr>
+      <td className="fw-semibold text-dark">
+        <Package size={16} className="me-2 text-muted" />
+        <span className="d-block">{inv.subcategoria}</span>
+        <small className="text-muted fw-normal">{inv.categoria}</small>
+        {extras.length > 0 && (
+          <div className="d-flex flex-wrap gap-1 mt-1">
+            {extras.map((extra: string) => (
+              <span key={extra} className="badge bg-light text-primary border border-primary-subtle" style={{ fontSize: '0.7rem' }}>
+                {extra}
+              </span>
+            ))}
+          </div>
+        )}
+      </td>
+      <td className="text-muted fw-bold">{inv.cantidad}</td>
+      <td className="text-muted">{inv.unidadMedida}</td>
+      <td>
+        <Badge bg="success" className="soft-badge bg-opacity-10 text-success border border-success">
+          <CheckCircle size={12} className="me-1" /> En Stock
+        </Badge>
+      </td>
+    </tr>
+  );
+};
 
 const PanelAdminAcopio: React.FC = () => {
   const { usuario } = useAuth();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('resumen');
@@ -667,6 +721,9 @@ const PanelAdminAcopio: React.FC = () => {
 
   const [showDetallesDonacion, setShowDetallesDonacion] = useState(false);
   const [donacionDetalle, setDonacionDetalle] = useState<DonacionResponse | null>(null);
+
+  const [showDetallesNecesidad, setShowDetallesNecesidad] = useState(false);
+  const [necesidadDetalle, setNecesidadDetalle] = useState<Necesidad | null>(null);
 
   const fetchData = async () => {
     try {
@@ -778,6 +835,7 @@ const PanelAdminAcopio: React.FC = () => {
   }, [inventarioLista]);
 
   const inventarioSubcategoriaOptions = React.useMemo(() => {
+    if (!inventarioFilters.categoria) return [];
     const set = new Set<string>();
     inventarioLista.forEach(i => {
       if (inventarioFilters.categoria && i.categoria !== inventarioFilters.categoria) return;
@@ -795,7 +853,7 @@ const PanelAdminAcopio: React.FC = () => {
   const paginatedNecesidadesActivas = necesidadesActivasFiltradas.slice(startIndex, endIndex);
   const paginatedNecesidadesCubiertas = necesidadesCubiertasFiltradas.slice(startIndex, endIndex);
 
-
+  const invCheck = necesidadSeleccionada ? chequearInventarioHelper(necesidadSeleccionada, inventarioLista) : { suficientes: false, detalles: [] };
 
   const centrarMapa = (lat?: number | null, lng?: number | null) => {
     if (lat && lng) setMapCenter([lat, lng]);
@@ -813,9 +871,10 @@ const PanelAdminAcopio: React.FC = () => {
       setDonacionAConfirmar(null);
       setConductorAConfirmar(null);
       fetchData();
+      toast.success('Conductor asignado con éxito');
     } catch (error) {
       console.error(error);
-      alert('Error al asignar conductor.');
+      toast.error('Error al asignar conductor.');
     } finally {
       setActionLoading(null);
     }
@@ -825,9 +884,10 @@ const PanelAdminAcopio: React.FC = () => {
     try {
       await actualizarEstadoDonacion(donacionId, 'RECIBIDO');
       fetchData();
+      toast.success('Donación recibida en bodega');
     } catch (error) {
       console.error(error);
-      alert('Error al recibir donación.');
+      toast.error('Error al recibir donación.');
     }
   };
 
@@ -840,10 +900,10 @@ const PanelAdminAcopio: React.FC = () => {
       setShowNecesidadModal(false);
       setConductorSeleccionadoNec(null);
       fetchData();
-      alert('Necesidad asignada con éxito');
+      toast.success('Necesidad asignada con éxito');
     } catch (error) {
       console.error(error);
-      alert('Error al cubrir necesidad.');
+      toast.error('Error al cubrir necesidad.');
     } finally {
       setActionLoading(null);
     }
@@ -1132,8 +1192,8 @@ const PanelAdminAcopio: React.FC = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {paginatedInventario.map((inv) => (
-                          <InventarioRow key={`${inv.categoria}-${inv.subcategoria}-${inv.unidadMedida}`} inv={inv} />
+                        {paginatedInventario.map((inv: any, idx: number) => (
+                          <InventarioRow key={`${inv.categoria}-${inv.subcategoria}-${inv.unidadMedida}-${inv.detalles || ''}-${idx}`} inv={inv} />
                         ))}
                       </tbody>
                     </Table>
@@ -1207,6 +1267,8 @@ const PanelAdminAcopio: React.FC = () => {
                                   centrarMapa={centrarMapa}
                                   setNecesidadSeleccionada={setNecesidadSeleccionada}
                                   setShowNecesidadModal={setShowNecesidadModal}
+                                  setNecesidadDetalle={setNecesidadDetalle}
+                                  setShowDetallesNecesidad={setShowDetallesNecesidad}
                                 />
                               ))}
                             </tbody>
@@ -1374,23 +1436,35 @@ const PanelAdminAcopio: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {chequearInventarioHelper(necesidadSeleccionada, inventarioLista).detalles.map((det: any, i: number) => (
-                      <tr key={`${det.categoria}-${det.subcategoria}-${det.unidad}-${i}`}>
-                        <td>
-                          <span className="fw-bold d-block">{det.subcategoria}</span>
-                          <small className="text-muted">{det.categoria}</small>
-                        </td>
-                        <td>{det.cantidad} <small>{det.unidad}</small></td>
-                        <td className="fw-bold">{det.disponible} <small>{det.unidad}</small></td>
-                        <td>
-                          {det.alcanza ? (
-                            <Badge bg="success" className="soft-badge text-success bg-opacity-10">Suficiente</Badge>
-                          ) : (
-                            <Badge bg="danger" className="soft-badge text-danger bg-opacity-10">Falta stock</Badge>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
+                    {invCheck.detalles.map((det: any, i: number) => {
+                      const extras = det.detallesStr ? det.detallesStr.split(';').filter(Boolean) : [];
+                      return (
+                        <tr key={`${det.categoria}-${det.subcategoria}-${det.unidad}-${i}`}>
+                          <td>
+                            <span className="fw-bold d-block">{det.subcategoria}</span>
+                            <small className="text-muted">{det.categoria}</small>
+                            {extras.length > 0 && (
+                              <div className="d-flex flex-wrap gap-1 mt-1">
+                                {extras.map((extra: string) => (
+                                  <span key={extra} className="badge bg-light text-primary border border-primary-subtle" style={{ fontSize: '0.7rem' }}>
+                                    {extra}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </td>
+                          <td>{det.cantidad} <small>{det.unidad}</small></td>
+                          <td className="fw-bold">{det.disponible} <small>{det.unidad}</small></td>
+                          <td>
+                            {det.alcanza ? (
+                              <Badge bg="success" className="soft-badge text-success bg-opacity-10">Suficiente</Badge>
+                            ) : (
+                              <Badge bg="danger" className="soft-badge text-danger bg-opacity-10">Falta stock</Badge>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </Table>
 
@@ -1419,13 +1493,48 @@ const PanelAdminAcopio: React.FC = () => {
                 variant="primary"
                 className="fw-semibold rounded-pill shadow-sm"
                 onClick={() => handleCubrirNecesidad()}
-                disabled={!conductorSeleccionadoNec || actionLoading === necesidadSeleccionada?.id}
+                disabled={!conductorSeleccionadoNec || actionLoading === necesidadSeleccionada?.id || !invCheck.suficientes}
               >
                 {actionLoading === necesidadSeleccionada?.id ? <Spinner size="sm" /> : 'Asignar Conductor'}
               </Button>
             </div>
           </Modal.Footer>
         </Modal>
+        {/* Modal Detalles Necesidad */}
+        <Modal show={showDetallesNecesidad} onHide={() => setShowDetallesNecesidad(false)} size="lg" centered>
+          <Modal.Header closeButton className="border-0 pb-0">
+            <Modal.Title className="fw-bold">Detalles de la Necesidad</Modal.Title>
+          </Modal.Header>
+          <Modal.Body className="py-4">
+            {necesidadDetalle && (
+              <Row className="g-4">
+                <Col md={6}>
+                  <h6 className="fw-bold text-muted mb-3 border-bottom pb-2">Información General</h6>
+                  <p className="mb-2"><strong>ID:</strong> #{necesidadDetalle.id}</p>
+                  <p className="mb-2"><strong>Emergencia:</strong> {necesidadDetalle.tipoEmergencia || 'Alerta General'}</p>
+                  <p className="mb-2"><strong>Estado Actual:</strong> <Badge bg={getBadgeColor(necesidadDetalle.estado || '')}>{necesidadDetalle.estado?.replace('_', ' ') || 'PENDIENTE'}</Badge></p>
+                  <p className="mb-2"><strong>Fecha Solicitud:</strong> {new Date(necesidadDetalle.fechaReporte).toLocaleString()}</p>
+                </Col>
+                <Col md={6}>
+                  <h6 className="fw-bold text-muted mb-3 border-bottom pb-2">Logística</h6>
+                  <p className="mb-2"><strong>Región:</strong> {necesidadDetalle.region || 'No especificada'}</p>
+                  <p className="mb-2"><strong>Comuna:</strong> {necesidadDetalle.comuna || 'No especificada'}</p>
+                  <p className="mb-2"><strong>Conductor ID:</strong> {necesidadDetalle.conductorId || 'No asignado'}</p>
+                  <p className="mb-2"><strong>Centro Acopio ID:</strong> {necesidadDetalle.centroAcopioId || 'No asignado'}</p>
+                </Col>
+
+                <Col md={12}>
+                  <h6 className="fw-bold text-muted mb-3 border-bottom pb-2">Recursos Solicitados</h6>
+                  <RecursosDetalleTable recursos={necesidadDetalle.recursos || '[]'} />
+                </Col>
+              </Row>
+            )}
+          </Modal.Body>
+          <Modal.Footer className="border-0">
+            <Button variant="secondary" onClick={() => setShowDetallesNecesidad(false)}>Cerrar</Button>
+          </Modal.Footer>
+        </Modal>
+
         {/* Modal Detalles Donación */}
         <Modal show={showDetallesDonacion} onHide={() => setShowDetallesDonacion(false)} size="lg" centered>
           <Modal.Header closeButton className="border-0 pb-0">
@@ -1439,12 +1548,18 @@ const PanelAdminAcopio: React.FC = () => {
                   <p className="mb-2"><strong>ID Tracking:</strong> #{donacionDetalle.id}</p>
                   <p className="mb-2"><strong>Título:</strong> {donacionDetalle.nombreArticulo || 'Sin título'}</p>
                   <p className="mb-2"><strong>Recursos:</strong> {(() => {
-                    let cant = 0;
                     try {
                       const recs = JSON.parse(donacionDetalle.recursos || '[]');
-                      if (Array.isArray(recs)) cant = recs.reduce((s: number, r: any) => s + (r.cantidad || 0), 0);
+                      if (Array.isArray(recs) && recs.length > 0) {
+                        const unitMap: Record<string, number> = {};
+                        recs.forEach((r: any) => {
+                          const { finalCantidad, finalUnidad } = flattenResourceUnit(r, r.cantidad || 0);
+                          unitMap[finalUnidad] = (unitMap[finalUnidad] || 0) + finalCantidad;
+                        });
+                        return Object.entries(unitMap).map(([u, c]) => `${c} ${u}`).join(', ');
+                      }
                     } catch { }
-                    return `${cant} items en total`;
+                    return '0 items';
                   })()}</p>
                   <p className="mb-2"><strong>Estado Actual:</strong> <Badge bg={getBadgeColor(donacionDetalle.estado || '')}>{donacionDetalle.estado}</Badge></p>
                   <p className="mb-2"><strong>Fecha Registro:</strong> {new Date(donacionDetalle.fechaRegistro).toLocaleString()}</p>

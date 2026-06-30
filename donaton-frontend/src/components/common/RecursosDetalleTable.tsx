@@ -15,7 +15,12 @@ const extraAttributes = [
   { key: 'restriccionDietetica', label: 'Restricción' },
   { key: 'dimensiones', label: 'Medidas' },
   { key: 'litros', label: 'Capacidad' },
-  { key: 'formatoQueso', label: 'Formato' }
+  { key: 'formatoQueso', label: 'Formato' },
+  { key: 'formatoSupermercado', label: 'Formato' },
+  { key: 'tipoLeche', label: 'Leche' },
+  { key: 'tipoYogur', label: 'Yogur' },
+  { key: 'capacidadBandeja', label: 'Bandeja' },
+  { key: 'pesoQueso', label: 'Peso' }
 ];
 
 const buildPalletSteps = (r: any, rawCant: number): string[] => {
@@ -98,11 +103,14 @@ const RecursoRow: React.FC<{ r: any; idx: number }> = ({ r, idx }) => {
     .filter(attr => r[attr.key])
     .map(attr => `${attr.label}: ${r[attr.key]}`);
 
+  const mainName = r.subCategoria || r.subcategoria || r.recurso || r.categoria || 'Recurso';
+  const showCategory = r.categoria && r.categoria !== mainName;
+
   return (
-    <tr key={`${r.categoria}-${r.subCategoria || r.recurso}-${idx}`}>
+    <tr key={`${r.categoria}-${r.subCategoria || r.subcategoria || r.recurso}-${idx}`}>
       <td className="px-3 py-3">
-        <div className="fw-bold text-dark mb-1">{r.subCategoria || r.recurso || r.categoria}</div>
-        <div className="text-muted small mb-2">{r.categoria}</div>
+        <div className="fw-bold text-dark mb-1">{mainName}</div>
+        {showCategory && <div className="text-muted small mb-2">{r.categoria}</div>}
         {r.estadoArticulo && <Badge bg="secondary" className="fw-normal mb-1">{r.estadoArticulo}</Badge>}
         {r.fechaVencimiento && (
           <div className="text-muted" style={{ fontSize: '0.75rem' }}>
