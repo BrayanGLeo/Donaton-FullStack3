@@ -4,6 +4,7 @@ import { AdminDonacionesView } from './AdminDonacionesView';
 import { AdminMapaView } from './AdminMapaView';
 import { AdminUsuariosView } from './AdminUsuariosView';
 import { PanelHistorialNecesidades } from './PanelHistorialNecesidades';
+import { AdminOverview } from './AdminOverview';
 import { AdminDonacionDetalleModal } from './AdminDonacionDetalleModal';
 import { RegionComunaInput } from '../common/RegionComunaInput';
 import { useAuth } from '../../context/AuthContext';
@@ -20,7 +21,7 @@ import {
   getEstadoBadgeColor
 } from '../../utils/adminDashboardUtils';
 
-type AdminSection = 'donaciones' | 'mapa' | 'usuarios' | 'historial';
+type AdminSection = 'resumen' | 'donaciones' | 'mapa' | 'usuarios' | 'historial';
 
 const AdminDashboard: React.FC = () => {
   const { usuario } = useAuth();
@@ -81,6 +82,14 @@ const AdminDashboard: React.FC = () => {
 
               <Nav className="flex-column gap-2">
                 <Nav.Link
+                  onClick={() => setActiveSection('resumen')}
+                  className="d-flex align-items-center gap-3 px-3 py-3 rounded-3"
+                  style={getNavStyle('resumen')}
+                >
+                  <span style={{ fontSize: '1.3rem' }}>📊</span>
+                  <span>Resumen (Dashboard)</span>
+                </Nav.Link>
+                <Nav.Link
                   onClick={() => setActiveSection('donaciones')}
                   className="d-flex align-items-center gap-3 px-3 py-3 rounded-3"
                   style={getNavStyle('donaciones')}
@@ -127,7 +136,15 @@ const AdminDashboard: React.FC = () => {
             </div>
           </Col>
 
-          <Col md={9} lg={10} className="p-4" style={{ backgroundColor: '#f5f6fa' }}>
+          <Col md={9} lg={10} className="p-4" style={{ backgroundColor: '#f5f6fa', overflowY: 'auto', maxHeight: 'calc(100vh - 120px)' }}>
+            {activeSection === 'resumen' && (
+              <AdminOverview 
+                donaciones={donaciones}
+                necesidades={necesidades}
+                centros={centros}
+                usuarios={usuarios}
+              />
+            )}
             {activeSection === 'donaciones' && (
               <AdminDonacionesView
                 loadingDonaciones={loadingDonaciones}

@@ -80,6 +80,39 @@ export const donacionStep1Schema = z.object({
       tamano: z.string().optional(),
       etapa: z.string().optional(),
       restriccionDietetica: z.string().optional(),
+      dimensiones: z.string().optional(),
+      litros: z.string().optional(),
+      unidadesPorEnvase: z.number().optional(),
+      pesoPorSaco: z.number().or(z.nan()).optional()
+        .transform(val => (val === undefined || Number.isNaN(val)) ? undefined : val)
+        .pipe(z.number().min(0.01, 'Debe ser mayor a 0').max(50, 'Máximo 50kg').optional()),
+      tipoEnvaseCaja: z.string().optional(),
+      pesoPorCaja: z.number().or(z.nan()).optional()
+        .transform(val => (val === undefined || Number.isNaN(val)) ? undefined : val)
+        .pipe(z.number().min(0.01, 'Debe ser mayor a 0').max(99999, 'Peso excesivo').optional()),
+      tipoEnvasePallet: z.string().optional(),
+      cantidadEnvasePallet: z.number().or(z.nan()).optional()
+        .transform(val => (val === undefined || Number.isNaN(val)) ? undefined : val)
+        .pipe(z.number().min(1, 'Debe ser mayor a 0').max(999999, 'Cantidad excesiva').optional()),
+      pesoPorEnvasePallet: z.number().or(z.nan()).optional()
+        .transform(val => (val === undefined || Number.isNaN(val)) ? undefined : val)
+        .pipe(z.number().min(0.01, 'Debe ser mayor a 0').max(99999, 'Peso excesivo').optional()),
+      unidadesPorEnvasePallet: z.number().or(z.nan()).optional()
+        .transform(val => (val === undefined || Number.isNaN(val)) ? undefined : val)
+        .pipe(z.number().min(1, 'Debe ser mayor a 0').max(999999, 'Cantidad excesiva').optional()),
+      unidadesPorPaquete: z.number().or(z.nan()).optional()
+        .transform(val => (val === undefined || Number.isNaN(val)) ? undefined : val)
+        .pipe(z.number().min(1, 'Debe ser mayor a 0').max(999999, 'Cantidad excesiva').optional()),
+      tipoEnvaseCajaPallet: z.string().optional(),
+      unidadesPorPaquetePallet: z.number().or(z.nan()).optional()
+        .transform(val => (val === undefined || Number.isNaN(val)) ? undefined : val)
+        .pipe(z.number().min(1, 'Debe ser mayor a 0').max(999999, 'Cantidad excesiva').optional()),
+      formatoSupermercado: z.string().optional(),
+      tipoLeche: z.string().optional(),
+      tipoYogur: z.string().optional(),
+      capacidadBandeja: z.string().optional(),
+      formatoQueso: z.string().optional(),
+      pesoQueso: z.string().optional(),
     })
   ).min(1, "Debes agregar al menos un recurso a donar"),
   descripcion: z.string()
@@ -146,7 +179,7 @@ export const donacionStep1Schema = z.object({
 });
 
 export const donacionStep2Schema = z.object({
-  modalidadEntrega: z.string().min(1, 'El método de entrega es requerido'),
+  modalidadEntrega: z.string({ message: 'El método de entrega es requerido' }).min(1, 'El método de entrega es requerido'),
   centroAcopioDestinoId: z.number().optional(),
   regionRetiro: z.string().optional(),
   comunaRetiro: z.string().optional(),

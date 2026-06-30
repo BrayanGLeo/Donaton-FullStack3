@@ -38,6 +38,7 @@ public class DonacionService {
         Donacion donacion = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Donación no encontrada con ID: " + id));
         donacion.setEstado(nuevoEstado);
+        donacion.setFechaActualizacion(LocalDateTime.now(java.time.ZoneId.systemDefault()));
         Donacion donacionActualizada = repository.save(donacion);
         
         if ("RECIBIDO".equalsIgnoreCase(nuevoEstado)) {

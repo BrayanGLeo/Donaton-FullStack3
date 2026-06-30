@@ -4,6 +4,7 @@ import { listarDonaciones, type DonacionResponse } from '../../services/donacion
 import { obtenerCentrosAcopio, type CentroAcopio } from '../../services/logisticaService';
 import { obtenerUsuarios } from '../../services/usuarioService';
 import { useAuth, type Usuario } from '../../context/AuthContext';
+import { RecursosDetalleTable } from '../common/RecursosDetalleTable';
 
 interface Props {
   refreshTrigger: number;
@@ -240,44 +241,7 @@ export const DonacionList: React.FC<Props> = ({ refreshTrigger }) => {
                 <DetailRow label="Requiere Transporte Especial" value={selectedDonacion.transporteEspecial} />
                 
                 <h6 className="mt-4 mb-2 fw-bold text-success">Recursos Donados</h6>
-                {(() => {
-                  try {
-                    const recs = JSON.parse(selectedDonacion.recursos || '[]');
-                    if (Array.isArray(recs)) {
-                      return (
-                        <div className="table-responsive">
-                          <Table size="sm" bordered hover className="bg-white">
-                            <thead className="table-success">
-                              <tr>
-                                <th>Categoría</th>
-                                <th>Recurso</th>
-                                <th>Estado</th>
-                                <th>Cant.</th>
-                                <th>Vencimiento</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {recs.map((r: any, idx: number) => (
-                                <tr key={`${r.categoria}-${r.subCategoria}-${idx}`}>
-                                  <td>{r.categoria}</td>
-                                  <td>{r.subCategoria}</td>
-                                  <td>{r.estadoArticulo}</td>
-                                  <td>{r.cantidad} {r.unidadMedida}</td>
-                                  <td>{r.fechaVencimiento || '-'}</td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </Table>
-                        </div>
-                      );
-                    } else {
-                      return <span className="text-muted fst-italic">No hay recursos en esta donación.</span>;
-                    }
-                  } catch (e) {
-                    console.error('Error parseando recursos:', e);
-                    return <span className="text-muted">Error al leer recursos</span>;
-                  }
-                })()}
+                <RecursosDetalleTable recursos={selectedDonacion.recursos || '[]'} />
               </div>
 
               {/* Entrega */}

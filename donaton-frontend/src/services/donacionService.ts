@@ -27,6 +27,7 @@ export interface DonacionResponse extends DonacionPayload {
   id: number;
   trackingId?: string;
   fechaRegistro: string;
+  fechaActualizacion?: string;
   nombreDonante?: string;
   conductorId?: number;
 }

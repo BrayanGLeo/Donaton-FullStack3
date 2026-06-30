@@ -4,6 +4,7 @@ import { Truck } from 'lucide-react';
 import type { DonacionResponse } from '../../services/donacionService';
 import type { CentroAcopio } from '../../services/logisticaService';
 import { getEstadoBadgeColor } from '../../utils/adminDashboardUtils';
+import { RecursosDetalleTable } from '../common/RecursosDetalleTable';
 
 interface AdminDonacionDetalleModalProps {
   show: boolean;
@@ -58,39 +59,7 @@ export const AdminDonacionDetalleModal: React.FC<AdminDonacionDetalleModalProps>
           <div>
             <strong className="text-primary d-block mb-1">Recursos Donados</strong>
             <div className="bg-light p-2 rounded">
-              {(() => {
-                try {
-                  const recs = JSON.parse(donacionDetalle.recursos || '[]');
-                  if (Array.isArray(recs) && recs.length > 0) {
-                    return (
-                      <ul className="mb-0 ps-3">
-                        {recs.map((r: any, idx: number) => (
-                          <li key={`${r.categoria}-${r.subCategoria}-${idx}`}>
-                            <span className="fw-semibold">{r.cantidad} {r.unidadMedida || 'u.'}</span> de <strong>{r.subCategoria}</strong> <span className="text-muted">({r.categoria} - {r.estadoArticulo})</span>
-                            {(() => {
-                              const extras = [
-                                r.genero && `Género: ${r.genero}`,
-                                r.talla && `Talla: ${r.talla}`,
-                                r.tamano && `Tamaño: ${r.tamano}`,
-                                r.etapa && `Etapa: ${r.etapa}`,
-                                r.restriccionDietetica && `Restricción: ${r.restriccionDietetica}`
-                              ].filter(Boolean);
-                              return extras.length > 0 ? (
-                                <span className="ms-1 text-primary fw-bold d-block d-sm-inline">[{extras.join(' | ')}]</span>
-                              ) : null;
-                            })()}
-                            {r.pesoAproximado ? ` - ${r.pesoAproximado} kg aprox.` : ''}
-                          </li>
-                        ))}
-                      </ul>
-                    );
-                  } else {
-                    return <span className="text-muted fst-italic">No hay recursos especificados</span>;
-                  }
-                } catch {
-                  return <span className="text-danger">Error al cargar recursos.</span>;
-                }
-              })()}
+              <RecursosDetalleTable recursos={donacionDetalle.recursos || '[]'} />
             </div>
           </div>
 

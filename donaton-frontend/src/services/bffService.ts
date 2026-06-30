@@ -11,12 +11,14 @@ export interface Necesidad {
   latitud: number;
   longitud: number;
   fechaReporte: string;
+  fechaActualizacion?: string;
   tipoEmergencia?: string;
   estado?: string;
   region?: string;
   comuna?: string;
   conductorId?: number;
   coordinadorId?: number;
+  centroAcopioId?: number;
 }
 
 export const obtenerNecesidades = async (): Promise<Necesidad[]> => {

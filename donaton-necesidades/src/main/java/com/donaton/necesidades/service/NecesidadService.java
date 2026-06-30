@@ -45,8 +45,12 @@ public class NecesidadService {
     public Necesidad actualizarEstado(Long id, String estado, String centroAcopioIdStr, String conductorIdStr) {
         Necesidad necesidad = necesidadRepository.findById(id).orElseThrow(() -> new RuntimeException("Necesidad no encontrada"));
         necesidad.setEstado(estado);
+        necesidad.setFechaActualizacion(LocalDateTime.now(ZoneId.systemDefault()));
         if (conductorIdStr != null && !conductorIdStr.isEmpty()) {
             necesidad.setConductorId(Long.parseLong(conductorIdStr));
+        }
+        if (centroAcopioIdStr != null && !centroAcopioIdStr.isEmpty()) {
+            necesidad.setCentroAcopioId(Long.parseLong(centroAcopioIdStr));
         }
         Necesidad actualizada = necesidadRepository.save(necesidad);
 

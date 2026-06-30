@@ -24,6 +24,7 @@ public class Donacion {
     private String estado;
     private String trackingId;
     private LocalDateTime fechaRegistro;
+    private LocalDateTime fechaActualizacion;
     private String acopioRecepcion;
 
     @Column(length = 1000)
@@ -73,6 +74,9 @@ public class Donacion {
 
     public LocalDateTime getFechaRegistro() { return fechaRegistro; }
     public void setFechaRegistro(LocalDateTime fechaRegistro) { this.fechaRegistro = fechaRegistro; }
+
+    public LocalDateTime getFechaActualizacion() { return fechaActualizacion; }
+    public void setFechaActualizacion(LocalDateTime fechaActualizacion) { this.fechaActualizacion = fechaActualizacion; }
 
     public String getAcopioRecepcion() { return acopioRecepcion; }
     public void setAcopioRecepcion(String acopioRecepcion) { this.acopioRecepcion = acopioRecepcion; }

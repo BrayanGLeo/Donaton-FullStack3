@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Badge, Button, Spinner, Alert, Nav, Modal, Table, Pagination, Form } from 'react-bootstrap';
-import { MapPin, CheckCircle, XCircle, Truck, Navigation, Clock, AlertTriangle } from 'lucide-react';
+import { MapPin, CheckCircle, XCircle, Truck, Navigation, Clock, AlertTriangle, Info } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { type DonacionResponse, listarDonaciones, actualizarEstadoDonacion } from '../../services/donacionService';
 import { obtenerNecesidades, actualizarEstadoNecesidad } from '../../services/bffService';
 import { obtenerCentrosAcopio, type CentroAcopio } from '../../services/logisticaService';
+import { RecursosDetalleTable } from '../common/RecursosDetalleTable';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -38,9 +39,10 @@ interface CardProps {
   esNecesidad?: boolean;
   onAceptar: (id: number) => void;
   onRechazar: (id: number) => void;
+  onViewDetails: (d: DonacionResponse) => void;
 }
 
-const ViajeCard: React.FC<CardProps> = ({ d, subtab, actionLoading, centrosAcopio, esNecesidad, onAceptar, onRechazar }) => {
+const ViajeCard: React.FC<CardProps> = ({ d, subtab, actionLoading, centrosAcopio, esNecesidad, onAceptar, onRechazar, onViewDetails }) => {
   const destino = centrosAcopio.find(c => c.id === d.centroAcopioDestinoId) 
     || centrosAcopio.find(c => c.region === d.regionRetiro || c.region === d.origen);
 
@@ -78,8 +80,32 @@ const ViajeCard: React.FC<CardProps> = ({ d, subtab, actionLoading, centrosAcopi
 
         {/* Dirección */}
         <div className="bg-light p-3 rounded-3 mb-4">
-          <p className="mb-2 text-dark fw-semibold">
-            <MapPin size={16} className="me-2 text-primary" />
+          {esNecesidad && destino && (
+            <>
+              <p className="mb-2 text-dark fw-semibold">
+                <MapPin size={16} className="me-2 text-primary" />
+                Punto de Retiro (Centro de Acopio):
+              </p>
+              <p className="mb-1 fw-bold text-dark small ms-4">{destino.nombre}</p>
+              <p className="mb-0 text-muted small ms-4">{destino.direccion}, {destino.comuna}</p>
+              {destino.latitud && destino.longitud && (
+                <div className="ms-4 mt-2 mb-3">
+                  <Button
+                    variant="outline-primary"
+                    size="sm"
+                    style={{ borderRadius: '6px' }}
+                    onClick={() => abrirGoogleMaps(destino.latitud!, destino.longitud!)}
+                  >
+                    <Navigation size={14} className="me-1" />
+                    Ver Ubicación
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
+
+          <p className={`mb-2 text-dark fw-semibold ${esNecesidad && destino ? 'border-top pt-3 mt-2' : ''}`}>
+            <MapPin size={16} className={`me-2 ${esNecesidad ? 'text-success' : 'text-primary'}`} />
             {esNecesidad ? 'Punto de Entrega (Zona de Necesidad):' : 'Punto de Retiro:'}
           </p>
           <p className="mb-1 text-muted small ms-4">
@@ -101,6 +127,16 @@ const ViajeCard: React.FC<CardProps> = ({ d, subtab, actionLoading, centrosAcopi
 
         {/* Acciones */}
         <div className="d-flex flex-wrap gap-2">
+          <Button
+            variant="outline-info"
+            className="fw-semibold"
+            style={{ borderRadius: '8px', padding: '8px 16px' }}
+            onClick={() => onViewDetails(d)}
+          >
+            <Info size={16} className="me-2" />
+            Detalles
+          </Button>
+
           {d.latitudRetiro != null && d.longitudRetiro != null && (
             <Button
               variant="outline-primary"
@@ -156,11 +192,12 @@ interface SubPanelProps {
   centrosAcopio: CentroAcopio[];
   onAceptar: (id: number) => void;
   onRechazar: (id: number) => void;
+  onViewDetails: (d: DonacionResponse) => void;
 }
 
 const SubPanel: React.FC<SubPanelProps> = ({
   title, icon, accentColor, items, esNecesidad,
-  actionLoading, centrosAcopio, onAceptar, onRechazar
+  actionLoading, centrosAcopio, onAceptar, onRechazar, onViewDetails
 }) => {
   const [tab, setTab] = useState<SubTab>('nuevo');
   const [page, setPage] = useState(1);
@@ -235,6 +272,7 @@ const SubPanel: React.FC<SubPanelProps> = ({
                   <th className="py-3">Destino</th>
                   <th className="py-3">Estado</th>
                   <th className="py-3">Fecha</th>
+                  <th className="py-3 px-3 text-end">Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -253,6 +291,18 @@ const SubPanel: React.FC<SubPanelProps> = ({
                       <td>{esNecesidad ? 'Zona Necesidad' : destino?.nombre || 'Acopio'}</td>
                       <td><Badge bg={getBadgeColor(d.estado || '')}>{d.estado?.replace('_', ' ')}</Badge></td>
                       <td className="text-muted small">{new Date(d.fechaRegistro).toLocaleDateString()}</td>
+                      <td className="px-3 text-end">
+                        <Button 
+                          variant="outline-info" 
+                          size="sm" 
+                          className="fw-semibold" 
+                          style={{ borderRadius: '6px' }}
+                          onClick={() => onViewDetails(d)}
+                        >
+                          <Info size={14} className="me-1" />
+                          Detalles
+                        </Button>
+                      </td>
                     </tr>
                   );
                 })}
@@ -274,6 +324,7 @@ const SubPanel: React.FC<SubPanelProps> = ({
             esNecesidad={esNecesidad}
             onAceptar={onAceptar}
             onRechazar={onRechazar}
+            onViewDetails={onViewDetails}
           />
         ))}
       </div>
@@ -361,6 +412,57 @@ const SubPanel: React.FC<SubPanelProps> = ({
 
 // ─── Componente Principal ─────────────────────────────────────────────────────
 
+const DetallesDonacionModal: React.FC<{
+  donacionSeleccionada: DonacionResponse | null;
+  onHide: () => void;
+}> = ({ donacionSeleccionada, onHide }) => {
+  return (
+    <Modal show={donacionSeleccionada !== null} onHide={onHide} size="lg" centered>
+      <Modal.Header closeButton className="border-0 pb-0">
+        <Modal.Title className="fw-bold text-dark">
+          Detalles del Viaje {donacionSeleccionada && (donacionSeleccionada.nombreArticulo ? `- ${donacionSeleccionada.nombreArticulo}` : '')}
+        </Modal.Title>
+      </Modal.Header>
+      <Modal.Body className="py-4">
+        {donacionSeleccionada && (
+          <div className="d-flex flex-column gap-3">
+            <div className="bg-light p-3 rounded d-flex flex-column gap-2">
+              <h6 className="fw-bold text-muted mb-2 border-bottom pb-2">Información General</h6>
+              <p className="mb-0"><strong>ID Tracking:</strong> {donacionSeleccionada.trackingId || donacionSeleccionada.id}</p>
+              <p className="mb-0"><strong>Estado:</strong> <Badge bg={getBadgeColor(donacionSeleccionada.estado || '')}>{donacionSeleccionada.estado?.replace('_', ' ')}</Badge></p>
+              <p className="mb-0"><strong>Vehículo Especial:</strong> {donacionSeleccionada.transporteEspecial ? 'Sí' : 'No'}</p>
+            </div>
+            
+            <div className="bg-light p-3 rounded d-flex flex-column gap-2">
+              <h6 className="fw-bold text-muted mb-2 border-bottom pb-2">Logística</h6>
+              <p className="mb-0"><strong>Origen:</strong> {donacionSeleccionada.origen || 'No especificado'}</p>
+              <p className="mb-0"><strong>Destino (ID Acopio):</strong> {donacionSeleccionada.centroAcopioDestinoId || 'No asignado'}</p>
+              <p className="mb-0"><strong>Dirección de Retiro:</strong> {donacionSeleccionada.direccionRetiro || 'No especificada'}</p>
+              <p className="mb-0"><strong>Comuna:</strong> {donacionSeleccionada.comunaRetiro || donacionSeleccionada.origen}</p>
+              <p className="mb-0"><strong>Horario Disponible:</strong> {donacionSeleccionada.disponibilidadHoraria || 'Cualquier horario'}</p>
+            </div>
+
+            <div className="rounded border bg-white p-3">
+              <h6 className="fw-bold text-muted mb-3 border-bottom pb-2">Recursos Transportados</h6>
+              <RecursosDetalleTable recursos={donacionSeleccionada.recursos || '[]'} />
+            </div>
+          </div>
+        )}
+      </Modal.Body>
+      <Modal.Footer className="border-0 pt-0 d-flex justify-content-end">
+        <Button
+          variant="secondary"
+          className="px-4 fw-semibold"
+          style={{ borderRadius: '8px' }}
+          onClick={onHide}
+        >
+          Cerrar
+        </Button>
+      </Modal.Footer>
+    </Modal>
+  );
+};
+
 const PanelConductor: React.FC = () => {
   const { usuario } = useAuth();
   const [donaciones, setDonaciones] = useState<DonacionResponse[]>([]);
@@ -368,6 +470,7 @@ const PanelConductor: React.FC = () => {
   const [centrosAcopio, setCentrosAcopio] = useState<CentroAcopio[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [donacionSeleccionada, setDonacionSeleccionada] = useState<DonacionResponse | null>(null);
   const [actionLoading, setActionLoading] = useState<number | null>(null);
   const [activeMainTab, setActiveMainTab] = useState<'donaciones' | 'necesidades'>('donaciones');
   const [confirmModal, setConfirmModal] = useState<{
@@ -422,6 +525,7 @@ const PanelConductor: React.FC = () => {
           comunaRetiro: n.comuna,
           latitudRetiro: n.latitud,
           longitudRetiro: n.longitud,
+          centroAcopioDestinoId: n.centroAcopioId,
           esNecesidadFlag: true
         } as unknown as DonacionResponse;
       });
@@ -567,6 +671,7 @@ const PanelConductor: React.FC = () => {
               centrosAcopio={centrosAcopio}
               onAceptar={(id) => handleAceptarViaje(id, false)}
               onRechazar={handleRechazarViaje}
+              onViewDetails={setDonacionSeleccionada}
             />
           )}
 
@@ -581,6 +686,7 @@ const PanelConductor: React.FC = () => {
               centrosAcopio={centrosAcopio}
               onAceptar={(id) => handleAceptarViaje(id, true)}
               onRechazar={handleRechazarViaje}
+              onViewDetails={setDonacionSeleccionada}
             />
           )}
         </>
@@ -615,9 +721,15 @@ const PanelConductor: React.FC = () => {
           </Button>
         </Modal.Footer>
       </Modal>
+
+      {/* Modal de Detalles de Donación */}
+      <DetallesDonacionModal
+        donacionSeleccionada={donacionSeleccionada}
+        onHide={() => setDonacionSeleccionada(null)}
+      />
+
     </Container>
   );
 };
 
 export default PanelConductor;
-

@@ -6,6 +6,7 @@ import { PieChart, Pie, Tooltip, ResponsiveContainer } from 'recharts';
 import { obtenerCentrosAcopioPorRegion, obtenerUsuarios, type CentroAcopio } from '../../services/usuarioService';
 import { REGIONES_CHILE } from '../../utils/chileData';
 import { useAuth, type Usuario } from '../../context/AuthContext';
+import { RecursosDetalleTable } from '../common/RecursosDetalleTable';
 
 const HistorialAcopio: React.FC = () => {
   const { usuario } = useAuth();
@@ -408,57 +409,7 @@ const HistorialAcopio: React.FC = () => {
               
               <Col md={12}>
                 <h6 className="fw-bold text-muted mb-3 border-bottom pb-2">Recursos Donados</h6>
-                {(() => {
-                  try {
-                    const recs = JSON.parse(selectedDonacion.recursos || '[]');
-                    if (Array.isArray(recs) && recs.length > 0) {
-                      return (
-                        <div className="table-responsive">
-                          <Table size="sm" bordered hover className="bg-white">
-                            <thead className="table-success">
-                              <tr>
-                                <th>Categoría</th>
-                                <th>Recurso</th>
-                                <th>Estado</th>
-                                <th>Cant.</th>
-                                <th>Detalles Adicionales</th>
-                                <th>Vencimiento</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {recs.map((r: any, idx: number) => (
-                                <tr key={`${r.categoria}-${r.subCategoria}-${idx}`}>
-                                  <td>{r.categoria}</td>
-                                  <td>{r.subCategoria}</td>
-                                  <td>{r.estadoArticulo}</td>
-                                  <td>{r.cantidad} {r.unidadMedida}</td>
-                                  <td>
-                                    {(() => {
-                                      const extras = [
-                                        r.genero && `G: ${r.genero}`,
-                                        r.talla && `T: ${r.talla}`,
-                                        r.tamano && `Tam: ${r.tamano}`,
-                                        r.etapa && `Ed: ${r.etapa}`,
-                                        r.restriccionDietetica && `Diet: ${r.restriccionDietetica}`
-                                      ].filter(Boolean);
-                                      return extras.length > 0 ? extras.join(' | ') : '-';
-                                    })()}
-                                  </td>
-                                  <td>{r.fechaVencimiento || '-'}</td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </Table>
-                        </div>
-                      );
-                    } else {
-                      return <span className="text-muted fst-italic">No hay recursos en esta donación.</span>;
-                    }
-                  } catch (e) {
-                    console.error('Error parseando recursos:', e);
-                    return <span className="text-muted fst-italic">Error al cargar recursos.</span>;
-                  }
-                })()}
+                <RecursosDetalleTable recursos={selectedDonacion.recursos || '[]'} />
               </Col>
               
               {selectedDonacion.descripcion && (

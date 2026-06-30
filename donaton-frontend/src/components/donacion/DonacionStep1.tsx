@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Form, Row, Col, Button, Card, Table, Badge } from 'react-bootstrap';
+import { Form, Row, Col, Button, Card, Table, Badge, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import { useFormContext, useFieldArray } from 'react-hook-form';
-import { Trash2, Plus } from 'lucide-react';
+import { Trash2, Plus, Info } from 'lucide-react';
 import type { DonacionGlobalValues } from './DonacionSchemas';
 import { getMaxYearsForSubcategory } from './DonacionSchemas';
+import { SUBCATEGORIAS, getUnidadesDisponibles, FORMATOS_ABARROTES, TIPOS_LECHE, TIPOS_YOGUR, getEnvasesPallet, FORMATOS_QUESO, PESOS_QUESO, FORMATOS_TE, FORMATOS_CAFE, FORMATOS_ACEITE, FORMATOS_CONSERVA, FORMATOS_SALSA, FORMATOS_MANTEQUILLA, FORMATOS_FIAMBRE, FORMATOS_MASCOTAS } from '../../utils/unidadesLogic';
 
 const CATEGORIAS_DONACION = [
   "Alimentos",
@@ -19,155 +20,7 @@ const CATEGORIAS_DONACION = [
   "Otro"
 ];
 
-const UNIDADES_POR_CATEGORIA: Record<string, string[]> = {
-  "Alimentos": ["Unidades", "Kilogramos", "Cajas", "Paquetes", "Pallets"],
-  "Alimentos imperecederos": ["Unidades", "Kilogramos", "Cajas", "Paquetes", "Sacos", "Pallets"],
-  "Ropa y Calzado": ["Unidades", "Cajas", "Paquetes", "Sacos"],
-  "Agua e Hidratación": ["Unidades", "Litros", "Cajas", "Pallets"],
-  "Artículos de Higiene Personal": ["Unidades", "Cajas", "Paquetes"],
-  "Insumos Médicos": ["Unidades", "Cajas", "Paquetes"],
-  "Materiales de Construcción": ["Unidades", "Kilogramos", "Sacos", "Pallets"],
-  "Herramientas": ["Unidades", "Cajas"],
-  "Muebles y Enseres": ["Unidades"],
-  "Alimentos para Mascotas": ["Unidades", "Kilogramos", "Sacos", "Cajas", "Pallets"],
-  "Otro": ["Unidades", "Kilogramos", "Litros", "Cajas", "Paquetes", "Sacos", "Pallets"]
-};
 
-const SUBCATEGORIAS: Record<string, string[]> = {
-  "Alimentos": [
-    "Frutas",
-    "Verduras",
-    "Comida Preparada",
-    "Lácteos",
-    "Refrigerados",
-    "Panadería",
-    "Pastelería"
-  ],
-  "Alimentos imperecederos": [
-    "Arroz",
-    "Fideos",
-    "Pastas",
-    "Legumbres",
-    "Aceite",
-    "Salsa de Tomate",
-    "Atún en Conserva",
-    "Jurel en Conserva",
-    "Leche en Polvo",
-    "Leche (Caja larga vida)",
-    "Harina",
-    "Azúcar",
-    "Sal",
-    "Té",
-    "Café",
-    "Avena",
-    "Cereales"
-  ],
-  "Ropa y Calzado": [
-    "Poleras",
-    "Camisas",
-    "Pantalones",
-    "Jeans",
-    "Chaquetas",
-    "Abrigos",
-    "Ropa Interior (Nueva)",
-    "Zapatos",
-    "Zapatillas",
-    "Ropa de Bebé"
-  ],
-  "Agua e Hidratación": [
-    "Agua Embotellada (Bidón)",
-    "Agua Embotellada (Individual)",
-    "Bebidas Isotónicas",
-    "Jugos en Caja"
-  ],
-  "Artículos de Higiene Personal": [
-    "Jabón",
-    "Gel de Ducha",
-    "Shampoo",
-    "Acondicionador",
-    "Pasta Dental",
-    "Cepillo Dental",
-    "Papel Higiénico",
-    "Toallas Higiénicas",
-    "Pañales (Bebé)",
-    "Pañales (Adulto)",
-    "Desodorante"
-  ],
-  "Insumos Médicos": [
-    "Mascarillas",
-    "Guantes de Látex",
-    "Guantes de Nitrilo",
-    "Alcohol",
-    "Alcohol Gel",
-    "Gasas",
-    "Vendas",
-    "Paracetamol",
-    "Ibuprofeno",
-    "Suero",
-    "Jeringas"
-  ],
-  "Materiales de Construcción": [
-    "Madera",
-    "Tablas",
-    "Clavos",
-    "Tornillos",
-    "Cemento",
-    "Zinc",
-    "Calaminas",
-    "Pintura",
-    "Cables Eléctricos",
-    "Ladrillos",
-    "Arena",
-    "Grava",
-    "Yeso",
-    "Tubos de PVC",
-    "Fierro/Acero",
-    "Planchas OSB",
-    "Aislante Térmico"
-  ],
-  "Herramientas": [
-    "Martillo",
-    "Serrucho",
-    "Palas",
-    "Picos",
-    "Taladro",
-    "Destornilladores",
-    "Alicates",
-    "Huincha de Medir",
-    "Llave Inglesa",
-    "Carretilla",
-    "Esmeril",
-    "Sierra Circular",
-    "Hacha",
-    "Brochas",
-    "Rodillos"
-  ],
-  "Muebles y Enseres": [
-    "Camas",
-    "Colchones",
-    "Mesas",
-    "Sillas",
-    "Cocina",
-    "Estufa",
-    "Refrigerador",
-    "Muebles de Guardado",
-    "Sillones",
-    "Estantes",
-    "Escritorios",
-    "Lavadora",
-    "Microondas",
-    "Televisor",
-    "Sábanas y Frazadas"
-  ],
-  "Alimentos para Mascotas": [
-    "Comida para Perros (Seca)",
-    "Comida para Perros (Húmeda)",
-    "Comida para Gatos (Seca)",
-    "Comida para Gatos (Húmeda)",
-    "Arena para Gatos"
-  ],
-  "Otro": []
-};
 
 const INITIAL_TEMP_RECURSO = {
   categoria: '',
@@ -181,7 +34,26 @@ const INITIAL_TEMP_RECURSO = {
   talla: '',
   tamano: '',
   etapa: '',
-  restriccionDietetica: ''
+  restriccionDietetica: '',
+  dimensiones: '',
+  litros: '',
+  unidadesPorEnvase: '',
+  pesoPorSaco: '',
+  tipoEnvaseCaja: '',
+  pesoPorCaja: '',
+  tipoEnvasePallet: '',
+  cantidadEnvasePallet: '',
+  pesoPorEnvasePallet: '',
+  unidadesPorEnvasePallet: '',
+  unidadesPorPaquete: '',
+  tipoEnvaseCajaPallet: '',
+  unidadesPorPaquetePallet: '',
+  formatoSupermercado: '',
+  tipoLeche: '',
+  tipoYogur: '',
+  capacidadBandeja: '',
+  formatoQueso: '',
+  pesoQueso: '',
 };
 
 const validateFechaVencimiento = (tempRecurso: typeof INITIAL_TEMP_RECURSO, errs: Record<string, string>) => {
@@ -210,11 +82,98 @@ const validateFechaVencimiento = (tempRecurso: typeof INITIAL_TEMP_RECURSO, errs
   }
 };
 
+const checkCategoriaSubCategoria = (tempRecurso: typeof INITIAL_TEMP_RECURSO, errs: Record<string, string>) => {
+  if (!tempRecurso.categoria) errs.categoria = "La categoría es obligatoria";
+  if (!tempRecurso.subCategoria) errs.subCategoria = "La subcategoría es obligatoria";
+};
+
+const isUnidadBaseFn = (tempRecurso: typeof INITIAL_TEMP_RECURSO) => {
+  return tempRecurso.unidadMedida === 'Unidades' || 
+    tempRecurso.unidadMedida === 'Paquetes' ||
+    (tempRecurso.unidadMedida === 'Cajas' && ['Unidades', 'Paquetes'].includes(tempRecurso.tipoEnvaseCaja)) ||
+    (tempRecurso.unidadMedida === 'Pallets' && (
+      ['Unidades', 'Paquetes'].includes(tempRecurso.tipoEnvasePallet) ||
+      (tempRecurso.tipoEnvasePallet === 'Cajas' && ['Unidades', 'Paquetes'].includes(tempRecurso.tipoEnvaseCajaPallet))
+    ));
+};
+
+const isBandejaBaseFn = (tempRecurso: typeof INITIAL_TEMP_RECURSO) => {
+  if (tempRecurso.subCategoria !== 'Huevos') return false;
+  return tempRecurso.unidadMedida === 'Bandejas' || 
+    tempRecurso.unidadMedida === 'Paquetes' ||
+    (tempRecurso.unidadMedida === 'Cajas' && ['Bandejas', 'Paquetes'].includes(tempRecurso.tipoEnvaseCaja)) ||
+    (tempRecurso.unidadMedida === 'Pallets' && (
+      ['Bandejas', 'Paquetes'].includes(tempRecurso.tipoEnvasePallet) ||
+      (tempRecurso.tipoEnvasePallet === 'Cajas' && ['Bandejas', 'Paquetes'].includes(tempRecurso.tipoEnvaseCajaPallet))
+    ));
+};
+
+const checkCantidadBase = (tempRecurso: typeof INITIAL_TEMP_RECURSO, errs: Record<string, string>) => {
+  const cantidadNum = Number(tempRecurso.cantidad);
+  if (!tempRecurso.cantidad || Number.isNaN(cantidadNum) || cantidadNum <= 0) {
+    if (!tempRecurso.cantidad) errs.cantidad = "La cantidad es obligatoria";
+    else if (cantidadNum <= 0) errs.cantidad = "La cantidad debe ser mayor a 0";
+  }
+};
+
+const checkFormatosEspeciales = (tempRecurso: typeof INITIAL_TEMP_RECURSO, errs: Record<string, string>) => {
+  if (['Quesos', 'Mantequilla/Margarina', 'Fiambres y Embutidos'].includes(tempRecurso.subCategoria) && isUnidadBaseFn(tempRecurso)) {
+    if (!tempRecurso.formatoQueso) errs.formatoQueso = "Indique el formato del producto";
+    if (!tempRecurso.pesoQueso) errs.pesoQueso = "Indique el peso por unidad";
+  }
+
+  if (isBandejaBaseFn(tempRecurso) && !tempRecurso.capacidadBandeja) {
+    errs.capacidadBandeja = "Indique la capacidad de la bandeja";
+  }
+};
+
+const validateCajasPaquetes = (tempRecurso: typeof INITIAL_TEMP_RECURSO, errs: Record<string, string>) => {
+  if (['Frutas', 'Verduras', 'Panadería'].includes(tempRecurso.subCategoria) || tempRecurso.tipoEnvaseCaja === 'Kilogramos') {
+    if (!tempRecurso.pesoPorCaja) errs.pesoPorCaja = "Indique los Kg por Caja/Paquete";
+  } else {
+    if (!tempRecurso.tipoEnvaseCaja) errs.tipoEnvaseCaja = "Seleccione el tipo de envase";
+    if (['Unidades', 'Paquetes', 'Bandejas'].includes(tempRecurso.tipoEnvaseCaja || '') && !tempRecurso.unidadesPorEnvase) {
+      errs.unidadesPorEnvase = "Indique la cantidad de unidades por envase";
+    }
+  }
+};
+
+const validatePallets = (tempRecurso: typeof INITIAL_TEMP_RECURSO, errs: Record<string, string>) => {
+  if (!tempRecurso.tipoEnvasePallet) errs.tipoEnvasePallet = "Seleccione qué contiene el pallet";
+  if (!tempRecurso.cantidadEnvasePallet) errs.cantidadEnvasePallet = "Indique la cantidad";
+};
+
+const checkUnidadCantidad = (tempRecurso: typeof INITIAL_TEMP_RECURSO, errs: Record<string, string>) => {
+  if (!tempRecurso.unidadMedida) errs.unidadMedida = "El formato de entrega es obligatorio";
+  
+  checkCantidadBase(tempRecurso, errs);
+
+  if (['Cajas', 'Paquetes'].includes(tempRecurso.unidadMedida)) {
+    validateCajasPaquetes(tempRecurso, errs);
+  }
+
+  if (tempRecurso.unidadMedida === 'Pallets') {
+    validatePallets(tempRecurso, errs);
+  }
+
+  if (tempRecurso.unidadMedida === 'Sacos' && !tempRecurso.pesoPorSaco) {
+    errs.pesoPorSaco = "Indique el peso aproximado de cada saco (en kg)";
+  }
+
+  checkFormatosEspeciales(tempRecurso, errs);
+};
+
+const checkRopaCalzado = (tempRecurso: typeof INITIAL_TEMP_RECURSO, errs: Record<string, string>) => {
+  if (tempRecurso.categoria === "Ropa y Calzado") {
+    if (!tempRecurso.genero) errs.genero = "El género es obligatorio para ropa/calzado";
+    if (!tempRecurso.talla) errs.talla = "La talla es obligatoria para ropa/calzado";
+  }
+};
+
 const validateRecursoLocal = (tempRecurso: typeof INITIAL_TEMP_RECURSO) => {
   const errs: Record<string, string> = {};
 
-  if (!tempRecurso.categoria) errs.categoria = "La categoría es obligatoria";
-  if (!tempRecurso.subCategoria) errs.subCategoria = "La subcategoría es obligatoria";
+  checkCategoriaSubCategoria(tempRecurso, errs);
   
   const hideEstado = [
     "Agua e Hidratación",
@@ -226,27 +185,22 @@ const validateRecursoLocal = (tempRecurso: typeof INITIAL_TEMP_RECURSO) => {
     errs.estadoArticulo = "El estado del artículo es obligatorio";
   }
 
-  if (!tempRecurso.unidadMedida) errs.unidadMedida = "La unidad de medida es obligatoria";
-  
-  const cantidadNum = Number(tempRecurso.cantidad);
-  if (!tempRecurso.cantidad || Number.isNaN(cantidadNum) || cantidadNum <= 0) {
-    errs.cantidad = "Debe ingresar una cantidad válida mayor a 0";
-  }
-
+  checkUnidadCantidad(tempRecurso, errs);
   validateFechaVencimiento(tempRecurso, errs);
+  checkRopaCalzado(tempRecurso, errs);
 
-  if (tempRecurso.categoria === "Ropa y Calzado") {
-    if (!tempRecurso.genero) errs.genero = "El género es obligatorio para ropa/calzado";
-    if (!tempRecurso.talla) errs.talla = "La talla es obligatoria para ropa/calzado";
-  }
-
-  return { errs, hideEstado, cantidadNum };
+  return { errs, hideEstado, cantidadNum: Number(tempRecurso.cantidad) };
 };
 
 const renderTallaOptions = (subCategoria: string) => {
   if (subCategoria === 'Ropa de Bebé') {
     return ["0-3 meses", "3-6 meses", "6-9 meses", "9-12 meses", "12-18 meses", "18-24 meses", "2-3 años"].map(t => (
       <option key={t} value={t}>{t}</option>
+    ));
+  }
+  if (subCategoria === 'Pantalones' || subCategoria === 'Jeans') {
+    return Array.from({length: 22}, (_, i) => 24 + i * 2).map(t => (
+      <option key={t} value={t.toString()}>{t}</option>
     ));
   }
   if (subCategoria === 'Zapatos' || subCategoria === 'Zapatillas') {
@@ -269,6 +223,7 @@ const renderTallaOptions = (subCategoria: string) => {
   ));
 };
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 export const DonacionStep1: React.FC = () => {
   const { register, control, watch, setValue, trigger, formState: { errors } } = useFormContext<DonacionGlobalValues>();
   const { fields, append, remove } = useFieldArray({
@@ -320,7 +275,6 @@ export const DonacionStep1: React.FC = () => {
       return;
     }
 
-    // Validacion correcta, agregar al fieldArray
     append({
       categoria: tempRecurso.categoria,
       subCategoria: tempRecurso.subCategoria,
@@ -328,18 +282,38 @@ export const DonacionStep1: React.FC = () => {
       unidadMedida: tempRecurso.unidadMedida,
       cantidad: cantidadNum,
       pesoAproximado: tempRecurso.pesoAproximado ? Number(tempRecurso.pesoAproximado) : undefined,
-      fechaVencimiento: tempRecurso.fechaVencimiento || undefined
+      fechaVencimiento: tempRecurso.fechaVencimiento || undefined,
+      formatoSupermercado: tempRecurso.formatoSupermercado || undefined,
+      tipoLeche: tempRecurso.tipoLeche || undefined,
+      tipoYogur: tempRecurso.tipoYogur || undefined,
+      formatoQueso: tempRecurso.formatoQueso || undefined,
+      pesoQueso: tempRecurso.pesoQueso || undefined,
+      genero: tempRecurso.genero || undefined,
+      talla: tempRecurso.talla || undefined,
+      tamano: tempRecurso.tamano || undefined,
+      etapa: tempRecurso.etapa || undefined,
+      restriccionDietetica: tempRecurso.restriccionDietetica || undefined,
+      dimensiones: tempRecurso.dimensiones || undefined,
+      litros: tempRecurso.litros || undefined,
+      unidadesPorEnvase: tempRecurso.unidadesPorEnvase ? Number(tempRecurso.unidadesPorEnvase) : undefined,
+      pesoPorSaco: tempRecurso.pesoPorSaco ? Number(tempRecurso.pesoPorSaco) : undefined,
+      tipoEnvaseCaja: tempRecurso.tipoEnvaseCaja || undefined,
+      pesoPorCaja: tempRecurso.pesoPorCaja ? Number(tempRecurso.pesoPorCaja) : undefined,
+      tipoEnvasePallet: tempRecurso.tipoEnvasePallet || undefined,
+      cantidadEnvasePallet: tempRecurso.cantidadEnvasePallet ? Number(tempRecurso.cantidadEnvasePallet) : undefined,
+      pesoPorEnvasePallet: tempRecurso.pesoPorEnvasePallet ? Number(tempRecurso.pesoPorEnvasePallet) : undefined,
+      unidadesPorEnvasePallet: tempRecurso.unidadesPorEnvasePallet ? Number(tempRecurso.unidadesPorEnvasePallet) : undefined,
+      unidadesPorPaquete: tempRecurso.unidadesPorPaquete ? Number(tempRecurso.unidadesPorPaquete) : undefined,
+      tipoEnvaseCajaPallet: tempRecurso.tipoEnvaseCajaPallet || undefined,
+      unidadesPorPaquetePallet: tempRecurso.unidadesPorPaquetePallet ? Number(tempRecurso.unidadesPorPaquetePallet) : undefined,
     });
 
-    // Limpiar form temporal y errores
     setTempRecurso(INITIAL_TEMP_RECURSO);
     setLocalErrors({});
-    
-    // Limpiar error root de validación del schema si había uno
     trigger('recursos');
   };
 
-  const unidadesDisponibles = tempRecurso.categoria ? (UNIDADES_POR_CATEGORIA[tempRecurso.categoria] || UNIDADES_POR_CATEGORIA["Otro"]) : [];
+  const unidadesDisponibles = getUnidadesDisponibles(tempRecurso.categoria, tempRecurso.subCategoria);
   const opcionesSubCategoria = tempRecurso.categoria ? [...(SUBCATEGORIAS[tempRecurso.categoria] || []), "Otro"] : [];
   
   const hideEstadoLocal = [
@@ -430,7 +404,7 @@ export const DonacionStep1: React.FC = () => {
                     setLocalErrors({ ...localErrors, categoria: '' });
                   }}
                 >
-                  <option value="">Selecciona una categoría</option>
+                  <option value="">Selecciona una opción</option>
                   {CATEGORIAS_DONACION.map(c => <option key={c} value={c}>{c}</option>)}
                 </Form.Select>
                 <Form.Control.Feedback type="invalid">{localErrors.categoria}</Form.Control.Feedback>
@@ -444,8 +418,33 @@ export const DonacionStep1: React.FC = () => {
                   <Form.Select 
                     value={tempRecurso.subCategoria}
                     isInvalid={!!localErrors.subCategoria}
+                    // eslint-disable-next-line sonarjs/cognitive-complexity
                     onChange={(e) => {
-                      setTempRecurso({ ...tempRecurso, subCategoria: e.target.value });
+                      const newSub = e.target.value;
+                      const updates: any = { subCategoria: newSub };
+                      
+                      if (tempRecurso.unidadMedida === 'Pallets') {
+                        const envases = getEnvasesPallet(tempRecurso.categoria, newSub);
+                        if (envases.length === 1) {
+                          updates.tipoEnvasePallet = envases[0];
+                          if (envases[0] === 'Cajas' && newSub === 'Comida Preparada') {
+                            updates.tipoEnvaseCajaPallet = 'Unidades';
+                          }
+                        } else if (tempRecurso.tipoEnvasePallet && !envases.includes(tempRecurso.tipoEnvasePallet)) {
+                          updates.tipoEnvasePallet = '';
+                        } else if (tempRecurso.tipoEnvasePallet === 'Cajas' && newSub === 'Comida Preparada') {
+                          updates.tipoEnvaseCajaPallet = 'Unidades';
+                        }
+                      }
+                      
+                      if (['Cajas', 'Paquetes'].includes(tempRecurso.unidadMedida) && !['Frutas', 'Verduras'].includes(newSub)) {
+                        const hasKg = ['Arroz', 'Legumbres', 'Azúcar', 'Harina', 'Avena', 'Clavos', 'Tornillos'].includes(newSub);
+                        if ((tempRecurso.unidadMedida === 'Paquetes' && !hasKg) || (tempRecurso.unidadMedida === 'Cajas' && newSub === 'Comida Preparada')) {
+                          updates.tipoEnvaseCaja = 'Unidades';
+                        }
+                      }
+                      
+                      setTempRecurso({ ...tempRecurso, ...updates });
                       setLocalErrors({ ...localErrors, subCategoria: '' });
                     }}
                   >
@@ -470,7 +469,7 @@ export const DonacionStep1: React.FC = () => {
                         setLocalErrors({ ...localErrors, genero: '' });
                       }}
                     >
-                      <option value="">Selecciona el género</option>
+                      <option value="">Selecciona una opción</option>
                       {tempRecurso.subCategoria === 'Ropa de Bebé' ? (
                         <>
                           <option value="Niño">Niño</option>
@@ -502,7 +501,7 @@ export const DonacionStep1: React.FC = () => {
                         setLocalErrors({ ...localErrors, talla: '' });
                       }}
                     >
-                      <option value="">Selecciona la talla</option>
+                      <option value="">Selecciona una opción</option>
                       {renderTallaOptions(tempRecurso.subCategoria)}
                     </Form.Select>
                     <Form.Control.Feedback type="invalid">{localErrors.talla}</Form.Control.Feedback>
@@ -527,7 +526,7 @@ export const DonacionStep1: React.FC = () => {
                       setLocalErrors({ ...localErrors, talla: '' });
                     }}
                   >
-                    <option value="">Selecciona la talla</option>
+                    <option value="">Selecciona una opción</option>
                     {renderTallaOptions(tempRecurso.subCategoria)}
                   </Form.Select>
                   <Form.Control.Feedback type="invalid">{localErrors.talla}</Form.Control.Feedback>
@@ -550,7 +549,7 @@ export const DonacionStep1: React.FC = () => {
                       setLocalErrors({ ...localErrors, tamano: '' });
                     }}
                   >
-                    <option value="">Selecciona el tamaño</option>
+                    <option value="">Selecciona una opción</option>
                     {["1 Plaza", "1.5 Plazas", "2 Plazas", "King", "Super King"].map(t => (
                       <option key={t} value={t}>{t}</option>
                     ))}
@@ -573,7 +572,7 @@ export const DonacionStep1: React.FC = () => {
                       setLocalErrors({ ...localErrors, etapa: '' });
                     }}
                   >
-                    <option value="">Selecciona la etapa</option>
+                    <option value="">Selecciona una opción</option>
                     {["Cachorro/Gatito", "Adulto", "Senior", "Todas las edades"].map(t => (
                       <option key={t} value={t}>{t}</option>
                     ))}
@@ -583,7 +582,11 @@ export const DonacionStep1: React.FC = () => {
               </Col>
             )}
 
-            {(tempRecurso.categoria === "Alimentos" || tempRecurso.categoria === "Alimentos imperecederos") && (
+            {[
+              "Comida Preparada", "Lácteos", "Refrigerados", "Panadería", "Pastelería", 
+              "Fideos", "Pastas", "Leche en Polvo", "Leche (Caja larga vida)", 
+              "Harina", "Avena", "Cereales"
+            ].includes(tempRecurso.subCategoria) && (
               <Col md={6}>
                 <Form.Group className="mb-3">
                   <Form.Label className="fw-semibold small text-muted">Restricción Dietética (Opcional)</Form.Label>
@@ -601,6 +604,53 @@ export const DonacionStep1: React.FC = () => {
               </Col>
             )}
 
+            {tempRecurso.categoria === "Materiales de Construcción" && 
+              !["Cemento", "Pintura", "Arena", "Grava", "Yeso"].includes(tempRecurso.subCategoria) && (
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label className="fw-semibold small">Dimensiones/Medidas <span className="text-danger">*</span></Form.Label>
+                  <Form.Control
+                    type="text"
+                    size="sm"
+                    placeholder="Ej: 2x4 pulgadas, 3 metros..."
+                    value={tempRecurso.dimensiones || ''}
+                    isInvalid={!!localErrors.dimensiones}
+                    onChange={(e) => {
+                      setTempRecurso({ ...tempRecurso, dimensiones: e.target.value });
+                      setLocalErrors({ ...localErrors, dimensiones: '' });
+                    }}
+                  />
+                  <Form.Control.Feedback type="invalid">{localErrors.dimensiones}</Form.Control.Feedback>
+                </Form.Group>
+              </Col>
+            )}
+
+            {tempRecurso.categoria === "Agua e Hidratación" && (
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label className="fw-semibold small">Litros (Capacidad) <span className="text-danger">*</span></Form.Label>
+                  <Form.Select 
+                    size="sm"
+                    value={tempRecurso.litros || ''}
+                    isInvalid={!!localErrors.litros}
+                    onChange={(e) => {
+                      setTempRecurso({ ...tempRecurso, litros: e.target.value });
+                      setLocalErrors({ ...localErrors, litros: '' });
+                    }}
+                  >
+                    <option value="">Selecciona una opción</option>
+                    {(tempRecurso.subCategoria === "Agua Embotellada (Bidón)"
+                      ? ["Bidón 5 Litros", "Bidón 10 Litros", "Bidón 12 Litros", "Bidón 20 Litros"]
+                      : ["Menos de 500ml", "500ml", "1 Litro", "1.5 a 2 Litros", "3 Litros"]
+                    ).map(t => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </Form.Select>
+                  <Form.Control.Feedback type="invalid">{localErrors.litros}</Form.Control.Feedback>
+                </Form.Group>
+              </Col>
+            )}
+
             {!hideEstadoLocal && tempRecurso.categoria && (
               <Col md={6}>
                 <Form.Group className="mb-3">
@@ -613,7 +663,7 @@ export const DonacionStep1: React.FC = () => {
                       setLocalErrors({ ...localErrors, estadoArticulo: '' });
                     }}
                   >
-                    <option value="">Selecciona el estado</option>
+                    <option value="">Selecciona una opción</option>
                     <option value="Nuevo">Nuevo (Sin abrir/Sin uso)</option>
                     <option value="Buen Estado">Buen Estado (Usado pero funcional)</option>
                     <option value="Para Reparar">Para Reparar (Requiere arreglos menores)</option>
@@ -627,17 +677,33 @@ export const DonacionStep1: React.FC = () => {
           <Row>
             <Col md={6}>
               <Form.Group className="mb-3">
-                <Form.Label className="fw-semibold small">Unidad de Medida <span className="text-danger">*</span></Form.Label>
+                <Form.Label className="fw-semibold small">Formato de Entrega <span className="text-danger">*</span></Form.Label>
                 <Form.Select 
                   value={tempRecurso.unidadMedida}
                   isInvalid={!!localErrors.unidadMedida}
-                  disabled={!tempRecurso.categoria}
+                  disabled={!tempRecurso.subCategoria}
                   onChange={(e) => {
-                    setTempRecurso({ ...tempRecurso, unidadMedida: e.target.value });
+                    const newUnidad = e.target.value;
+                    const updates: any = { unidadMedida: newUnidad };
+                    if (newUnidad === 'Pallets') {
+                      const envases = getEnvasesPallet(tempRecurso.categoria, tempRecurso.subCategoria);
+                      if (envases.length === 1) {
+                        updates.tipoEnvasePallet = envases[0];
+                        if (envases[0] === 'Cajas' && tempRecurso.subCategoria === 'Comida Preparada') {
+                          updates.tipoEnvaseCajaPallet = 'Unidades';
+                        }
+                      }
+                    } else if (['Cajas', 'Paquetes'].includes(newUnidad) && !['Frutas', 'Verduras'].includes(tempRecurso.subCategoria)) {
+                      const hasKg = ['Arroz', 'Legumbres', 'Azúcar', 'Harina', 'Avena', 'Clavos', 'Tornillos'].includes(tempRecurso.subCategoria);
+                      if ((newUnidad === 'Paquetes' && !hasKg) || (newUnidad === 'Cajas' && tempRecurso.subCategoria === 'Comida Preparada')) {
+                        updates.tipoEnvaseCaja = 'Unidades';
+                      }
+                    }
+                    setTempRecurso({ ...tempRecurso, ...updates });
                     setLocalErrors({ ...localErrors, unidadMedida: '' });
                   }}
                 >
-                  <option value="">Selecciona la unidad</option>
+                  <option value="">Selecciona una opción</option>
                   {unidadesDisponibles.map(u => <option key={u} value={u}>{u}</option>)}
                 </Form.Select>
                 <Form.Control.Feedback type="invalid">{localErrors.unidadMedida}</Form.Control.Feedback>
@@ -666,11 +732,734 @@ export const DonacionStep1: React.FC = () => {
             </Col>
           </Row>
 
+          {/* === INICIO LÓGICA CONDICIONAL V3 === */}
+          
+          {/* CAJAS Y PAQUETES */}
+          {['Cajas', 'Paquetes'].includes(tempRecurso.unidadMedida) && (
+            <>
+              {/* Frutas y Verduras en Cajas -> Kg */}
+              {['Frutas', 'Verduras', 'Panadería'].includes(tempRecurso.subCategoria) ? (
+                <Row>
+                  <Col md={6}>
+                    <Form.Group className="mb-3">
+                      <Form.Label className="fw-semibold small">Kg por {tempRecurso.unidadMedida === 'Cajas' ? 'Caja' : 'Paquete'} <span className="text-danger">*</span></Form.Label>
+                      <Form.Control 
+                        type="number" step="any" min="0.01" max="25"
+                        value={tempRecurso.pesoPorCaja}
+                        isInvalid={!!localErrors.pesoPorCaja}
+                        onKeyDown={(e) => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === '' || (Number(val) >= 0 && Number(val) <= 25 && val.length <= 5)) {
+                            setTempRecurso({ ...tempRecurso, pesoPorCaja: val });
+                          }
+                        }}
+                      />
+                      <Form.Text className="text-muted d-block mt-1"><small>Máximo 25 kg (Ley 20.949)</small></Form.Text>
+                      <Form.Control.Feedback type="invalid">{localErrors.pesoPorCaja}</Form.Control.Feedback>
+                    </Form.Group>
+                  </Col>
+                </Row>
+              ) : (
+                <Row>
+                  <Col md={6}>
+                    <Form.Group className="mb-3">
+                      <Form.Label className="fw-semibold small">¿Qué contiene {tempRecurso.unidadMedida === 'Cajas' ? 'la Caja' : 'el Paquete'}? <span className="text-danger">*</span></Form.Label>
+                      <Form.Select 
+                        value={tempRecurso.tipoEnvaseCaja || ''}
+                        isInvalid={!!localErrors.tipoEnvaseCaja}
+                        disabled={
+                          (tempRecurso.unidadMedida === 'Paquetes' && !['Huevos', 'Arroz', 'Legumbres', 'Azúcar', 'Harina', 'Avena', 'Clavos', 'Tornillos'].includes(tempRecurso.subCategoria)) ||
+                          (tempRecurso.unidadMedida === 'Cajas' && tempRecurso.subCategoria === 'Comida Preparada')
+                        }
+                        onChange={(e) => {
+                          setTempRecurso({ ...tempRecurso, tipoEnvaseCaja: e.target.value, unidadesPorEnvase: '', pesoPorCaja: '', unidadesPorPaquete: '' });
+                          setLocalErrors({ ...localErrors, tipoEnvaseCaja: '' });
+                        }}
+                      >
+                        <option value="">Selecciona una opción</option>
+                        {tempRecurso.subCategoria === 'Huevos' ? (
+                          <option value="Bandejas">Bandejas</option>
+                        ) : (
+                          <option value="Unidades">Unidades</option>
+                        )}
+                        {tempRecurso.unidadMedida === 'Cajas' && tempRecurso.subCategoria !== 'Comida Preparada' && (
+                          <option value="Paquetes">Paquetes</option>
+                        )}
+                        {['Arroz', 'Legumbres', 'Azúcar', 'Harina', 'Avena', 'Clavos', 'Tornillos'].includes(tempRecurso.subCategoria) && (
+                          <option value="Kilogramos">Kilogramos</option>
+                        )}
+                      </Form.Select>
+                      <Form.Control.Feedback type="invalid">{localErrors.tipoEnvaseCaja}</Form.Control.Feedback>
+                    </Form.Group>
+                  </Col>
+                  
+                  {['Unidades', 'Paquetes', 'Bandejas'].includes(tempRecurso.tipoEnvaseCaja) && (
+                    <Col md={6}>
+                      <Form.Group className="mb-3">
+                        <Form.Label className="fw-semibold small">{tempRecurso.tipoEnvaseCaja} por {tempRecurso.unidadMedida === 'Cajas' ? 'Caja' : 'Paquete'} <span className="text-danger">*</span></Form.Label>
+                        <Form.Control 
+                          type="number" step="1" min="1" max="9999"
+                          value={tempRecurso.unidadesPorEnvase}
+                          isInvalid={!!localErrors.unidadesPorEnvase}
+                          onKeyDown={(e) => ['e', 'E', '+', '-', '.'].includes(e.key) && e.preventDefault()}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === '' || (Number(val) >= 0 && Number(val) <= 9999 && val.length <= 4)) {
+                              setTempRecurso({ ...tempRecurso, unidadesPorEnvase: val });
+                            }
+                          }}
+                        />
+                        <Form.Control.Feedback type="invalid">{localErrors.unidadesPorEnvase}</Form.Control.Feedback>
+                      </Form.Group>
+                    </Col>
+                  )}
+
+                  {tempRecurso.tipoEnvaseCaja === 'Paquetes' && (
+                    <Col md={6}>
+                      <Form.Group className="mb-3">
+                        <Form.Label className="fw-semibold small">{tempRecurso.subCategoria === 'Huevos' ? 'Bandejas' : 'Unidades'} por Paquete <span className="text-danger">*</span></Form.Label>
+                        <Form.Control 
+                          type="number" step="1" min="1" max="9999"
+                          value={tempRecurso.unidadesPorPaquete}
+                          isInvalid={!!localErrors.unidadesPorPaquete}
+                          onKeyDown={(e) => ['e', 'E', '+', '-', '.'].includes(e.key) && e.preventDefault()}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === '' || (Number(val) >= 0 && Number(val) <= 9999 && val.length <= 4)) {
+                              setTempRecurso({ ...tempRecurso, unidadesPorPaquete: val });
+                            }
+                          }}
+                        />
+                        <Form.Control.Feedback type="invalid">{localErrors.unidadesPorPaquete}</Form.Control.Feedback>
+                      </Form.Group>
+                    </Col>
+                  )}
+
+                  {tempRecurso.tipoEnvaseCaja === 'Kilogramos' && (
+                    <Col md={6}>
+                      <Form.Group className="mb-3">
+                        <Form.Label className="fw-semibold small">Kg por {tempRecurso.unidadMedida === 'Cajas' ? 'Caja' : 'Paquete'} <span className="text-danger">*</span></Form.Label>
+                        <Form.Control 
+                          type="number" step="any" min="0.01" max="25"
+                          value={tempRecurso.pesoPorCaja}
+                          isInvalid={!!localErrors.pesoPorCaja}
+                          onKeyDown={(e) => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === '' || (Number(val) >= 0 && Number(val) <= 25 && val.length <= 5)) {
+                              setTempRecurso({ ...tempRecurso, pesoPorCaja: val });
+                            }
+                          }}
+                        />
+                        <Form.Text className="text-muted d-block mt-1"><small>Máximo 25 kg (Ley 20.949)</small></Form.Text>
+                        <Form.Control.Feedback type="invalid">{localErrors.pesoPorCaja}</Form.Control.Feedback>
+                      </Form.Group>
+                    </Col>
+                  )}
+                </Row>
+              )}
+            </>
+          )}
+
+          {/* SACOS */}
+          {tempRecurso.unidadMedida === 'Sacos' && (
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label className="fw-semibold small">Peso por Saco (Kg) <span className="text-danger">*</span></Form.Label>
+                  <Form.Control
+                    type="number" step="any" min="1" max={25}
+                    placeholder="Ej: 25"
+                    value={tempRecurso.pesoPorSaco}
+                    isInvalid={!!localErrors.pesoPorSaco}
+                    onKeyDown={(e) => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '' || (Number(val) >= 0 && Number(val) <= 25 && val.length <= 5)) {
+                        setTempRecurso({ ...tempRecurso, pesoPorSaco: val });
+                      }
+                    }}
+                  />
+                  <Form.Text className="text-muted d-block mt-1">
+                    <small>Máximo 25 kg (Ley 20.949)</small>
+                  </Form.Text>
+                  <Form.Control.Feedback type="invalid">{localErrors.pesoPorSaco}</Form.Control.Feedback>
+                </Form.Group>
+              </Col>
+            </Row>
+          )}
+
+          {/* PALLETS */}
+          {tempRecurso.unidadMedida === 'Pallets' && (
+            <Row>
+              <Col md={4}>
+                <Form.Group className="mb-3">
+                  <Form.Label className="fw-semibold small">Contiene <span className="text-danger">*</span></Form.Label>
+                  <Form.Select 
+                    value={tempRecurso.tipoEnvasePallet || ''}
+                    isInvalid={!!localErrors.tipoEnvasePallet}
+                    disabled={getEnvasesPallet(tempRecurso.categoria, tempRecurso.subCategoria).length === 1}
+                    onChange={(e) => {
+                      const newTipo = e.target.value;
+                      let autoTipoCaja = '';
+                      if (newTipo === 'Cajas' && tempRecurso.subCategoria === 'Comida Preparada') {
+                        autoTipoCaja = 'Unidades';
+                      }
+                      setTempRecurso({ ...tempRecurso, tipoEnvasePallet: newTipo, cantidadEnvasePallet: '', unidadesPorEnvasePallet: '', pesoPorEnvasePallet: '', tipoEnvaseCajaPallet: autoTipoCaja, unidadesPorPaquetePallet: '' });
+                      setLocalErrors({ ...localErrors, tipoEnvasePallet: '' });
+                    }}
+                  >
+                    <option value="">Selecciona una opción</option>
+                    {getEnvasesPallet(tempRecurso.categoria, tempRecurso.subCategoria).map(envase => (
+                      <option key={envase} value={envase}>
+                        {envase === 'Unidades' ? 'Unidades Sueltas' : envase}
+                      </option>
+                    ))}
+                  </Form.Select>
+                  <Form.Control.Feedback type="invalid">{localErrors.tipoEnvasePallet}</Form.Control.Feedback>
+                </Form.Group>
+              </Col>
+
+              {tempRecurso.tipoEnvasePallet && (
+                <Col md={4}>
+                  <Form.Group className="mb-3">
+                    <Form.Label className="fw-semibold small">Cantidad de {tempRecurso.tipoEnvasePallet} <span className="text-danger">*</span></Form.Label>
+                    <Form.Control 
+                      type="number" step="1" min="1" max="999"
+                      value={tempRecurso.cantidadEnvasePallet}
+                      isInvalid={!!localErrors.cantidadEnvasePallet}
+                      onKeyDown={(e) => ['e', 'E', '+', '-', '.'].includes(e.key) && e.preventDefault()}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === '' || (Number(val) >= 0 && Number(val) <= 999 && val.length <= 3)) {
+                          setTempRecurso({ ...tempRecurso, cantidadEnvasePallet: val });
+                        }
+                      }}
+                    />
+                    <Form.Control.Feedback type="invalid">{localErrors.cantidadEnvasePallet}</Form.Control.Feedback>
+                  </Form.Group>
+                </Col>
+              )}
+
+              {tempRecurso.tipoEnvasePallet === 'Cajas' && (
+                <>
+                  {['Frutas', 'Verduras', 'Panadería'].includes(tempRecurso.subCategoria) ? (
+                    <Col md={4}>
+                      <Form.Group className="mb-3">
+                        <Form.Label className="fw-semibold small">Kg por Caja <span className="text-danger">*</span></Form.Label>
+                        <Form.Control 
+                          type="number" step="any" min="0.01" max="25"
+                          value={tempRecurso.pesoPorEnvasePallet}
+                          isInvalid={!!localErrors.pesoPorEnvasePallet}
+                          onKeyDown={(e) => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === '' || (Number(val) >= 0 && Number(val) <= 25 && val.length <= 5)) {
+                              setTempRecurso({ ...tempRecurso, pesoPorEnvasePallet: val });
+                            }
+                          }}
+                        />
+                        <Form.Text className="text-muted d-block mt-1"><small>Máximo 25 kg (Ley 20.949)</small></Form.Text>
+                        <Form.Control.Feedback type="invalid">{localErrors.pesoPorEnvasePallet}</Form.Control.Feedback>
+                      </Form.Group>
+                    </Col>
+                  ) : (
+                    <>
+                      <Col md={4}>
+                        <Form.Group className="mb-3">
+                          <Form.Label className="fw-semibold small">¿Qué contiene la Caja? <span className="text-danger">*</span></Form.Label>
+                          <Form.Select 
+                            value={tempRecurso.tipoEnvaseCajaPallet || ''}
+                            isInvalid={!!localErrors.tipoEnvaseCajaPallet}
+                            disabled={tempRecurso.subCategoria === 'Comida Preparada'}
+                            onChange={(e) => {
+                              setTempRecurso({ ...tempRecurso, tipoEnvaseCajaPallet: e.target.value, unidadesPorEnvasePallet: '', pesoPorEnvasePallet: '', unidadesPorPaquetePallet: '' });
+                              setLocalErrors({ ...localErrors, tipoEnvaseCajaPallet: '' });
+                            }}
+                          >
+                            <option value="">Selecciona una opción</option>
+                            {tempRecurso.subCategoria === 'Huevos' ? (
+                              <option value="Bandejas">Bandejas</option>
+                            ) : (
+                              <option value="Unidades">Unidades</option>
+                            )}
+                            {tempRecurso.subCategoria !== 'Comida Preparada' && (
+                              <option value="Paquetes">Paquetes</option>
+                            )}
+                            {['Arroz', 'Legumbres', 'Azúcar', 'Harina', 'Avena', 'Clavos', 'Tornillos'].includes(tempRecurso.subCategoria) && (
+                              <option value="Kilogramos">Kilogramos</option>
+                            )}
+                          </Form.Select>
+                          <Form.Control.Feedback type="invalid">{localErrors.tipoEnvaseCajaPallet}</Form.Control.Feedback>
+                        </Form.Group>
+                      </Col>
+
+                      {['Unidades', 'Paquetes', 'Bandejas'].includes(tempRecurso.tipoEnvaseCajaPallet) && (
+                        <Col md={4}>
+                          <Form.Group className="mb-3">
+                            <Form.Label className="fw-semibold small">{tempRecurso.tipoEnvaseCajaPallet} por Caja <span className="text-danger">*</span></Form.Label>
+                            <Form.Control 
+                              type="number" step="1" min="1" max="9999"
+                              value={tempRecurso.unidadesPorEnvasePallet}
+                              isInvalid={!!localErrors.unidadesPorEnvasePallet}
+                              onKeyDown={(e) => ['e', 'E', '+', '-', '.'].includes(e.key) && e.preventDefault()}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                if (val === '' || (Number(val) >= 0 && Number(val) <= 9999 && val.length <= 4)) {
+                                  setTempRecurso({ ...tempRecurso, unidadesPorEnvasePallet: val });
+                                }
+                              }}
+                            />
+                            <Form.Control.Feedback type="invalid">{localErrors.unidadesPorEnvasePallet}</Form.Control.Feedback>
+                          </Form.Group>
+                        </Col>
+                      )}
+
+                      {tempRecurso.tipoEnvaseCajaPallet === 'Paquetes' && (
+                        <Col md={4}>
+                          <Form.Group className="mb-3">
+                            <Form.Label className="fw-semibold small">{tempRecurso.subCategoria === 'Huevos' ? 'Bandejas' : 'Unidades'} por Paquete <span className="text-danger">*</span></Form.Label>
+                            <Form.Control 
+                              type="number" step="1" min="1" max="9999"
+                              value={tempRecurso.unidadesPorPaquetePallet}
+                              isInvalid={!!localErrors.unidadesPorPaquetePallet}
+                              onKeyDown={(e) => ['e', 'E', '+', '-', '.'].includes(e.key) && e.preventDefault()}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                if (val === '' || (Number(val) >= 0 && Number(val) <= 9999 && val.length <= 4)) {
+                                  setTempRecurso({ ...tempRecurso, unidadesPorPaquetePallet: val });
+                                }
+                              }}
+                            />
+                            <Form.Control.Feedback type="invalid">{localErrors.unidadesPorPaquetePallet}</Form.Control.Feedback>
+                          </Form.Group>
+                        </Col>
+                      )}
+
+                      {tempRecurso.tipoEnvaseCajaPallet === 'Kilogramos' && (
+                        <Col md={4}>
+                          <Form.Group className="mb-3">
+                            <Form.Label className="fw-semibold small">Kg por Caja <span className="text-danger">*</span></Form.Label>
+                            <Form.Control 
+                              type="number" step="any" min="0.01" max="25"
+                              value={tempRecurso.pesoPorEnvasePallet}
+                              isInvalid={!!localErrors.pesoPorEnvasePallet}
+                              onKeyDown={(e) => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                if (val === '' || (Number(val) >= 0 && Number(val) <= 25 && val.length <= 5)) {
+                                  setTempRecurso({ ...tempRecurso, pesoPorEnvasePallet: val });
+                                }
+                              }}
+                            />
+                            <Form.Text className="text-muted d-block mt-1"><small>Máximo 25 kg (Ley 20.949)</small></Form.Text>
+                            <Form.Control.Feedback type="invalid">{localErrors.pesoPorEnvasePallet}</Form.Control.Feedback>
+                          </Form.Group>
+                        </Col>
+                      )}
+                    </>
+                  )}
+                </>
+              )}
+              
+              {tempRecurso.tipoEnvasePallet === 'Sacos' && (
+                <Col md={4}>
+                  <Form.Group className="mb-3">
+                    <Form.Label className="fw-semibold small">Kg por Saco <span className="text-danger">*</span></Form.Label>
+                    <Form.Control 
+                      type="number" step="any" min="1" max={25}
+                      value={tempRecurso.pesoPorEnvasePallet}
+                      isInvalid={!!localErrors.pesoPorEnvasePallet}
+                      onKeyDown={(e) => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === '' || (Number(val) >= 0 && Number(val) <= 25 && val.length <= 5)) {
+                          setTempRecurso({ ...tempRecurso, pesoPorEnvasePallet: val });
+                        }
+                      }}
+                    />
+                    <Form.Text className="text-muted d-block mt-1">
+                      <small>Máximo 25 kg (Ley 20.949)</small>
+                    </Form.Text>
+                    <Form.Control.Feedback type="invalid">{localErrors.pesoPorEnvasePallet}</Form.Control.Feedback>
+                  </Form.Group>
+                </Col>
+              )}
+
+              {tempRecurso.tipoEnvasePallet === 'Paquetes' && (
+                <Col md={4}>
+                  {['Frutas', 'Verduras', 'Panadería'].includes(tempRecurso.subCategoria) ? (
+                    <Form.Group className="mb-3">
+                      <Form.Label className="fw-semibold small">Kg por Paquete <span className="text-danger">*</span></Form.Label>
+                      <Form.Control 
+                        type="number" step="any" min="0.01" max="25"
+                        value={tempRecurso.pesoPorEnvasePallet}
+                        isInvalid={!!localErrors.pesoPorEnvasePallet}
+                        onKeyDown={(e) => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === '' || (Number(val) >= 0 && Number(val) <= 25 && val.length <= 5)) {
+                            setTempRecurso({ ...tempRecurso, pesoPorEnvasePallet: val });
+                          }
+                        }}
+                      />
+                      <Form.Text className="text-muted d-block mt-1"><small>Máximo 25 kg (Ley 20.949)</small></Form.Text>
+                      <Form.Control.Feedback type="invalid">{localErrors.pesoPorEnvasePallet}</Form.Control.Feedback>
+                    </Form.Group>
+                  ) : (
+                    <Form.Group className="mb-3">
+                      <Form.Label className="fw-semibold small">{tempRecurso.subCategoria === 'Huevos' ? 'Bandejas' : 'Unidades'} por Paquete <span className="text-danger">*</span></Form.Label>
+                      <Form.Control 
+                        type="number" step="1" min="1" max="9999"
+                        value={tempRecurso.unidadesPorEnvasePallet}
+                        isInvalid={!!localErrors.unidadesPorEnvasePallet}
+                        onKeyDown={(e) => ['e', 'E', '+', '-', '.'].includes(e.key) && e.preventDefault()}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === '' || (Number(val) >= 0 && Number(val) <= 9999 && val.length <= 4)) {
+                            setTempRecurso({ ...tempRecurso, unidadesPorEnvasePallet: val });
+                          }
+                        }}
+                      />
+                      <Form.Control.Feedback type="invalid">{localErrors.unidadesPorEnvasePallet}</Form.Control.Feedback>
+                    </Form.Group>
+                  )}
+                </Col>
+              )}
+            </Row>
+          )}
+          {/* FORMATO SUPERMERCADO para Abarrotes en Unidades */}
+          {['Arroz', 'Legumbres', 'Azúcar', 'Harina', 'Avena', 'Sal', 'Fideos', 'Pastas', 'Cereales', 'Leche en Polvo'].includes(tempRecurso.subCategoria) && isUnidadBaseFn(tempRecurso) && (
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label className="fw-semibold small">Formato del Envase <span className="text-danger">*</span></Form.Label>
+                  <Form.Select 
+                    value={tempRecurso.formatoSupermercado || ''}
+                    isInvalid={!!localErrors.formatoSupermercado}
+                    onChange={(e) => {
+                      setTempRecurso({ ...tempRecurso, formatoSupermercado: e.target.value });
+                      setLocalErrors({ ...localErrors, formatoSupermercado: '' });
+                    }}
+                  >
+                    <option value="">Selecciona una opción</option>
+                    {FORMATOS_ABARROTES.map(f => <option key={f} value={f}>{f}</option>)}
+                  </Form.Select>
+                  <Form.Control.Feedback type="invalid">{localErrors.formatoSupermercado}</Form.Control.Feedback>
+                </Form.Group>
+              </Col>
+            </Row>
+          )}
+
+          {/* FORMATO TÉ */}
+          {tempRecurso.subCategoria === 'Té' && isUnidadBaseFn(tempRecurso) && (
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label className="fw-semibold small">Formato del Té <span className="text-danger">*</span></Form.Label>
+                  <Form.Select 
+                    value={tempRecurso.formatoSupermercado || ''}
+                    isInvalid={!!localErrors.formatoSupermercado}
+                    onChange={(e) => {
+                      setTempRecurso({ ...tempRecurso, formatoSupermercado: e.target.value });
+                      setLocalErrors({ ...localErrors, formatoSupermercado: '' });
+                    }}
+                  >
+                    <option value="">Selecciona una opción</option>
+                    {FORMATOS_TE.map(f => <option key={f} value={f}>{f}</option>)}
+                  </Form.Select>
+                  <Form.Control.Feedback type="invalid">{localErrors.formatoSupermercado}</Form.Control.Feedback>
+                </Form.Group>
+              </Col>
+            </Row>
+          )}
+
+          {/* FORMATO CAFÉ */}
+          {tempRecurso.subCategoria === 'Café' && isUnidadBaseFn(tempRecurso) && (
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label className="fw-semibold small">Formato del Café <span className="text-danger">*</span></Form.Label>
+                  <Form.Select 
+                    value={tempRecurso.formatoSupermercado || ''}
+                    isInvalid={!!localErrors.formatoSupermercado}
+                    onChange={(e) => {
+                      setTempRecurso({ ...tempRecurso, formatoSupermercado: e.target.value });
+                      setLocalErrors({ ...localErrors, formatoSupermercado: '' });
+                    }}
+                  >
+                    <option value="">Selecciona una opción</option>
+                    {FORMATOS_CAFE.map(f => <option key={f} value={f}>{f}</option>)}
+                  </Form.Select>
+                  <Form.Control.Feedback type="invalid">{localErrors.formatoSupermercado}</Form.Control.Feedback>
+                </Form.Group>
+              </Col>
+            </Row>
+          )}
+
+          {/* FORMATO ACEITE */}
+          {tempRecurso.subCategoria === 'Aceite' && isUnidadBaseFn(tempRecurso) && (
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label className="fw-semibold small">Formato del Aceite <span className="text-danger">*</span></Form.Label>
+                  <Form.Select 
+                    value={tempRecurso.formatoSupermercado || ''}
+                    isInvalid={!!localErrors.formatoSupermercado}
+                    onChange={(e) => {
+                      setTempRecurso({ ...tempRecurso, formatoSupermercado: e.target.value });
+                      setLocalErrors({ ...localErrors, formatoSupermercado: '' });
+                    }}
+                  >
+                    <option value="">Selecciona una opción</option>
+                    {FORMATOS_ACEITE.map(f => <option key={f} value={f}>{f}</option>)}
+                  </Form.Select>
+                  <Form.Control.Feedback type="invalid">{localErrors.formatoSupermercado}</Form.Control.Feedback>
+                </Form.Group>
+              </Col>
+            </Row>
+          )}
+
+          {/* FORMATO CONSERVAS */}
+          {['Atún en Conserva', 'Jurel en Conserva'].includes(tempRecurso.subCategoria) && isUnidadBaseFn(tempRecurso) && (
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label className="fw-semibold small">Formato de Conserva <span className="text-danger">*</span></Form.Label>
+                  <Form.Select 
+                    value={tempRecurso.formatoSupermercado || ''}
+                    isInvalid={!!localErrors.formatoSupermercado}
+                    onChange={(e) => {
+                      setTempRecurso({ ...tempRecurso, formatoSupermercado: e.target.value });
+                      setLocalErrors({ ...localErrors, formatoSupermercado: '' });
+                    }}
+                  >
+                    <option value="">Selecciona una opción</option>
+                    {FORMATOS_CONSERVA.map(f => <option key={f} value={f}>{f}</option>)}
+                  </Form.Select>
+                  <Form.Control.Feedback type="invalid">{localErrors.formatoSupermercado}</Form.Control.Feedback>
+                </Form.Group>
+              </Col>
+            </Row>
+          )}
+
+          {/* FORMATO MASCOTAS */}
+          {['Comida para Perros (Seca)', 'Comida para Gatos (Seca)'].includes(tempRecurso.subCategoria) && isUnidadBaseFn(tempRecurso) && (
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label className="fw-semibold small">Formato del Saco/Bolsa <span className="text-danger">*</span></Form.Label>
+                  <Form.Select 
+                    value={tempRecurso.formatoSupermercado || ''}
+                    isInvalid={!!localErrors.formatoSupermercado}
+                    onChange={(e) => {
+                      setTempRecurso({ ...tempRecurso, formatoSupermercado: e.target.value });
+                      setLocalErrors({ ...localErrors, formatoSupermercado: '' });
+                    }}
+                  >
+                    <option value="">Selecciona una opción</option>
+                    {FORMATOS_MASCOTAS.map(f => <option key={f} value={f}>{f}</option>)}
+                  </Form.Select>
+                  <Form.Control.Feedback type="invalid">{localErrors.formatoSupermercado}</Form.Control.Feedback>
+                </Form.Group>
+              </Col>
+            </Row>
+          )}
+
+          {/* FORMATO SALSA */}
+          {tempRecurso.subCategoria === 'Salsa de Tomate' && isUnidadBaseFn(tempRecurso) && (
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label className="fw-semibold small">Formato de la Salsa <span className="text-danger">*</span></Form.Label>
+                  <Form.Select 
+                    value={tempRecurso.formatoSupermercado || ''}
+                    isInvalid={!!localErrors.formatoSupermercado}
+                    onChange={(e) => {
+                      setTempRecurso({ ...tempRecurso, formatoSupermercado: e.target.value });
+                      setLocalErrors({ ...localErrors, formatoSupermercado: '' });
+                    }}
+                  >
+                    <option value="">Selecciona una opción</option>
+                    {FORMATOS_SALSA.map(f => <option key={f} value={f}>{f}</option>)}
+                  </Form.Select>
+                  <Form.Control.Feedback type="invalid">{localErrors.formatoSupermercado}</Form.Control.Feedback>
+                </Form.Group>
+              </Col>
+            </Row>
+          )}
+
+          {/* FORMATO QUESOS */}
+          {tempRecurso.subCategoria === 'Quesos' && isUnidadBaseFn(tempRecurso) && (
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label className="fw-semibold small">Formato del Producto <span className="text-danger">*</span></Form.Label>
+                  <Form.Select 
+                    value={tempRecurso.formatoQueso || ''}
+                    isInvalid={!!localErrors.formatoQueso}
+                    onChange={(e) => {
+                      setTempRecurso({ ...tempRecurso, formatoQueso: e.target.value });
+                      setLocalErrors({ ...localErrors, formatoQueso: '' });
+                    }}
+                  >
+                    <option value="">Selecciona una opción</option>
+                    {FORMATOS_QUESO.map(f => <option key={f} value={f}>{f}</option>)}
+                  </Form.Select>
+                  <Form.Control.Feedback type="invalid">{localErrors.formatoQueso}</Form.Control.Feedback>
+                </Form.Group>
+              </Col>
+              
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label className="fw-semibold small">Peso por Unidad <span className="text-danger">*</span></Form.Label>
+                  <Form.Select 
+                    value={tempRecurso.pesoQueso || ''}
+                    isInvalid={!!localErrors.pesoQueso}
+                    onChange={(e) => {
+                      setTempRecurso({ ...tempRecurso, pesoQueso: e.target.value });
+                      setLocalErrors({ ...localErrors, pesoQueso: '' });
+                    }}
+                  >
+                    <option value="">Selecciona una opción</option>
+                    {PESOS_QUESO.map(p => <option key={p} value={p}>{p}</option>)}
+                  </Form.Select>
+                  <Form.Control.Feedback type="invalid">{localErrors.pesoQueso}</Form.Control.Feedback>
+                </Form.Group>
+              </Col>
+            </Row>
+          )}
+
+          {/* FORMATO MANTEQUILLA / MARGARINA */}
+          {tempRecurso.subCategoria === 'Mantequilla/Margarina' && isUnidadBaseFn(tempRecurso) && (
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label className="fw-semibold small">Formato del Envase <span className="text-danger">*</span></Form.Label>
+                  <Form.Select 
+                    value={tempRecurso.formatoSupermercado || ''}
+                    isInvalid={!!localErrors.formatoSupermercado}
+                    onChange={(e) => {
+                      setTempRecurso({ ...tempRecurso, formatoSupermercado: e.target.value });
+                      setLocalErrors({ ...localErrors, formatoSupermercado: '' });
+                    }}
+                  >
+                    <option value="">Selecciona una opción</option>
+                    {FORMATOS_MANTEQUILLA.map(f => <option key={f} value={f}>{f}</option>)}
+                  </Form.Select>
+                  <Form.Control.Feedback type="invalid">{localErrors.formatoSupermercado}</Form.Control.Feedback>
+                </Form.Group>
+              </Col>
+            </Row>
+          )}
+
+          {/* FORMATO FIAMBRES Y EMBUTIDOS */}
+          {tempRecurso.subCategoria === 'Fiambres y Embutidos' && isUnidadBaseFn(tempRecurso) && (
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label className="fw-semibold small">Formato del Fiambre <span className="text-danger">*</span></Form.Label>
+                  <Form.Select 
+                    value={tempRecurso.formatoSupermercado || ''}
+                    isInvalid={!!localErrors.formatoSupermercado}
+                    onChange={(e) => {
+                      setTempRecurso({ ...tempRecurso, formatoSupermercado: e.target.value });
+                      setLocalErrors({ ...localErrors, formatoSupermercado: '' });
+                    }}
+                  >
+                    <option value="">Selecciona una opción</option>
+                    {FORMATOS_FIAMBRE.map(f => <option key={f} value={f}>{f}</option>)}
+                  </Form.Select>
+                  <Form.Control.Feedback type="invalid">{localErrors.formatoSupermercado}</Form.Control.Feedback>
+                </Form.Group>
+              </Col>
+            </Row>
+          )}
+
+          {/* TIPOS DE LECHE Y YOGUR */}
+          {['Leche de 1 Litro', 'Leche Individual (200ml)', 'Leche (Caja larga vida)'].includes(tempRecurso.subCategoria) && isUnidadBaseFn(tempRecurso) && (
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label className="fw-semibold small">Tipo de Leche <span className="text-danger">*</span></Form.Label>
+                  <Form.Select 
+                    value={tempRecurso.tipoLeche || ''}
+                    isInvalid={!!localErrors.tipoLeche}
+                    onChange={(e) => {
+                      setTempRecurso({ ...tempRecurso, tipoLeche: e.target.value });
+                      setLocalErrors({ ...localErrors, tipoLeche: '' });
+                    }}
+                  >
+                    <option value="">Selecciona una opción</option>
+                    {TIPOS_LECHE.map(t => <option key={t} value={t}>{t}</option>)}
+                  </Form.Select>
+                  <Form.Control.Feedback type="invalid">{localErrors.tipoLeche}</Form.Control.Feedback>
+                </Form.Group>
+              </Col>
+            </Row>
+          )}
+          {['Yogur Individual', 'Yogur en Bolsa (1 Litro)'].includes(tempRecurso.subCategoria) && isUnidadBaseFn(tempRecurso) && (
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label className="fw-semibold small">Tipo de Yogur <span className="text-danger">*</span></Form.Label>
+                  <Form.Select 
+                    value={tempRecurso.tipoYogur || ''}
+                    isInvalid={!!localErrors.tipoYogur}
+                    onChange={(e) => {
+                      setTempRecurso({ ...tempRecurso, tipoYogur: e.target.value });
+                      setLocalErrors({ ...localErrors, tipoYogur: '' });
+                    }}
+                  >
+                    <option value="">Selecciona una opción</option>
+                    {TIPOS_YOGUR.map(t => <option key={t} value={t}>{t}</option>)}
+                  </Form.Select>
+                  <Form.Control.Feedback type="invalid">{localErrors.tipoYogur}</Form.Control.Feedback>
+                </Form.Group>
+              </Col>
+            </Row>
+          )}
+
+          {/* HUEVOS (Bandejas) */}
+          {isBandejaBaseFn(tempRecurso) && (
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label className="fw-semibold small">Capacidad de la Bandeja <span className="text-danger">*</span></Form.Label>
+                  <Form.Select 
+                    value={tempRecurso.capacidadBandeja || ''}
+                    isInvalid={!!localErrors.capacidadBandeja}
+                    onChange={(e) => {
+                      setTempRecurso({ ...tempRecurso, capacidadBandeja: e.target.value });
+                      setLocalErrors({ ...localErrors, capacidadBandeja: '' });
+                    }}
+                  >
+                    <option value="">Selecciona una opción</option>
+                    <option value="12">12 Huevos</option>
+                    <option value="30">30 Huevos</option>
+                  </Form.Select>
+                  <Form.Control.Feedback type="invalid">{localErrors.capacidadBandeja}</Form.Control.Feedback>
+                </Form.Group>
+              </Col>
+            </Row>
+          )}
+
+          {/* === FIN LÓGICA CONDICIONAL V3 === */}
+
           <Row>
             {requiresDateLocal && (
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Label className="fw-semibold small">Fecha de Vencimiento <span className="text-danger">*</span></Form.Label>
+                  <Form.Label className="fw-semibold small d-flex align-items-center gap-1">
+                    Fecha de Vencimiento <span className="text-danger">*</span>
+                    <OverlayTrigger
+                      placement="top"
+                      overlay={<Tooltip>Recuerda que no se aceptan alimentos vencidos ni medicamentos abiertos</Tooltip>}
+                    >
+                      <Info size={16} className="text-muted ms-1" style={{ cursor: 'pointer' }} />
+                    </OverlayTrigger>
+                  </Form.Label>
                   <Form.Control 
                     type="date" 
                     min={new Date().toISOString().split('T')[0]}
@@ -751,6 +1540,11 @@ export const DonacionStep1: React.FC = () => {
                           <div>{item.subCategoria}</div>
                           {item.fechaVencimiento && (
                             <small className="text-muted d-block">Vence: {new Date(item.fechaVencimiento).toLocaleDateString()}</small>
+                          )}
+                          {item.categoria === 'Ropa y Calzado' && (item.genero || item.talla) && (
+                            <small className="text-muted d-block">
+                              {item.genero && `Género: ${item.genero}`} {item.genero && item.talla && '|'} {item.talla && `Talla: ${item.talla}`}
+                            </small>
                           )}
                         </td>
                         <td className="px-3">
