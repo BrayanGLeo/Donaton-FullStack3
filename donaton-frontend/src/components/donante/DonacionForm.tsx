@@ -28,8 +28,11 @@ export const DonacionForm: React.FC<Props> = ({ onSuccess }) => {
     resolver: zodResolver(donacionGlobalSchema),
     mode: 'onBlur',
     defaultValues: {
-      cantidad: 1,
+      nombreArticulo: '',
+      recursos: [],
+      descripcion: '',
       modalidadEntrega: '',
+      visibilidad: ''
     }
   });
 
@@ -38,8 +41,7 @@ export const DonacionForm: React.FC<Props> = ({ onSuccess }) => {
   const nextStep = async () => {
     // Validate only step 1 fields before proceeding
     const isStepValid = await trigger([
-      'categoria', 'estadoArticulo', 'unidadMedida', 'cantidad', 
-      'pesoAproximado', 'descripcion', 'fechaVencimiento', 'fotoBase64'
+      'nombreArticulo', 'recursos', 'descripcion', 'fotoBase64', 'visibilidad'
     ]);
     if (isStepValid) {
       setStep(2);
@@ -64,7 +66,10 @@ export const DonacionForm: React.FC<Props> = ({ onSuccess }) => {
       const payload: any = { 
         ...data, 
         donanteId: Number(usuario.id),
-        recurso: data.subCategoria,
+        recursos: JSON.stringify(data.recursos.map(r => ({
+          ...r,
+          recurso: r.subCategoria === 'Otro' && data.nombreArticulo ? data.nombreArticulo : r.subCategoria
+        })))
       };
 
       if (data.modalidadEntrega === 'Retiro' && data.direccionRetiroCalle && data.direccionRetiroNumero) {

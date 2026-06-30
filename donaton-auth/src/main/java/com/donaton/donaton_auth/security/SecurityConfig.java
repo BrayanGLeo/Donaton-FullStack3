@@ -15,12 +15,13 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableWebSecurity
 public class SecurityConfig {
 
+    @SuppressWarnings("java:S4502") // Desactivar CSRF es seguro porque usamos JWT y la API es Stateless
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) {
         http
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/login", "/api/auth/registro", "/api/auth/admin/registro", "/api/auth/usuarios", "/api/auth/admin/usuarios/**", "/api/auth/forgot-password", "/api/auth/verify-code", "/api/auth/reset-password", "/api/auth/verificar-email", "/api/auth/verificar-rut", "/error").permitAll()
+                .requestMatchers("/api/auth/login", "/api/auth/registro", "/api/auth/admin/registro", "/api/auth/usuarios", "/api/auth/usuarios/**", "/api/auth/admin/usuarios/**", "/api/auth/forgot-password", "/api/auth/verify-code", "/api/auth/reset-password", "/api/auth/verificar-email", "/api/auth/verificar-rut", "/error").permitAll()
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));

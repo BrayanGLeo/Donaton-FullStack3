@@ -38,8 +38,7 @@ class LogisticaServiceTest {
         logisticaService = new LogisticaService(inventarioRepository, recepcionRepository);
         donacionEventDTO = new DonacionEventDTO();
         donacionEventDTO.setId(1L);
-        donacionEventDTO.setRecurso("Agua");
-        donacionEventDTO.setCantidad(50);
+        donacionEventDTO.setRecursos("[{\"recurso\":\"Agua\",\"cantidad\":50}]");
         donacionEventDTO.setOrigen("Centro");
         donacionEventDTO.setEstado("Completado");
     }
@@ -61,12 +60,12 @@ class LogisticaServiceTest {
     @Test
     void testConfirmarIngresoExitoso() {
         Recepcion recepcion = new Recepcion("TRK-DON-1", "Agua", 50, "Pendiente de recepción");
-        when(recepcionRepository.findByTrackingId("TRK-DON-1")).thenReturn(Optional.of(recepcion));
+        when(recepcionRepository.findByTrackingId("TRK-DON-1")).thenReturn(java.util.Collections.singletonList(recepcion));
         when(inventarioRepository.findByRecurso("Agua")).thenReturn(Optional.empty());
 
-        Recepcion result = logisticaService.confirmarIngreso("TRK-DON-1");
+        java.util.List<Recepcion> result = logisticaService.confirmarIngreso("TRK-DON-1");
 
-        assertEquals("Disponible", result.getEstado());
+        assertEquals("Disponible", result.get(0).getEstado());
         verify(recepcionRepository, times(1)).save(recepcion);
         
         ArgumentCaptor<Inventario> inventarioCaptor = ArgumentCaptor.forClass(Inventario.class);
@@ -79,12 +78,12 @@ class LogisticaServiceTest {
     void testConfirmarIngresoExitosoInventarioExistente() {
         Recepcion recepcion = new Recepcion("TRK-DON-1", "Agua", 50, "Pendiente de recepción");
         Inventario inventarioExistente = new Inventario("Agua", 100);
-        when(recepcionRepository.findByTrackingId("TRK-DON-1")).thenReturn(Optional.of(recepcion));
+        when(recepcionRepository.findByTrackingId("TRK-DON-1")).thenReturn(java.util.Collections.singletonList(recepcion));
         when(inventarioRepository.findByRecurso("Agua")).thenReturn(Optional.of(inventarioExistente));
 
-        Recepcion result = logisticaService.confirmarIngreso("TRK-DON-1");
+        java.util.List<Recepcion> result = logisticaService.confirmarIngreso("TRK-DON-1");
 
-        assertEquals("Disponible", result.getEstado());
+        assertEquals("Disponible", result.get(0).getEstado());
         verify(recepcionRepository, times(1)).save(recepcion);
         
         ArgumentCaptor<Inventario> inventarioCaptor = ArgumentCaptor.forClass(Inventario.class);
@@ -96,18 +95,18 @@ class LogisticaServiceTest {
     @Test
     void testConfirmarIngresoYaConfirmado() {
         Recepcion recepcion = new Recepcion("TRK-DON-1", "Agua", 50, "Disponible");
-        when(recepcionRepository.findByTrackingId("TRK-DON-1")).thenReturn(Optional.of(recepcion));
+        when(recepcionRepository.findByTrackingId("TRK-DON-1")).thenReturn(java.util.Collections.singletonList(recepcion));
 
-        Recepcion result = logisticaService.confirmarIngreso("TRK-DON-1");
+        java.util.List<Recepcion> result = logisticaService.confirmarIngreso("TRK-DON-1");
 
-        assertEquals("Disponible", result.getEstado());
+        assertEquals("Disponible", result.get(0).getEstado());
         verify(recepcionRepository, never()).save(any(Recepcion.class));
         verify(inventarioRepository, never()).save(any(Inventario.class));
     }
 
     @Test
     void testConfirmarIngresoFallaDonacionNoEncontrada() {
-        when(recepcionRepository.findByTrackingId("INVALID")).thenReturn(Optional.empty());
+        when(recepcionRepository.findByTrackingId("INVALID")).thenReturn(java.util.Collections.emptyList());
 
         EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> {
             logisticaService.confirmarIngreso("INVALID");
@@ -121,7 +120,7 @@ class LogisticaServiceTest {
     @Test
     void testProcesarDonacionRecibidaExitoso() {
         Recepcion recepcion = new Recepcion("TRK-DON-1", "Agua", 50, "Pendiente de recepción");
-        when(recepcionRepository.findByTrackingId("TRK-DON-1")).thenReturn(Optional.of(recepcion));
+        when(recepcionRepository.findByTrackingId("TRK-DON-1")).thenReturn(java.util.Collections.singletonList(recepcion));
         when(inventarioRepository.findByRecurso("Agua")).thenReturn(Optional.empty());
 
         logisticaService.procesarDonacionRecibida(donacionEventDTO);
@@ -134,8 +133,8 @@ class LogisticaServiceTest {
     @Test
     void testProcesarDonacionRecibidaConFalloYRecuperacion() {
         when(recepcionRepository.findByTrackingId("TRK-DON-1"))
-                .thenReturn(Optional.empty())
-                .thenReturn(Optional.of(new Recepcion("TRK-DON-1", "Agua", 50, "Pendiente de recepción")));
+                .thenReturn(java.util.Collections.emptyList())
+                .thenReturn(java.util.Collections.singletonList(new Recepcion("TRK-DON-1", "Agua", 50, "Pendiente de recepción")));
         
         when(inventarioRepository.findByRecurso("Agua")).thenReturn(Optional.empty());
 

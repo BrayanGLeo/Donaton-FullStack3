@@ -4,6 +4,7 @@ import { Truck } from 'lucide-react';
 import type { DonacionResponse } from '../../services/donacionService';
 import type { CentroAcopio } from '../../services/logisticaService';
 import { getEstadoBadgeColor } from '../../utils/adminDashboardUtils';
+import { RecursosDetalleTable } from '../common/RecursosDetalleTable';
 
 interface AdminDonacionDetalleModalProps {
   show: boolean;
@@ -49,10 +50,16 @@ export const AdminDonacionDetalleModal: React.FC<AdminDonacionDetalleModalProps>
           </Row>
 
           <div>
-            <strong className="text-primary d-block mb-1">Recurso y Detalles</strong>
+            <strong className="text-primary d-block mb-1">Título de la Donación</strong>
             <div className="bg-light p-2 rounded">
-              <span className="fw-semibold">{donacionDetalle.cantidad} {donacionDetalle.unidadMedida ? donacionDetalle.unidadMedida : 'x'}</span> de <strong>{donacionDetalle.recurso}</strong>
-              {Boolean(donacionDetalle.pesoAproximado) && <span className="ms-2 text-muted">({donacionDetalle.pesoAproximado} kg aprox.)</span>}
+              {donacionDetalle.nombreArticulo || 'Sin título'}
+            </div>
+          </div>
+
+          <div>
+            <strong className="text-primary d-block mb-1">Recursos Donados</strong>
+            <div className="bg-light p-2 rounded">
+              <RecursosDetalleTable recursos={donacionDetalle.recursos || '[]'} />
             </div>
           </div>
 
@@ -62,15 +69,7 @@ export const AdminDonacionDetalleModal: React.FC<AdminDonacionDetalleModalProps>
           </div>
 
           <Row>
-            <Col md={4}>
-              <strong className="text-primary d-block mb-1">Categoría</strong>
-              <div className="bg-light p-2 rounded">{donacionDetalle.categoria || 'N/A'}</div>
-            </Col>
-            <Col md={4}>
-              <strong className="text-primary d-block mb-1">Estado Artículo</strong>
-              <div className="bg-light p-2 rounded">{donacionDetalle.estadoArticulo || 'N/A'}</div>
-            </Col>
-            <Col md={4}>
+            <Col md={12}>
               <strong className="text-primary d-block mb-1">Visibilidad</strong>
               <div className="bg-light p-2 rounded">{donacionDetalle.visibilidad || 'Pública'}</div>
             </Col>

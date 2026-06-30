@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { Container, Row, Col, Nav } from 'react-bootstrap';
 import MapaNecesidades from './MapaNecesidades';
 import PanelEntregasCoordinador from './PanelEntregasCoordinador';
+import { CoordinadorOverview } from './CoordinadorOverview';
 
-type CoordinadorSection = 'alertas' | 'entregas';
+type CoordinadorSection = 'resumen' | 'alertas' | 'entregas';
 
 const DashboardCoordinador: React.FC = () => {
-  const [activeSection, setActiveSection] = useState<CoordinadorSection>('alertas');
+  const [activeSection, setActiveSection] = useState<CoordinadorSection>('resumen');
 
   const getNavStyle = (section: CoordinadorSection) => ({
     color: activeSection === section ? '#fff' : 'rgba(255,255,255,0.6)',
@@ -34,6 +35,15 @@ const DashboardCoordinador: React.FC = () => {
             <hr style={{ borderColor: 'rgba(255,255,255,0.1)' }} />
 
             <Nav className="flex-column gap-2">
+              <Nav.Link
+                onClick={() => setActiveSection('resumen')}
+                className="d-flex align-items-center gap-3 px-3 py-3 rounded-3"
+                style={getNavStyle('resumen')}
+              >
+                <span style={{ fontSize: '1.3rem' }}>📊</span>
+                <span>Resumen General</span>
+              </Nav.Link>
+
               <Nav.Link
                 onClick={() => setActiveSection('alertas')}
                 className="d-flex align-items-center gap-3 px-3 py-3 rounded-3"
@@ -63,7 +73,10 @@ const DashboardCoordinador: React.FC = () => {
           </div>
         </Col>
 
-        <Col md={9} lg={10} className="p-4" style={{ backgroundColor: '#f5f6fa' }}>
+        <Col md={9} lg={10} className="p-4" style={{ backgroundColor: '#f5f6fa', overflowY: 'auto', maxHeight: 'calc(100vh - 120px)' }}>
+          {activeSection === 'resumen' && (
+            <CoordinadorOverview />
+          )}
           {activeSection === 'alertas' && (
             <div className="bg-white p-4 shadow-sm" style={{ borderRadius: '16px' }}>
               <MapaNecesidades />

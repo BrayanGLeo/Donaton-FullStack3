@@ -32,8 +32,35 @@ interface AdminEditUserModalProps {
   usuarios: UsuarioExtended[];
 }
 
+const validateAdminForm = (formData: Partial<UsuarioExtended>, isJuridica: boolean) => {
+  const newErrors: Record<string, string> = {};
+  let nombreFinal = '';
+
+  if (isJuridica) {
+    if (!formData.razonSocial?.trim()) newErrors.razonSocial = 'Este campo no debe estar vacío';
+    nombreFinal = formData.razonSocial?.trim() || '';
+  } else {
+    if (!formData.nombres?.trim()) newErrors.nombres = 'Este campo no debe estar vacío';
+    if (!formData.apellidos?.trim()) newErrors.apellidos = 'Este campo no debe estar vacío';
+    nombreFinal = `${formData.nombres?.trim() || ''} ${formData.apellidos?.trim() || ''}`.trim();
+  }
+
+  if (!formData.email?.trim()) newErrors.email = 'Este campo no debe estar vacío';
+  
+  if (!formData.telefono?.trim() || formData.telefono.trim().replace(/\D/g, '').length < 9) {
+    newErrors.telefono = 'El teléfono debe tener al menos 9 dígitos';
+  }
+
+  if (!formData.region?.trim()) newErrors.region = 'Este campo no debe estar vacío';
+  if (!formData.comuna?.trim()) newErrors.comuna = 'Este campo no debe estar vacío';
+  if (!formData.direccion?.trim()) newErrors.direccion = 'Este campo no debe estar vacío';
+
+  return { newErrors, nombreFinal };
+};
+
 export const AdminEditUserModal: React.FC<AdminEditUserModalProps> = ({ show, onHide, usuario, onSuccess, usuarios }) => {
   const [formData, setFormData] = useState<Partial<UsuarioExtended>>({});
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -84,31 +111,26 @@ export const AdminEditUserModal: React.FC<AdminEditUserModalProps> = ({ show, on
       });
       setError(null);
       setShowSuccess(false);
+      setFormErrors({});
     }
   }, [usuario]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    if (formErrors[e.target.name]) setFormErrors(prev => ({ ...prev, [e.target.name]: '' }));
   };
 
   const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!usuario) return;
+    
     const isJuridica = usuario.tipoPersona === 'JURIDICA';
-    let nombreFinal = '';
+    const { newErrors, nombreFinal } = validateAdminForm(formData, isJuridica);
 
-    if (isJuridica) {
-      if (!formData.razonSocial?.trim()) {
-        setError('La razón social no puede estar vacía.');
-        return;
-      }
-      nombreFinal = formData.razonSocial.trim();
-    } else {
-      if (!formData.nombres?.trim() || !formData.apellidos?.trim()) {
-        setError('Los nombres y apellidos no pueden estar vacíos.');
-        return;
-      }
-      nombreFinal = `${formData.nombres.trim()} ${formData.apellidos.trim()}`;
+    if (Object.keys(newErrors).length > 0) {
+      setFormErrors(newErrors);
+      setError('Por favor, corrige los errores marcados en rojo.');
+      return;
     }
 
     const emailAComprobar = formData.email?.trim().toLowerCase();
@@ -192,8 +214,9 @@ export const AdminEditUserModal: React.FC<AdminEditUserModalProps> = ({ show, on
                     value={formData.razonSocial || ''} 
                     onChange={handleChange} 
                     maxLength={100}
-                    required 
+                    isInvalid={!!formErrors.razonSocial}
                   />
+                  <Form.Control.Feedback type="invalid">{formErrors.razonSocial}</Form.Control.Feedback>
                 </Form.Group>
               </Col>
             ) : (
@@ -208,8 +231,9 @@ export const AdminEditUserModal: React.FC<AdminEditUserModalProps> = ({ show, on
                       onChange={handleChange} 
                       onInput={formatNameInput}
                       maxLength={50}
-                      required 
+                      isInvalid={!!formErrors.nombres}
                     />
+                    <Form.Control.Feedback type="invalid">{formErrors.nombres}</Form.Control.Feedback>
                   </Form.Group>
                 </Col>
                 <Col md={6}>
@@ -222,8 +246,9 @@ export const AdminEditUserModal: React.FC<AdminEditUserModalProps> = ({ show, on
                       onChange={handleChange} 
                       onInput={formatNameInput}
                       maxLength={50}
-                      required 
+                      isInvalid={!!formErrors.apellidos}
                     />
+                    <Form.Control.Feedback type="invalid">{formErrors.apellidos}</Form.Control.Feedback>
                   </Form.Group>
                 </Col>
               </>
@@ -252,8 +277,9 @@ export const AdminEditUserModal: React.FC<AdminEditUserModalProps> = ({ show, on
                   onInput={formatNoSpaceInput}
                   onKeyDown={preventSpaceKeyDown}
                   maxLength={100}
-                  required 
+                  isInvalid={!!formErrors.email}
                 />
+                <Form.Control.Feedback type="invalid">{formErrors.email}</Form.Control.Feedback>
               </Form.Group>
             </Col>
 
@@ -280,7 +306,9 @@ export const AdminEditUserModal: React.FC<AdminEditUserModalProps> = ({ show, on
                     onKeyDown={preventPhoneKeyDown}
                     maxLength={15}
                     title="Ejemplo: 912345678"
+                    isInvalid={!!formErrors.telefono}
                   />
+                  <Form.Control.Feedback type="invalid">{formErrors.telefono}</Form.Control.Feedback>
                 </InputGroup>
               </Form.Group>
             </Col>
@@ -321,6 +349,7 @@ export const AdminEditUserModal: React.FC<AdminEditUserModalProps> = ({ show, on
                       region: option?.value || '', 
                       comuna: '' 
                     }));
+                    if (formErrors.region) setFormErrors(prev => ({ ...prev, region: '' }));
                   }}
                   placeholder="Selecciona región..."
                   isClearable
@@ -328,12 +357,13 @@ export const AdminEditUserModal: React.FC<AdminEditUserModalProps> = ({ show, on
                   styles={{
                     control: (base) => ({
                       ...base,
-                      borderColor: '#dee2e6',
+                      borderColor: formErrors.region ? '#dc3545' : '#dee2e6',
                       boxShadow: 'none',
-                      '&:hover': { borderColor: '#b1b6bb' }
+                      '&:hover': { borderColor: formErrors.region ? '#dc3545' : '#b1b6bb' }
                     })
                   }}
                 />
+                {formErrors.region && <div className="text-danger mt-1" style={{ fontSize: '0.875em' }}>{formErrors.region}</div>}
               </Form.Group>
             </Col>
 
@@ -350,6 +380,7 @@ export const AdminEditUserModal: React.FC<AdminEditUserModalProps> = ({ show, on
                       ...prev, 
                       comuna: option?.value || ''
                     }));
+                    if (formErrors.comuna) setFormErrors(prev => ({ ...prev, comuna: '' }));
                   }}
                   placeholder="Selecciona comuna..."
                   isDisabled={!formData.region}
@@ -358,12 +389,13 @@ export const AdminEditUserModal: React.FC<AdminEditUserModalProps> = ({ show, on
                   styles={{
                     control: (base) => ({
                       ...base,
-                      borderColor: '#dee2e6',
+                      borderColor: formErrors.comuna ? '#dc3545' : '#dee2e6',
                       boxShadow: 'none',
-                      '&:hover': { borderColor: '#b1b6bb' }
+                      '&:hover': { borderColor: formErrors.comuna ? '#dc3545' : '#b1b6bb' }
                     })
                   }}
                 />
+                {formErrors.comuna && <div className="text-danger mt-1" style={{ fontSize: '0.875em' }}>{formErrors.comuna}</div>}
               </Form.Group>
             </Col>
             
@@ -376,7 +408,9 @@ export const AdminEditUserModal: React.FC<AdminEditUserModalProps> = ({ show, on
                   value={formData.direccion || ''} 
                   onChange={handleChange} 
                   maxLength={250}
+                  isInvalid={!!formErrors.direccion}
                 />
+                <Form.Control.Feedback type="invalid">{formErrors.direccion}</Form.Control.Feedback>
               </Form.Group>
             </Col>
           </Row>

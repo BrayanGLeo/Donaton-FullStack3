@@ -1,11 +1,13 @@
 import React from 'react';
-import { Row, Col, Card, Badge, Form, Spinner, Button } from 'react-bootstrap';
+import { Row, Col, Card, Badge, Form, Spinner, Button, Collapse } from 'react-bootstrap';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import { Truck } from 'lucide-react';
+import { Truck, Filter, X } from 'lucide-react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { DonacionResponse } from '../../services/donacionService';
 import type { Necesidad } from '../../services/bffService';
+import Select from 'react-select';
+import { RegionComunaInput } from '../common/RegionComunaInput';
 
 export const userIcon = new L.Icon({
   iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
@@ -131,14 +133,93 @@ export const AdminMapaView: React.FC<AdminMapaViewProps> = ({
 
   const [currentPage, setCurrentPage] = React.useState(0);
   const [itemsPerPage, setItemsPerPage] = React.useState(10);
+  
+  const [listFilters, setListFilters] = React.useState({
+    id: '',
+    region: '',
+    comuna: '',
+    categoria: '',
+    subcategoria: ''
+  });
+  const [showFilters, setShowFilters] = React.useState(false);
+
+  // Generar opciones dinámicas para los selects
+  const regionOptions = React.useMemo(() => {
+    const set = new Set<string>();
+    puntosAccion.forEach(p => { const r = p.regionRetiro || p.region; if (r) set.add(r); });
+    return Array.from(set).sort((a, b) => a.localeCompare(b)).map(r => ({ value: r, label: r }));
+  }, [puntosAccion]);
+
+  const comunaOptions = React.useMemo(() => {
+    const set = new Set<string>();
+    puntosAccion.forEach(p => {
+      const r = p.regionRetiro || p.region;
+      if (listFilters.region && r !== listFilters.region) return;
+      const c = p.comunaRetiro || p.comuna;
+      if (c) set.add(c);
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b)).map(c => ({ value: c, label: c }));
+  }, [puntosAccion, listFilters.region]);
+
+  const categoriaOptions = React.useMemo(() => {
+    const set = new Set<string>();
+    puntosAccion.forEach(p => {
+      const recs = parseRecursos(p.recursos);
+      if (Array.isArray(recs)) recs.forEach((r: any) => { if (r?.categoria) set.add(r.categoria); });
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b)).map(c => ({ value: c, label: c }));
+  }, [puntosAccion]);
+
+  const subcategoriaOptions = React.useMemo(() => {
+    const set = new Set<string>();
+    puntosAccion.forEach(p => {
+      const recs = parseRecursos(p.recursos);
+      if (Array.isArray(recs)) recs.forEach((r: any) => {
+        if (listFilters.categoria && r?.categoria !== listFilters.categoria) return;
+        const sub = r?.subcategoria || r?.subCategoria;
+        if (sub) set.add(sub);
+      });
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b)).map(c => ({ value: c, label: c }));
+  }, [puntosAccion, listFilters.categoria]);
 
   React.useEffect(() => {
     setCurrentPage(0);
-  }, [mapFilter]);
+  }, [mapFilter, listFilters]);
 
-  const totalElements = puntosAccion.length;
+  const puntosFiltrados = React.useMemo(() => {
+    return puntosAccion.filter(punto => {
+      let match = true;
+      if (listFilters.id && !punto.id?.toString().includes(listFilters.id)) match = false;
+      
+      const reg = punto.regionRetiro || punto.region || '';
+      if (listFilters.region && !reg.toLowerCase().includes(listFilters.region.toLowerCase())) match = false;
+
+      const com = punto.comunaRetiro || punto.comuna || '';
+      if (listFilters.comuna && !com.toLowerCase().includes(listFilters.comuna.toLowerCase())) match = false;
+
+      if (listFilters.categoria || listFilters.subcategoria) {
+        const recs = parseRecursos(punto.recursos);
+        let hasCat = false;
+        let hasSubcat = false;
+        if (Array.isArray(recs)) {
+          recs.forEach((r: any) => {
+            if (r?.categoria?.toLowerCase().includes(listFilters.categoria.toLowerCase())) hasCat = true;
+            if (r?.subcategoria?.toLowerCase().includes(listFilters.subcategoria.toLowerCase())) hasSubcat = true;
+            if (r?.subCategoria?.toLowerCase().includes(listFilters.subcategoria.toLowerCase())) hasSubcat = true;
+          });
+        }
+        if (listFilters.categoria && !hasCat) match = false;
+        if (listFilters.subcategoria && !hasSubcat) match = false;
+      }
+
+      return match;
+    });
+  }, [puntosAccion, listFilters]);
+
+  const totalElements = puntosFiltrados.length;
   const totalPages = Math.ceil(totalElements / itemsPerPage) || 1;
-  const paginatedPuntos = puntosAccion.slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage);
+  const paginatedPuntos = puntosFiltrados.slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage);
 
   return (
     <div>
@@ -172,7 +253,72 @@ export const AdminMapaView: React.FC<AdminMapaViewProps> = ({
               <Card.Body className="p-0">
                 <div className="p-3 border-bottom d-flex justify-content-between align-items-center" style={{ backgroundColor: '#f8f9ff', position: 'sticky', top: 0, zIndex: 10 }}>
                   <h6 className="fw-bold mb-0" style={{ color: '#6c63ff' }}>📋 Puntos de Acción</h6>
+                  <Button variant="outline-primary" size="sm" onClick={() => setShowFilters(!showFilters)} style={{ borderRadius: '8px' }}>
+                    <Filter size={14} className="me-1" />
+                    Filtros
+                  </Button>
                 </div>
+                
+                <Collapse in={showFilters}>
+                  <div className="bg-light p-3 border-bottom" style={{ position: 'sticky', top: '56px', zIndex: 9 }}>
+                    <Row className="g-2 align-items-center">
+                      <Col lg={2} md={4} xs={6}>
+                        <Form.Control size="sm" placeholder="ID..." value={listFilters.id} onChange={e => setListFilters(prev => ({...prev, id: e.target.value}))} style={{ height: '38px' }} />
+                      </Col>
+                      <Col lg={3} md={4} xs={6}>
+                        <Select
+                          options={regionOptions}
+                          placeholder="Región..."
+                          isClearable
+                          components={{ Input: RegionComunaInput }}
+                          value={listFilters.region ? { value: listFilters.region, label: listFilters.region } : null}
+                          onChange={(opt) => setListFilters(prev => ({ ...prev, region: opt?.value || '', comuna: '' }))}
+                          noOptionsMessage={() => "Sin regiones"}
+                        />
+                      </Col>
+                      <Col lg={3} md={4} xs={6}>
+                        <Select
+                          options={comunaOptions}
+                          placeholder="Comuna..."
+                          isClearable
+                          components={{ Input: RegionComunaInput }}
+                          value={listFilters.comuna ? { value: listFilters.comuna, label: listFilters.comuna } : null}
+                          onChange={(opt) => setListFilters(prev => ({ ...prev, comuna: opt?.value || '' }))}
+                          noOptionsMessage={() => listFilters.region ? "Sin comunas" : "Seleccione una región primero"}
+                        />
+                      </Col>
+                      <Col lg={4} md={6} xs={12}>
+                        <Select
+                          options={categoriaOptions}
+                          placeholder="Categoría..."
+                          isClearable
+                          components={{ Input: RegionComunaInput }}
+                          value={listFilters.categoria ? { value: listFilters.categoria, label: listFilters.categoria } : null}
+                          onChange={(opt) => setListFilters(prev => ({ ...prev, categoria: opt?.value || '', subcategoria: '' }))}
+                          noOptionsMessage={() => "Sin categorías"}
+                        />
+                      </Col>
+                      <Col lg={4} md={6} xs={12}>
+                        <Select
+                          options={subcategoriaOptions}
+                          placeholder="Subcategoría..."
+                          isClearable
+                          components={{ Input: RegionComunaInput }}
+                          value={listFilters.subcategoria ? { value: listFilters.subcategoria, label: listFilters.subcategoria } : null}
+                          onChange={(opt) => setListFilters(prev => ({ ...prev, subcategoria: opt?.value || '' }))}
+                          noOptionsMessage={() => listFilters.categoria ? "Sin subcategorías" : "Seleccione una categoría primero"}
+                        />
+                      </Col>
+                      {(listFilters.id || listFilters.region || listFilters.comuna || listFilters.categoria || listFilters.subcategoria) && (
+                        <Col lg={4} md={12} xs={12} className="text-end">
+                          <Button variant="link" size="sm" className="text-danger p-0 text-decoration-none" onClick={() => setListFilters({id: '', region: '', comuna: '', categoria: '', subcategoria: ''})}>
+                            <X size={14} className="me-1" /> Limpiar Filtros
+                          </Button>
+                        </Col>
+                      )}
+                    </Row>
+                  </div>
+                </Collapse>
 
                 {paginatedPuntos.map((item) => {
                   if (item._tipo === 'donacion') {
@@ -196,8 +342,9 @@ export const AdminMapaView: React.FC<AdminMapaViewProps> = ({
                           </Form.Select>
                         </div>
                         <p className="mb-1 fw-semibold text-dark" style={{ fontSize: '0.9rem' }}>
-                          {d.cantidad} {d.unidadMedida ? d.unidadMedida : 'x'} {d.recurso}
+                          {d.nombreArticulo || 'Varias Donaciones'}
                         </p>
+                        <div className="mb-1">{renderRecursos(d.recursos)}</div>
                         <small className="text-muted d-block"><Truck size={12} className="me-1"/>{d.direccionRetiro || (d.direccionRetiroCalle + ' ' + (d.direccionRetiroNumero ? '#' + d.direccionRetiroNumero : '')).trim()}, {d.comunaRetiro}, {d.regionRetiro}</small>
                         <div className="mt-2 text-end">
                           <Button variant="outline-primary" size="sm" style={{ fontSize: '0.75rem', padding: '0.2rem 0.6rem', borderRadius: '8px' }} onClick={() => setDonacionDetalle(d)}>Ver Detalles</Button>
@@ -268,8 +415,8 @@ export const AdminMapaView: React.FC<AdminMapaViewProps> = ({
                   {showDonaciones && donacionesLogistica.map(d => (
                     <Marker key={`don-marker-${d.id}`} position={[d.latitudRetiro || 0, d.longitudRetiro || 0]} icon={userIcon}>
                       <Popup>
-                        <strong>Donación #{d.id}</strong><br/>
-                        {d.cantidad}x {d.recurso}<br/>
+                        <strong>Donación #{d.id} - {d.nombreArticulo || 'Varias Donaciones'}</strong><br/>
+                        {renderRecursos(d.recursos)}
                         <Badge bg="info" className="mt-1">{d.estado}</Badge>
                       </Popup>
                     </Marker>

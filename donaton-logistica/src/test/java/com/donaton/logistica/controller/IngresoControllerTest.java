@@ -36,15 +36,15 @@ class IngresoControllerTest {
 
     @Test
     void testConfirmarIngreso_Exito() {
-        when(logisticaService.confirmarIngreso("TRK-DON-123")).thenReturn(recepcion);
+        when(logisticaService.confirmarIngreso("TRK-DON-123")).thenReturn(java.util.Collections.singletonList(recepcion));
 
-        ResponseEntity<Recepcion> response = ingresoController.confirmarIngreso("TRK-DON-123");
+        ResponseEntity<java.util.List<Recepcion>> response = ingresoController.confirmarIngreso("TRK-DON-123");
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals("TRK-DON-123", response.getBody().getTrackingId());
-        assertEquals("Arroz", response.getBody().getRecurso());
-        assertEquals(20, response.getBody().getCantidad());
-        assertEquals("Disponible", response.getBody().getEstado());
+        assertEquals("TRK-DON-123", response.getBody().get(0).getTrackingId());
+        assertEquals("Arroz", response.getBody().get(0).getRecurso());
+        assertEquals(20, response.getBody().get(0).getCantidad());
+        assertEquals("Disponible", response.getBody().get(0).getEstado());
     }
 
     @Test

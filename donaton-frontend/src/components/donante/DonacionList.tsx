@@ -4,6 +4,7 @@ import { listarDonaciones, type DonacionResponse } from '../../services/donacion
 import { obtenerCentrosAcopio, type CentroAcopio } from '../../services/logisticaService';
 import { obtenerUsuarios } from '../../services/usuarioService';
 import { useAuth, type Usuario } from '../../context/AuthContext';
+import { RecursosDetalleTable } from '../common/RecursosDetalleTable';
 
 interface Props {
   refreshTrigger: number;
@@ -141,8 +142,8 @@ export const DonacionList: React.FC<Props> = ({ refreshTrigger }) => {
                 <thead className="table-light">
                   <tr>
                     <th>ID de Seguimiento</th>
-                    <th>Subcategoría</th>
-                    <th>Cantidad</th>
+                    <th>Título / Nombre</th>
+                    <th>Recursos</th>
                     <th>Estado</th>
                     <th>Fecha de Registro</th>
                     <th>Detalle</th>
@@ -154,8 +155,17 @@ export const DonacionList: React.FC<Props> = ({ refreshTrigger }) => {
                       <td className="fw-bold font-monospace text-primary">
                         {canSeeTracking(usuario, donacion) ? (donacion.trackingId || '-') : <span className="text-muted fst-italic">No disponible</span>}
                       </td>
-                      <td>{donacion.recurso}</td>
-                      <td>{donacion.cantidad} {donacion.unidadMedida || ''}</td>
+                      <td>{donacion.nombreArticulo || 'Varias Donaciones'}</td>
+                      <td>{(() => {
+                        try {
+                          const recs = JSON.parse(donacion.recursos || '[]');
+                          if (!Array.isArray(recs) || recs.length === 0) return <span className="text-muted fst-italic">Sin recursos</span>;
+                          const subcats = recs.map((r: any) => r.subCategoria || r.recurso || r.categoria).filter(Boolean);
+                          return subcats.join(', ');
+                        } catch {
+                          return '-';
+                        }
+                      })()}</td>
                       <td>
                         <Badge bg={getEstadoBadge(donacion.estado)}>
                           {donacion.estado || 'REGISTRADA'}
@@ -226,14 +236,12 @@ export const DonacionList: React.FC<Props> = ({ refreshTrigger }) => {
                 {canSeeDonor(usuario) && selectedDonacion.donanteId && (
                   <DetailRow label="Donante" value={selectedDonacion.visibilidad === 'Privada' ? `${getDonanteName(selectedDonacion.donanteId)} (Anónimo en público)` : getDonanteName(selectedDonacion.donanteId)} />
                 )}
-                <DetailRow label="Categoría" value={selectedDonacion.categoria} />
-                <DetailRow label="Subcategoría" value={selectedDonacion.recurso} />
-                <DetailRow label="Descripción" value={selectedDonacion.descripcion} />
-                <DetailRow label="Estado del Artículo" value={selectedDonacion.estadoArticulo} />
-                <DetailRow label="Cantidad" value={`${selectedDonacion.cantidad} ${selectedDonacion.unidadMedida || ''}`} />
-                <DetailRow label="Peso Aproximado" value={selectedDonacion.pesoAproximado ? `${selectedDonacion.pesoAproximado} kg` : undefined} />
-                <DetailRow label="Fecha de Vencimiento" value={selectedDonacion.fechaVencimiento} />
+                <DetailRow label="Título de la Donación" value={selectedDonacion.nombreArticulo || 'Sin título'} />
+                <DetailRow label="Descripción General" value={selectedDonacion.descripcion} />
                 <DetailRow label="Requiere Transporte Especial" value={selectedDonacion.transporteEspecial} />
+                
+                <h6 className="mt-4 mb-2 fw-bold text-success">Recursos Donados</h6>
+                <RecursosDetalleTable recursos={selectedDonacion.recursos || '[]'} />
               </div>
 
               {/* Entrega */}

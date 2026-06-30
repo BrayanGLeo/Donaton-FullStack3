@@ -1,17 +1,11 @@
 package com.donaton.donaton_donaciones.dto;
 
 public class DonacionRequest {
-    private String recurso;
-    private Integer cantidad;
+    private String nombreArticulo;
+    private String recursos;
     private String origen;
     private String estado;
-
-    private String categoria;
     private String descripcion;
-    private String estadoArticulo;
-    private String fechaVencimiento;
-    private String unidadMedida;
-    private Double pesoAproximado;
     private String fotoBase64;
     private String modalidadEntrega;
     private Long centroAcopioDestinoId;
@@ -30,11 +24,11 @@ public class DonacionRequest {
         // Constructor vacío para serialización JSON
     }
 
-    public String getRecurso() { return recurso; }
-    public void setRecurso(String recurso) { this.recurso = recurso; }
+    public String getNombreArticulo() { return nombreArticulo; }
+    public void setNombreArticulo(String nombreArticulo) { this.nombreArticulo = nombreArticulo; }
 
-    public Integer getCantidad() { return cantidad; }
-    public void setCantidad(Integer cantidad) { this.cantidad = cantidad; }
+    public String getRecursos() { return recursos; }
+    public void setRecursos(String recursos) { this.recursos = recursos; }
 
     public String getOrigen() { return origen; }
     public void setOrigen(String origen) { this.origen = origen; }
@@ -42,23 +36,8 @@ public class DonacionRequest {
     public String getEstado() { return estado; }
     public void setEstado(String estado) { this.estado = estado; }
 
-    public String getCategoria() { return categoria; }
-    public void setCategoria(String categoria) { this.categoria = categoria; }
-
     public String getDescripcion() { return descripcion; }
     public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
-
-    public String getEstadoArticulo() { return estadoArticulo; }
-    public void setEstadoArticulo(String estadoArticulo) { this.estadoArticulo = estadoArticulo; }
-
-    public String getFechaVencimiento() { return fechaVencimiento; }
-    public void setFechaVencimiento(String fechaVencimiento) { this.fechaVencimiento = fechaVencimiento; }
-
-    public String getUnidadMedida() { return unidadMedida; }
-    public void setUnidadMedida(String unidadMedida) { this.unidadMedida = unidadMedida; }
-
-    public Double getPesoAproximado() { return pesoAproximado; }
-    public void setPesoAproximado(Double pesoAproximado) { this.pesoAproximado = pesoAproximado; }
 
     public String getFotoBase64() { return fotoBase64; }
     public void setFotoBase64(String fotoBase64) { this.fotoBase64 = fotoBase64; }

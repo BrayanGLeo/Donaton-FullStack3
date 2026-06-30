@@ -4,6 +4,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Column;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 
@@ -15,6 +16,7 @@ public class Necesidad {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(columnDefinition = "TEXT")
     private String recursos;
 
     private Double latitud;
@@ -22,6 +24,8 @@ public class Necesidad {
     private Double longitud;
 
     private LocalDateTime fechaReporte;
+
+    private LocalDateTime fechaActualizacion;
 
     private String estado = "Pendiente";
 
@@ -34,6 +38,8 @@ public class Necesidad {
     private Long conductorId;
 
     private Long coordinadorId;
+
+    private Long centroAcopioId;
 
     public Necesidad() {
         // Constructor vacío requerido por JPA
@@ -89,6 +95,14 @@ public class Necesidad {
         this.fechaReporte = fechaReporte;
     }
 
+    public LocalDateTime getFechaActualizacion() {
+        return fechaActualizacion;
+    }
+
+    public void setFechaActualizacion(LocalDateTime fechaActualizacion) {
+        this.fechaActualizacion = fechaActualizacion;
+    }
+
     public String getEstado() {
         return estado;
     }
@@ -135,5 +149,13 @@ public class Necesidad {
 
     public void setCoordinadorId(Long coordinadorId) {
         this.coordinadorId = coordinadorId;
+    }
+
+    public Long getCentroAcopioId() {
+        return centroAcopioId;
+    }
+
+    public void setCentroAcopioId(Long centroAcopioId) {
+        this.centroAcopioId = centroAcopioId;
     }
 }

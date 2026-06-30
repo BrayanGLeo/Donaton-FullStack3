@@ -6,10 +6,10 @@ import { obtenerNecesidades, actualizarEstadoNecesidad, type Necesidad } from '.
 import type { UsuarioExtended } from '../components/admin/AdminDonacionesView';
 import type { MapFilterType } from '../components/admin/AdminMapaView';
 
-type AdminSection = 'donaciones' | 'mapa' | 'usuarios' | 'historial';
+type AdminSection = 'resumen' | 'donaciones' | 'mapa' | 'usuarios' | 'historial';
 
 export const useAdminDashboard = () => {
-  const [activeSection, setActiveSection] = useState<AdminSection>('donaciones');
+  const [activeSection, setActiveSection] = useState<AdminSection>('resumen');
 
   const [donaciones, setDonaciones] = useState<DonacionResponse[]>([]);
   const [centros, setCentros] = useState<CentroAcopio[]>([]);
@@ -55,7 +55,19 @@ export const useAdminDashboard = () => {
   }, [filtros, searchTerm, pageInfo.page, pageInfo.size]);
 
   useEffect(() => {
-    if (activeSection === 'donaciones') {
+    if (activeSection === 'resumen') {
+      Promise.all([
+        listarDonaciones().catch(() => []),
+        obtenerNecesidades().catch(() => []),
+        obtenerCentrosAcopio().catch(() => []),
+        obtenerUsuarios({ size: 1000 }).catch(() => ({ content: [] }))
+      ]).then(([dons, necs, cents, usersPage]) => {
+        setDonaciones(dons);
+        setNecesidades(necs);
+        setCentros(cents);
+        setUsuarios(usersPage.content || []);
+      }).catch(console.error);
+    } else if (activeSection === 'donaciones') {
       setLoadingDonaciones(true);
       Promise.all([
         listarDonaciones(),

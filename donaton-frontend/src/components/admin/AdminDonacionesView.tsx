@@ -150,8 +150,8 @@ export const AdminDonacionesView: React.FC<AdminDonacionesViewProps> = ({
           <thead style={{ backgroundColor: '#f8f9ff' }}>
             <tr>
               <th className="py-3 px-4" style={{ color: '#6c63ff', fontWeight: 600 }}>ID</th>
-              <th className="py-3" style={{ color: '#6c63ff', fontWeight: 600 }}>Cantidad</th>
-              <th className="py-3" style={{ color: '#6c63ff', fontWeight: 600 }}>Recurso</th>
+              <th className="py-3" style={{ color: '#6c63ff', fontWeight: 600 }}>Recursos</th>
+              <th className="py-3" style={{ color: '#6c63ff', fontWeight: 600 }}>Título</th>
               <th className="py-3" style={{ color: '#6c63ff', fontWeight: 600 }}>Ubicación</th>
               <th className="py-3" style={{ color: '#6c63ff', fontWeight: 600 }}>Tracking</th>
               <th className="py-3" style={{ color: '#6c63ff', fontWeight: 600 }}>Donante</th>
@@ -164,10 +164,18 @@ export const AdminDonacionesView: React.FC<AdminDonacionesViewProps> = ({
               <tr key={d.id} style={{ transition: 'background 0.2s' }}>
                 <td className="px-4 fw-semibold text-muted">#{d.id}</td>
                 <td>
-                  <span className="fw-semibold">{d.cantidad}</span>{' '}
-                  <small style={{ color: '#6c63ff', fontWeight: 500 }}>{d.unidadMedida || 'u.'}</small>
+                  <Badge bg="primary" pill>
+                    {(() => {
+                      let totalItems = 0;
+                      try {
+                        const recs = JSON.parse(d.recursos || '[]');
+                        if (Array.isArray(recs)) totalItems = recs.reduce((s: number, r: any) => s + (r.cantidad || 0), 0);
+                      } catch {}
+                      return `${totalItems} items`;
+                    })()}
+                  </Badge>
                 </td>
-                <td style={{ color: '#333' }}>{d.recurso}</td>
+                <td style={{ color: '#333' }}>{d.nombreArticulo || 'Varias Donaciones'}</td>
                 <td>
                   <small style={{ color: '#555', fontWeight: 500 }}>{d.comunaRetiro || d.origen || '—'}</small>
                 </td>

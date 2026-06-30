@@ -32,7 +32,13 @@ export const AdminUserForm: React.FC<AdminUserFormProps> = ({ onUserCreated }) =
   const { register, handleSubmit, watch, setValue, control, formState: { errors } } = useForm<AdminUserValues>({
     resolver: zodResolver(adminUserSchema),
     mode: 'onBlur',
-    defaultValues: { codigoPais: '+56' }
+    defaultValues: { 
+      codigoPais: '+56',
+      region: '',
+      comuna: '',
+      regionAcopio: '',
+      centroAcopioId: ''
+    }
   });
 
   const rol = watch('rol');
