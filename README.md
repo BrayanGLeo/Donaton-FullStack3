@@ -99,8 +99,18 @@ Una vez que todos los proyectos compilen con éxito (`BUILD SUCCESS`), ejecuta e
 ```
 > *Tip: Puedes verificar el estado de los contenedores con `docker ps`. El panel de Eureka estará disponible en `http://localhost:8761`. Para detener de manera segura toda la arquitectura, ejecuta `.\stop-all.ps1`.*
 
-### Paso 2: Iniciar el Frontend
-En una nueva terminal, navega al directorio de la aplicación frontend (ej. `cd frontend`) y levanta el servidor de desarrollo:
+### Paso 2: Inyección de Datos de Prueba (Opcional)
+Para probar el sistema con miles de registros (usuarios, donaciones, centros de acopio y necesidades), hemos desarrollado un script en Python que interactúa directamente con los contenedores.
+
+1. Abre una terminal y dirígete a la carpeta `db-init`.
+2. Ejecuta el script generador (requiere Python 3+):
+   ```bash
+   python generate_seed.py
+   ```
+3. El script automáticamente generará y particionará los archivos `.sql` y los inyectará dentro de los contenedores de Docker correspondientes (`donaton-mysql-auth`, `donaton-mysql-donaciones` y `donaton-mysql-necesidades`) usando `docker exec`.
+
+### Paso 3: Iniciar el Frontend
+En una nueva terminal, navega al directorio de la aplicación frontend (ej. `cd donaton-frontend`) y levanta el servidor de desarrollo:
 
 ```bash
 npm install
@@ -109,20 +119,25 @@ npm run dev
 
 La plataforma estará lista y accesible desde tu navegador en `http://localhost:5173`.
 
-### Paso 3: Ejecución de Pruebas y Análisis en SonarQube (Backend)
+### Paso 4: Ejecución de Pruebas y Análisis en SonarQube (Backend)
 
-Para ejecutar las pruebas unitarias y enviar el reporte de cobertura y calidad de código a SonarQube (que corre localmente en `http://localhost:9000`), puedes utilizar Maven desde la raíz de cada microservicio.
+Para ejecutar las pruebas unitarias y enviar el reporte de cobertura de todo el backend a SonarQube (que corre localmente en `http://localhost:9000`), hemos creado un script automatizado que itera por todos los microservicios.
 
-Primero asegúrate de que el contenedor de SonarQube esté en ejecución (se levanta automáticamente con el script `start-all.ps1`). Luego, en la terminal, ingresa a la carpeta de cualquier microservicio (por ejemplo, `donaton-logistica`) y ejecuta:
+Asegúrate de que el contenedor de SonarQube esté en ejecución, genera tu token desde el panel local, y luego ejecuta el siguiente script en la raíz del proyecto:
 
-```bash
-./mvnw test
-
-./mvnw sonar:sonar -Dsonar.projectKey=donaton-logistica -Dsonar.projectName='donaton-logistica' -Dsonar.host.url=http://localhost:9000 -Dsonar.token=tu_token_generado_aqui
+```powershell
+.\run-sonar-all.ps1 -SonarToken "tu_token_generado_aqui"
 ```
-*(Nota: Debes generar un token en el panel de SonarQube local e ingresarlo en el comando).*
+*(Este proceso compilará, testeará y enviará el código fuente de los 6 microservicios directamente a SonarQube).*
 
-### Paso 4: Pruebas Unitarias del Frontend
+**Alternativa Local (Sin SonarQube):**
+Si solo deseas correr las pruebas y generar un reporte visual de cobertura en HTML (JaCoCo) de manera offline, puedes ejecutar:
+```powershell
+.\run-tests-local.ps1
+```
+*(Los reportes se generarán en la ruta `target/site/jacoco/index.html` de cada microservicio).*
+
+### Paso 5: Pruebas Unitarias del Frontend
 
 El cliente web utiliza **Vitest** y **React Testing Library** para asegurar la calidad de la interfaz. Dentro de la carpeta `donaton-frontend`, puedes ejecutar:
 
