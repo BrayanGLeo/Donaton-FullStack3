@@ -104,6 +104,15 @@ describe('Epic 2: Control y Validación de Donaciones', () => {
     await waitFor(() => expect(screen.getByText(/Indique el peso por unidad/i)).toBeInTheDocument());
     await waitFor(() => expect(screen.getByText(/La cantidad es obligatoria/i)).toBeInTheDocument());
 
+    // Fix Quesos validation to cover onChange lines
+    const formatoQuesoLabel = screen.getByText(/^Formato del Producto/);
+    const formatoQuesoSelect = formatoQuesoLabel.parentElement?.querySelector('select') as HTMLSelectElement;
+    fireEvent.change(formatoQuesoSelect, { target: { value: 'Laminado' } });
+
+    const pesoQuesoLabel = screen.getByText(/^Peso por Unidad/);
+    const pesoQuesoSelect = pesoQuesoLabel.parentElement?.querySelector('select') as HTMLSelectElement;
+    fireEvent.change(pesoQuesoSelect, { target: { value: '250g' } });
+
     // Poner cantidad negativa
     const cantidadLabel = screen.getByText(/^Cantidad/);
     const cantidadInput = cantidadLabel.parentElement?.querySelector('input') as HTMLInputElement;
@@ -117,6 +126,10 @@ describe('Epic 2: Control y Validación de Donaciones', () => {
     fireEvent.change(formatSelect, { target: { value: 'Bandejas' } });
     fireEvent.click(addBtn);
     await waitFor(() => expect(screen.getByText(/Indique la capacidad de la bandeja/i)).toBeInTheDocument());
+
+    const capacidadBandejaLabel = screen.getByText(/^Capacidad de la Bandeja/);
+    const capacidadBandejaSelect = capacidadBandejaLabel.parentElement?.querySelector('select') as HTMLSelectElement;
+    fireEvent.change(capacidadBandejaSelect, { target: { value: '30' } });
 
     // 5. Cajas/Paquetes
     fireEvent.change(subCatSelect, { target: { value: 'Arroz' } });
@@ -136,7 +149,12 @@ describe('Epic 2: Control y Validación de Donaciones', () => {
     fireEvent.click(addBtn);
     await waitFor(() => expect(screen.getByText(/Indique los Kg por Caja/i)).toBeInTheDocument());
 
-    // 6. Pallets
+    // 6. Pallets (with Arroz to support Kilogramos)
+    const catSelectLocal = screen.getAllByText(/^Categoría/)[0]?.parentElement?.querySelector('select') as HTMLSelectElement;
+    fireEvent.change(catSelectLocal, { target: { value: 'Alimentos imperecederos' } });
+    await waitFor(() => expect(screen.getAllByText(/^Subcategoría/)[0]).toBeInTheDocument());
+    
+    fireEvent.change(subCatSelect, { target: { value: 'Arroz' } });
     fireEvent.change(formatSelect, { target: { value: 'Pallets' } });
     fireEvent.click(addBtn);
     await waitFor(() => expect(screen.getByText(/Seleccione qué contiene el pallet/i)).toBeInTheDocument());
@@ -147,12 +165,33 @@ describe('Epic 2: Control y Validación de Donaciones', () => {
     fireEvent.click(addBtn);
     await waitFor(() => expect(screen.getByText(/Indique la cantidad/i)).toBeInTheDocument());
 
+    // Cover Pallet -> Cajas -> Unidades inputs
+    const tipoEnvaseLabel = screen.getByText(/Qué contiene la Caja/i);
+    const tipoEnvaseSelect = tipoEnvaseLabel.parentElement?.querySelector('select') as HTMLSelectElement;
+    fireEvent.change(tipoEnvaseSelect, { target: { value: 'Unidades' } });
+
+    const unidadesCajaLabel = screen.getByText(/Unidades por Caja/i);
+    const unidadesCajaInput = unidadesCajaLabel.parentElement?.querySelector('input') as HTMLInputElement;
+    fireEvent.change(unidadesCajaInput, { target: { value: '10' } });
+    fireEvent.keyDown(unidadesCajaInput, { key: 'e' });
+
+    // Cover Pallet -> Cajas -> Kilogramos inputs
+    fireEvent.change(tipoEnvaseSelect, { target: { value: 'Kilogramos' } });
+    const kgCajaLabel = screen.getByText(/Kg por Caja/i);
+    const kgCajaInput = kgCajaLabel.parentElement?.querySelector('input') as HTMLInputElement;
+    fireEvent.change(kgCajaInput, { target: { value: '10' } });
+    fireEvent.keyDown(kgCajaInput, { key: 'e' });
+
     // 7. Sacos
     fireEvent.change(formatSelect, { target: { value: 'Sacos' } });
     fireEvent.click(addBtn);
     await waitFor(() => expect(screen.getByText(/Indique el peso aproximado de cada saco/i)).toBeInTheDocument());
 
     // 8. Validación de fecha máxima y vacía
+    const catSelectLocal2 = screen.getAllByText(/^Categoría/)[0]?.parentElement?.querySelector('select') as HTMLSelectElement;
+    fireEvent.change(catSelectLocal2, { target: { value: 'Alimentos' } });
+    await waitFor(() => expect(screen.getAllByText(/^Subcategoría/)[0]).toBeInTheDocument());
+    
     fireEvent.change(subCatSelect, { target: { value: 'Frutas' } }); // Requiere fecha
     fireEvent.click(addBtn);
     await waitFor(() => expect(screen.getByText(/La fecha de vencimiento es obligatoria para esta categoría/i)).toBeInTheDocument());

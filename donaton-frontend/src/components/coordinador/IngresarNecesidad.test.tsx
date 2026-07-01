@@ -148,6 +148,39 @@ describe('Epic 3: Coordinación de Emergencias', () => {
     await checkSelect('Leche de 1 Litro', /^Tipo de Leche/);
     await checkSelect('Yogur Individual', /^Tipo de Yogur/);
 
+    // Huevos y Bandejas
+    await testFormat('Alimentos', 'Huevos', 'Bandejas');
+    await waitFor(() => expect(screen.getAllByText(/^Capacidad de la Bandeja/)[0]).toBeInTheDocument());
+    const huevosFormat = screen.getAllByText(/^Capacidad de la Bandeja/)[0]?.parentElement?.querySelector('select');
+    if (huevosFormat) fireEvent.change(huevosFormat, { target: { value: '30' } });
+
+    // Frutas y Cajas
+    await testFormat('Alimentos', 'Frutas', 'Cajas');
+    await waitFor(() => expect(screen.getAllByText(/^Kg por Caja/)[0]).toBeInTheDocument());
+    
+    // Simulate error clearing for coverage
+    const btnAdd = screen.getByRole('button', { name: /\+ Añadir a la lista/i });
+    fireEvent.click(btnAdd);
+
+    const kgCaja = screen.getAllByText(/^Kg por Caja/)[0]?.parentElement?.querySelector('input');
+    if (kgCaja) {
+      fireEvent.change(kgCaja, { target: { value: '15' } });
+      fireEvent.keyDown(kgCaja, { key: 'e' }); // Coverage onKeyDown
+    }
+
+    // Main Kilogramos / Litros coverage (Formato de Entrega)
+    await testFormat('Alimentos imperecederos', 'Arroz', 'Kilogramos');
+    const cantidadMain = screen.getByText(/^Cantidad/).parentElement?.querySelector('input');
+    if (cantidadMain) {
+      fireEvent.change(cantidadMain, { target: { value: '30' } }); // Should be capped to 25
+      fireEvent.keyDown(cantidadMain, { key: 'E', code: 'KeyE' });
+    }
+
+    await testFormat('Alimentos', 'Frutas', 'Unidades');
+    if (cantidadMain) {
+      fireEvent.change(cantidadMain, { target: { value: '1000000' } }); // Should be capped to 999999
+    }
+
     // Test Cajas format
     await testFormat('Alimentos imperecederos', 'Arroz', 'Cajas');
     await waitFor(() => expect(screen.getByText(/Qué contiene la Caja/i)).toBeInTheDocument());

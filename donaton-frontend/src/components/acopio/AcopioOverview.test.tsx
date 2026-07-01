@@ -166,5 +166,18 @@ describe('AcopioOverview', () => {
     render(<AcopioOverview donaciones={donaciones} necesidades={[]} capacidadMax={10000} />);
     expect(screen.getByText('Entradas vs Salidas (Últimos 7 días)')).toBeInTheDocument();
   });
+
+  it('Debe manejar elementos sin estado o fechas', () => {
+    const donaciones = [
+      { id: 10, recursos: '[{"categoria":"Varios"}]' }, // sin estado ni fechas
+      { id: 11, estado: undefined },
+    ];
+    const necesidades = [
+      { id: 10 },
+      { id: 11, estado: undefined }
+    ];
+    render(<AcopioOverview donaciones={donaciones as any} necesidades={necesidades as any} capacidadMax={100} />);
+    expect(screen.getByText('Dashboard del Centro de Acopio')).toBeInTheDocument();
+  });
 });
 

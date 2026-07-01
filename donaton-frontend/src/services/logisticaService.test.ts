@@ -24,6 +24,19 @@ describe('logisticaService', () => {
     expect(data).toEqual([{ id: 1 }]);
   });
 
+  it('usa token si esta presente', async () => {
+    localStorage.setItem('donaton_token', 'fake-token');
+    mockedAxios.get.mockResolvedValueOnce({ data: [] });
+    await obtenerInventario();
+    expect(mockedAxios.get).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        headers: { Authorization: 'Bearer fake-token' }
+      })
+    );
+    localStorage.removeItem('donaton_token');
+  });
+
   it('obtenerDespachos', async () => {
     mockedAxios.get.mockResolvedValueOnce({ data: [{ id: 1 }] });
     const data = await obtenerDespachos();

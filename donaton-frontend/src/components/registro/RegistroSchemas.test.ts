@@ -190,9 +190,22 @@ describe('RegistroSchemas', () => {
 
   it('adminUserSchema logistica sin subrol falla', async () => {
     const result = await adminUserSchema.safeParseAsync({
-      rol: 'LOGISTICA'
+      rol: 'LOGISTICA',
+      email: 'admin@gmail.com',
+      rut: '19.000.000-0',
+      nombre: 'Juan',
+      apellido: 'Perez',
+      password: 'Pass',
+      region: 'Metro',
+      comuna: 'Stgo',
+      direccion: 'Dir',
+      codigoPais: '+56',
+      telefono: '12345'
     });
     expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues.some(i => i.path.includes('subRol'))).toBe(true);
+    }
   });
 
   it('adminUserSchema falla cuando nombre empieza con espacio', async () => {
