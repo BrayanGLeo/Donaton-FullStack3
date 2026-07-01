@@ -74,6 +74,14 @@
 				<groupId>org.jacoco</groupId>
 				<artifactId>jacoco-maven-plugin</artifactId>
 				<version>0.8.12</version>
+				<configuration>
+					<includes>
+						<include>com/donaton/**</include>
+					</includes>
+					<excludes>
+						<exclude>net/bytebuddy/**</exclude>
+					</excludes>
+				</configuration>
 				<executions>
 					<execution>
 						<goals>

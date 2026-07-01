@@ -114,4 +114,36 @@ class DonacionServiceTest {
                 donacionGuardada
         );
     }
+
+    @Test
+    void testActualizarEstadoNotFound() {
+        when(repository.findById(99L)).thenReturn(java.util.Optional.empty());
+        
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            donacionService.actualizarEstado(99L, "RECIBIDO");
+        });
+        assertEquals("Donación no encontrada con ID: 99", exception.getMessage());
+    }
+
+    @Test
+    void testAsignarConductorSuccess() {
+        when(repository.findById(1L)).thenReturn(java.util.Optional.of(donacionGuardada));
+        when(repository.save(any(Donacion.class))).thenReturn(donacionGuardada);
+
+        Donacion resultado = donacionService.asignarConductor(1L, 100L);
+
+        assertEquals(100L, resultado.getConductorId());
+        assertEquals("ASIGNADO", resultado.getEstado());
+        verify(repository).save(donacionGuardada);
+    }
+
+    @Test
+    void testAsignarConductorNotFound() {
+        when(repository.findById(99L)).thenReturn(java.util.Optional.empty());
+        
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            donacionService.asignarConductor(99L, 100L);
+        });
+        assertEquals("Donación no encontrada con ID: 99", exception.getMessage());
+    }
 }

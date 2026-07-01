@@ -1,54 +1,81 @@
 package com.donaton.donaton_bff.service;
 
+
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.Map;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
-@SpringBootTest
+@ExtendWith(MockitoExtension.class)
 class NecesidadesClientServiceTest {
 
-    @MockitoBean
+    @Mock
     private RestTemplate restTemplate;
 
-    private final NecesidadesClientService necesidadesClientService;
-
-    @Autowired
-    public NecesidadesClientServiceTest(NecesidadesClientService necesidadesClientService) {
-        this.necesidadesClientService = necesidadesClientService;
-    }
+    @InjectMocks
+    private NecesidadesClientService necesidadesClientService;
 
     @Test
-    void testObtenerNecesidadesExitoso() {
-        String url = "http://donaton-necesidades/api/necesidades";
-        String expectedResponse = "[{\"id\":1, \"descripcion\":\"Alimentos\"}]";
+    void testObtenerNecesidades() {
+        ResponseEntity<String> mockResponse = new ResponseEntity<>("[]", HttpStatus.OK);
+        when(restTemplate.getForEntity("http://donaton-necesidades/api/necesidades", String.class))
+                .thenReturn(mockResponse);
 
-        when(restTemplate.getForEntity(url, String.class))
-                .thenReturn(new ResponseEntity<>(expectedResponse, HttpStatus.OK));
-
-        ResponseEntity<String> response = necesidadesClientService.obtenerNecesidades();
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(expectedResponse, response.getBody());
-    }
-
-    @Test
-    void testFallbackActivado() {
-        String url = "http://donaton-necesidades/api/necesidades";
+        ResponseEntity<String> result = necesidadesClientService.obtenerNecesidades();
         
-        when(restTemplate.getForEntity(url, String.class))
-                .thenThrow(new RestClientException("Timeout simulado: El servicio no responde"));
+        assertEquals(HttpStatus.OK, result.getStatusCode());
+        assertEquals("[]", result.getBody());
+    }
 
-        ResponseEntity<String> response = necesidadesClientService.obtenerNecesidades();
+    @Test
+    void testActualizarEstadoNecesidad() {
+        Map<String, String> payload = Map.of("estado", "Cubierta");
+        ResponseEntity<String> mockResponse = new ResponseEntity<>("{\"estado\":\"Cubierta\"}", HttpStatus.OK);
+        
+        when(restTemplate.exchange(
+                eq("http://donaton-necesidades/api/necesidades/1/estado"),
+                eq(HttpMethod.PUT),
+                any(HttpEntity.class),
+                eq(String.class)
+        )).thenReturn(mockResponse);
 
-        assertEquals(HttpStatus.SERVICE_UNAVAILABLE, response.getStatusCode());
-        assertEquals("Servicio degradado", response.getBody());
+        ResponseEntity<String> result = necesidadesClientService.actualizarEstadoNecesidad(1L, payload);
+        
+        assertEquals(HttpStatus.OK, result.getStatusCode());
+        assertEquals("{\"estado\":\"Cubierta\"}", result.getBody());
+    }
+
+    @Test
+    void testObtenerHistorialNecesidades() {
+        ResponseEntity<String> mockResponse = new ResponseEntity<>("[]", HttpStatus.OK);
+        when(restTemplate.getForEntity("http://donaton-necesidades/api/necesidades/historial", String.class))
+                .thenReturn(mockResponse);
+
+        ResponseEntity<String> result = necesidadesClientService.obtenerHistorialNecesidades();
+        
+        assertEquals(HttpStatus.OK, result.getStatusCode());
+        assertEquals("[]", result.getBody());
+    }
+
+    @Test
+    void testFallbackObtenerNecesidades() {
+        ResponseEntity<String> result = necesidadesClientService.fallbackObtenerNecesidades(new RuntimeException("Server down"));
+        
+        assertEquals(HttpStatus.SERVICE_UNAVAILABLE, result.getStatusCode());
+        assertEquals("Servicio degradado", result.getBody());
     }
 }

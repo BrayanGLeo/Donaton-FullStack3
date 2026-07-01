@@ -17,7 +17,7 @@ foreach ($ms in $microservices) {
         Push-Location $ms
 
         Write-Host "Ejecutando pruebas y generando reporte JaCoCo..." -ForegroundColor Green
-        .\mvnw.cmd test jacoco:report
+        .\mvnw.cmd clean test jacoco:report
 
         $reportPath = "target\site\jacoco\index.html"
         if (Test-Path $reportPath) {
