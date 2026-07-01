@@ -28,3 +28,9 @@ mvn spring-boot:run
 ```
 
 Este servicio requiere estar registrado en **Eureka** para poder descubrir a los demás microservicios que orquesta.
+
+## 🔌 Endpoints y Proxy
+Este servicio actúa como un intermediario (Fachada). Agrupa las llamadas hacia donaton-necesidades, donaton-donaciones y donaton-logistica bajo el prefijo /api/... para que el frontend web solo tenga que interactuar con una única API cohesiva.
+
+## 🛡️ Resiliencia (Circuit Breaker)
+Implementa **Resilience4j** para evitar fallos en cascada. Si un microservicio subyacente (ej. Logística) se satura o cae, el BFF devuelve una respuesta controlada de contingencia (Fallback) en lugar de colapsar la experiencia del usuario.

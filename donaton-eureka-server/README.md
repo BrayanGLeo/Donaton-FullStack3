@@ -34,3 +34,6 @@ mvn spring-boot:run
 **Puerto por defecto:** `8761`
 
 Puedes acceder al panel de control interactivo de Eureka visitando `http://localhost:8761` en tu navegador para ver la matriz de microservicios registrados en tiempo real.
+
+## 📡 Arquitectura de Descubrimiento
+Actúa como el "Directorio Telefónico" de la plataforma. Cada vez que un microservicio de Donatón arranca, se registra aquí. Esto permite que servicios como el API Gateway o el BFF encuentren a los demás servicios por su nombre (ej. DONATON-LOGISTICA) sin importar en qué IP o puerto dinámico se estén ejecutando.

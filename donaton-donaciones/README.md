@@ -35,3 +35,12 @@ mvn spring-boot:run
 ```
 
 **Puerto por defecto:** `8082`
+
+## 🔌 Endpoints Principales
+* POST /api/donaciones - Registra una donación entrante al sistema.
+* GET /api/donaciones - Lista todas las donaciones procesadas.
+* PUT /api/donaciones/{id}/estado - Actualiza el estado logístico (ej. EN_TRANSITO).
+
+## ⚙️ Variables de Entorno Clave
+* SPRING_DATASOURCE_URL: URL de conexión a MySQL.
+* SPRING_RABBITMQ_HOST: Host del servidor RabbitMQ para publicar eventos asíncronos.

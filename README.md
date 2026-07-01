@@ -144,6 +144,15 @@ El cliente web utiliza **Vitest** y **React Testing Library** para asegurar la c
 - `npm run test`: Para correr las pruebas en modo rápido y verificar el estado.
 - `npm run coverage`: Para ejecutar todas las pruebas y generar un reporte de cobertura en consola (asegurando el >60% estipulado).
 
+### Paso 6: Pruebas de Integración (Smoke Tests)
+
+Para verificar que toda la arquitectura backend está levantada y comunicándose correctamente (API Gateway + Microservicios), puedes ejecutar el script de Smoke Tests de PowerShell en la raíz del proyecto:
+
+```powershell
+.\test-endpoints.ps1
+```
+*(Este script realizará llamadas HTTP reales a los flujos principales de la aplicación: Registro, Login, Creación de Donaciones, Necesidades y Despachos, confirmando que las integraciones y reglas de negocio estén funcionando).*
+
 ---
 <div align="center">
   <i>Construido con resiliencia y código limpio para quienes más lo necesitan. 🌍🤝</i>

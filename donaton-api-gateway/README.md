@@ -31,3 +31,11 @@ mvn spring-boot:run
 ```
 
 > **Nota:** Este servicio actúa en conjunto con Eureka, por lo que es indispensable levantar el **Service Registry** primero para que el Gateway pueda mapear las rutas correctamente.
+
+## 🛣️ Rutas Configuradas (Routing)
+El Gateway expone el puerto 8081 al exterior y redirige el tráfico basándose en los predicados de las URLs:
+* /api/auth/** ➔ Enruta hacia donaton-auth
+* /api/** ➔ Enruta hacia donaton-bff
+
+## 🔒 Filtros de Seguridad (AuthFilter)
+Cuenta con filtros globales que interceptan las peticiones, validando la presencia, firma y expiración del token JWT antes de permitir que la petición alcance la red interna de microservicios.
