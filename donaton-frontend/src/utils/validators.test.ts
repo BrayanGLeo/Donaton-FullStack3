@@ -17,6 +17,14 @@ import {
 } from './validators';
 
 describe('Utilidades de Validación (validators.ts)', () => {
+  const createMockEvent = (value: string, selectionStart: number = value.length) => ({
+    currentTarget: {
+      value,
+      selectionStart,
+      selectionEnd: selectionStart,
+      setSelectionRange: vi.fn(),
+    }
+  } as unknown as any);
 
   describe('validarNombres', () => {
     it('debería retornar true para nombres válidos', () => {
@@ -125,15 +133,6 @@ describe('Utilidades de Validación (validators.ts)', () => {
   });
 
   describe('Funciones formatInput', () => {
-    const createMockEvent = (value: string, selectionStart: number = value.length) => ({
-      currentTarget: {
-        value,
-        selectionStart,
-        selectionEnd: selectionStart,
-        setSelectionRange: vi.fn(),
-      }
-    } as unknown as any);
-
     it('formatRutInput debería formatear correctamente un RUT', () => {
       let event = createMockEvent('190543269');
       formatRutInput(event);
@@ -190,6 +189,12 @@ describe('Utilidades de Validación (validators.ts)', () => {
       expect(event.preventDefault).toHaveBeenCalled();
     });
 
+    it('preventSpaceKeyDown no bloquea otras teclas', () => {
+      const event = createMockKeyboardEvent('a');
+      preventSpaceKeyDown(event);
+      expect(event.preventDefault).not.toHaveBeenCalled();
+    });
+
     it('preventRutKeyDown debería bloquear letras distintas a K y números', () => {
       const event = createMockKeyboardEvent('a');
       preventRutKeyDown(event);
@@ -198,6 +203,18 @@ describe('Utilidades de Validación (validators.ts)', () => {
       const eventValid = createMockKeyboardEvent('k');
       preventRutKeyDown(eventValid);
       expect(eventValid.preventDefault).not.toHaveBeenCalled();
+    });
+
+    it('preventRutKeyDown no bloquea teclas de control (Ctrl+C)', () => {
+      const event = createMockKeyboardEvent('c', true);
+      preventRutKeyDown(event);
+      expect(event.preventDefault).not.toHaveBeenCalled();
+    });
+
+    it('preventRutKeyDown no bloquea teclas especiales (Enter, Backspace)', () => {
+      const event = createMockKeyboardEvent('Enter');
+      preventRutKeyDown(event);
+      expect(event.preventDefault).not.toHaveBeenCalled();
     });
 
     it('preventPhoneKeyDown debería bloquear no-números', () => {
@@ -213,5 +230,66 @@ describe('Utilidades de Validación (validators.ts)', () => {
       preventPhoneKeyDown(eventCtrl);
       expect(eventCtrl.preventDefault).not.toHaveBeenCalled();
     });
+
+    it('preventPhoneKeyDown no bloquea teclas especiales (ArrowLeft)', () => {
+      const event = createMockKeyboardEvent('ArrowLeft');
+      preventPhoneKeyDown(event);
+      expect(event.preventDefault).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('formatRutInput casos borde', () => {
+    it('no cambia el valor si ya está formateado correctamente', () => {
+      const event = createMockEvent('19.054.326-9');
+
+      formatRutInput(event);
+      // Si el valor ya estaba bien formateado, no debería llamar setSelectionRange de forma especial
+      expect(event.currentTarget.value).toBe('19.054.326-9');
+    });
+
+    it('maneja RUT vacío sin errores', () => {
+      const event = createMockEvent('');
+      formatRutInput(event);
+      expect(event.currentTarget.value).toBe('');
+    });
+
+    it('maneja selectionStart null correctamente en formatNameInput', () => {
+      const event = {
+        currentTarget: {
+          value: 'juan123',
+          selectionStart: null,
+          selectionEnd: null,
+          setSelectionRange: vi.fn(),
+        }
+      } as unknown as any;
+      formatNameInput(event);
+      expect(event.currentTarget.value).toBe('Juan');
+    });
+  });
+
+  describe('formatPhoneInput casos borde', () => {
+    it('maneja cadena vacía sin errores', () => {
+      const event = createMockEvent('');
+      formatPhoneInput(event);
+      expect(event.currentTarget.value).toBe('');
+    });
+
+    it('no cambia valor si ya está formateado', () => {
+      const event = createMockEvent('9 1234 5678');
+      formatPhoneInput(event);
+      expect(event.currentTarget.value).toBe('9 1234 5678');
+    });
+  });
+
+  describe('formatNoSpaceInput casos borde', () => {
+    it('no cambia el valor si no tiene espacios', () => {
+      const event = createMockEvent('holamundo');
+      const setSelectionRangeSpy = event.currentTarget.setSelectionRange;
+      formatNoSpaceInput(event);
+      expect(event.currentTarget.value).toBe('holamundo');
+      // Como el valor no cambió, no debería llamar setSelectionRange
+      expect(setSelectionRangeSpy).not.toHaveBeenCalled();
+    });
   });
 });
+

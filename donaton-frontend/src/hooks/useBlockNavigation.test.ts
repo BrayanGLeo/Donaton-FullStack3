@@ -61,7 +61,7 @@ describe('useBlockNavigation', () => {
     });
 
     expect(mockOnCancelForm).toHaveBeenCalled();
-    document.body.removeChild(mockButton);
+    mockButton.remove();
   });
 
   it('debería cerrar el modal si se cancela la salida', () => {
@@ -100,7 +100,7 @@ describe('useBlockNavigation', () => {
     });
     
     expect(mockNavigate).toHaveBeenCalledWith('/some-other-path');
-    document.body.removeChild(mockLink);
+    mockLink.remove();
   });
 
   it('debería manejar beforeunload correctamente', () => {
@@ -125,5 +125,86 @@ describe('useBlockNavigation', () => {
     });
 
     expect(globalThis.history.go).toHaveBeenCalledWith(-2);
+  });
+
+  it('no debería añadir #form si el formulario no está sucio', () => {
+    renderHook(() => useBlockNavigation(false, false, mockOnCancelForm));
+    expect(globalThis.history.pushState).not.toHaveBeenCalled();
+  });
+
+  it('no debería añadir #form si el formulario ya fue enviado', () => {
+    renderHook(() => useBlockNavigation(true, true, mockOnCancelForm));
+    expect(globalThis.history.pushState).not.toHaveBeenCalled();
+  });
+
+  it('no debería bloquear beforeunload si el formulario fue enviado', () => {
+    renderHook(() => useBlockNavigation(true, true, mockOnCancelForm));
+    const event = new Event('beforeunload', { cancelable: true });
+    globalThis.dispatchEvent(event);
+    expect(event.defaultPrevented).toBe(false);
+  });
+
+  it('no debería mostrar modal al hacer clic en botón normal cuando no está sucio', () => {
+    const { result } = renderHook(() => useBlockNavigation(false, false, mockOnCancelForm));
+
+    const mockButton = document.createElement('button');
+    mockButton.textContent = 'Guardar';
+    document.body.appendChild(mockButton);
+
+    act(() => {
+      mockButton.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    });
+
+    expect(result.current.showExitModal).toBe(false);
+    mockButton.remove();
+  });
+
+  it('no debería mostrar modal al hacer clic en botón no relacionado con navegación', () => {
+    const { result } = renderHook(() => useBlockNavigation(true, false, mockOnCancelForm));
+
+    const mockButton = document.createElement('button');
+    mockButton.textContent = 'Guardar';
+    document.body.appendChild(mockButton);
+
+    act(() => {
+      mockButton.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    });
+
+    expect(result.current.showExitModal).toBe(false);
+    mockButton.remove();
+  });
+
+  it('handleConfirmExit no hace nada si pendingAction es null', () => {
+    const { result } = renderHook(() => useBlockNavigation(true, false, mockOnCancelForm));
+    
+    act(() => {
+      result.current.handleConfirmExit();
+    });
+
+    expect(mockNavigate).not.toHaveBeenCalled();
+    expect(mockOnCancelForm).not.toHaveBeenCalled();
+    expect(globalThis.history.go).not.toHaveBeenCalled();
+  });
+
+  it('no debería hacer popstate si el formulario no está sucio', () => {
+    const { result } = renderHook(() => useBlockNavigation(false, false, mockOnCancelForm));
+    const event = new Event('popstate');
+
+    act(() => {
+      globalThis.dispatchEvent(event);
+    });
+
+    expect(result.current.showExitModal).toBe(false);
+  });
+
+  it('no debería hacer popstate si el formulario fue enviado', () => {
+    const { result } = renderHook(() => useBlockNavigation(true, true, mockOnCancelForm));
+    const event = new Event('popstate');
+
+    act(() => {
+      globalThis.dispatchEvent(event);
+    });
+
+    expect(result.current.showExitModal).toBe(false);
   });
 });

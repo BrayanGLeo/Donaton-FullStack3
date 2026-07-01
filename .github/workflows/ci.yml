@@ -32,6 +32,6 @@ jobs:
             echo "========================================="
             echo "⚙️ Compilando microservicio: $pom"
             echo "========================================="
-            mvn clean verify -f "$pom" --batch-mode --fail-at-end
+            mvn clean verify -f "$pom" --batch-mode --fail-at-end -Dspring.profiles.active=test
           done
         fi

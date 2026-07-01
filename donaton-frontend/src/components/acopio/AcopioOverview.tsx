@@ -60,8 +60,14 @@ export const AcopioOverview: React.FC<AcopioOverviewProps> = ({ donaciones, nece
     let totalItems = 0;
     donaciones.filter(d => ['RECIBIDO', 'ENTREGADO'].includes(d.estado?.toUpperCase())).forEach(don => {
       try {
+        if (!don.recursos) return;
         const recs = typeof don.recursos === 'string' ? JSON.parse(don.recursos) : don.recursos;
-        const arr = Array.isArray(recs) ? recs : JSON.parse(recs);
+        let arr: any[] = [];
+        if (Array.isArray(recs)) {
+          arr = recs;
+        } else if (typeof recs === 'string') {
+          arr = JSON.parse(recs);
+        }
         arr.forEach((r: any) => {
           const { finalCantidad } = flattenResourceUnit(r, r.cantidad || 1);
           const cat = r.categoria || 'Otros';

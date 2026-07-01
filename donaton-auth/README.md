@@ -29,3 +29,12 @@ mvn spring-boot:run
 ```
 
 **Puerto por defecto:** `8081`
+
+## 🔌 Endpoints Principales
+* POST /api/auth/registro - Registra nuevos usuarios (donantes, voluntarios, etc).
+* POST /api/auth/login - Autentica y devuelve un token JWT sin estado.
+* GET /api/auth/usuarios - Lista los usuarios registrados en la plataforma.
+
+## ⚙️ Variables de Entorno Clave
+* SPRING_DATASOURCE_URL: URL de conexión a la base de datos MySQL.
+* JWT_SECRET: Semilla secreta para la firma y validación de tokens JWT.

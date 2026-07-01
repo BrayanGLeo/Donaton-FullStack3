@@ -33,7 +33,8 @@ describe('bffService', () => {
     const data = await actualizarEstadoNecesidad(1, 'ACTUALIZADO', 99, 100);
     expect(mockedAxios.put).toHaveBeenCalledWith(
       '/api/bff/necesidades/1/estado',
-      { estado: 'ACTUALIZADO', centroAcopioId: '99', conductorId: '100' }
+      { estado: 'ACTUALIZADO', centroAcopioId: '99', conductorId: '100' },
+      expect.any(Object)
     );
     expect(data).toEqual({ id: 1, estado: 'ACTUALIZADO' });
   });

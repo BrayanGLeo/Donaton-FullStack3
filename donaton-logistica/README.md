@@ -35,3 +35,12 @@ mvn spring-boot:run
 ```
 
 **Puerto por defecto:** `8083`
+
+## 🔌 Endpoints Principales
+* GET /api/logistica/inventario - Consulta el stock actual consolidado.
+* POST /api/logistica/despachos - Crea una ruta de entrega de suministros hacia una necesidad.
+* GET /api/logistica/centros-acopio - Lista los centros de acopio disponibles por región.
+
+## ⚙️ Variables de Entorno Clave
+* SPRING_DATASOURCE_URL: URL de conexión a MySQL.
+* SPRING_RABBITMQ_HOST: Host de RabbitMQ para escuchar eventos de ingresos de donaciones.

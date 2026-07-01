@@ -100,6 +100,15 @@ class DespachoServiceTest {
     }
 
     @Test
+    void testAsignarTransporte_InventarioNotFound() {
+        request.setInventarioId(99L);
+        when(inventarioRepository.findById(99L)).thenReturn(Optional.empty());
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> despachoService.asignarTransporte(request));
+        assertEquals("Stock insuficiente o no validado", ex.getMessage());
+    }
+
+    @Test
     void testConfirmarEntregaExito() {
         Despacho despacho = new Despacho(1L, 50, "Camion A", LocalDateTime.now(), "En tránsito");
         when(despachoRepository.findById(1L)).thenReturn(Optional.of(despacho));
@@ -123,5 +132,40 @@ class DespachoServiceTest {
 
         assertEquals("El despacho no está en tránsito", exception.getMessage());
         verify(despachoRepository, never()).save(any(Despacho.class));
+    }
+
+    @Test
+    void testAsignarTransporteInventarioNulo() {
+        request.setInventarioId(null);
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            despachoService.asignarTransporte(request);
+        });
+        assertEquals("Stock insuficiente o no validado", exception.getMessage());
+    }
+
+    @Test
+    void testObtenerInventario() {
+        when(inventarioRepository.findAll()).thenReturn(java.util.Collections.singletonList(inventario));
+        java.util.List<Inventario> result = despachoService.obtenerInventario();
+        assertEquals(1, result.size());
+        assertEquals("Agua", result.get(0).getRecurso());
+    }
+
+    @Test
+    void testObtenerDespachos() {
+        Despacho despacho = new Despacho(1L, 50, "Camion A", LocalDateTime.now(), "En tránsito");
+        when(despachoRepository.findAll()).thenReturn(java.util.Collections.singletonList(despacho));
+        java.util.List<Despacho> result = despachoService.obtenerDespachos();
+        assertEquals(1, result.size());
+        assertEquals("Camion A", result.get(0).getVehiculo());
+    }
+
+    @Test
+    void testConfirmarEntregaNoEncontrada() {
+        when(despachoRepository.findById(99L)).thenReturn(Optional.empty());
+        jakarta.persistence.EntityNotFoundException exception = assertThrows(jakarta.persistence.EntityNotFoundException.class, () -> {
+            despachoService.confirmarEntregaDespacho(99L);
+        });
+        assertEquals("Despacho no encontrado", exception.getMessage());
     }
 }

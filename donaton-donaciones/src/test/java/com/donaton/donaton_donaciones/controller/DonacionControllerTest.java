@@ -108,4 +108,83 @@ class DonacionControllerTest {
                 .andExpect(jsonPath("$.estado").value("EN TRANSITO"));
     }
 
+    @Test
+    void testRegistrarDonacionConAuthHeader() throws Exception {
+        when(jwtUtil.extractUserId("token123")).thenReturn(99L);
+        when(donacionService.registrarDonacion(any(Donacion.class))).thenReturn(donacionMock);
+
+        com.donaton.donaton_donaciones.dto.DonacionRequest req = new com.donaton.donaton_donaciones.dto.DonacionRequest();
+        req.setVisibilidad("Privada");
+
+        mockMvc.perform(post("/api/donaciones")
+                .header("Authorization", "Bearer token123")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isCreated());
+    }
+
+    @Test
+    void testRegistrarDonacionConDonanteIdEnBody() throws Exception {
+        when(donacionService.registrarDonacion(any(Donacion.class))).thenReturn(donacionMock);
+
+        com.donaton.donaton_donaciones.dto.DonacionRequest req = new com.donaton.donaton_donaciones.dto.DonacionRequest();
+        req.setDonanteId(88L);
+        req.setVisibilidad(null); // Force default "Pública"
+
+        mockMvc.perform(post("/api/donaciones")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isCreated());
+    }
+
+    @Test
+    void testRegistrarDonacionAuthHeaderInvalidPrefix() throws Exception {
+        when(donacionService.registrarDonacion(any(Donacion.class))).thenReturn(donacionMock);
+
+        com.donaton.donaton_donaciones.dto.DonacionRequest req = new com.donaton.donaton_donaciones.dto.DonacionRequest();
+        req.setDonanteId(88L);
+
+        mockMvc.perform(post("/api/donaciones")
+                .header("Authorization", "Token token123") // Not Bearer
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isCreated());
+    }
+
+    @Test
+    void testActualizarEstado_BlankEstado() throws Exception {
+        java.util.Map<String, String> body = new java.util.HashMap<>();
+        body.put("estado", "  ");
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/donaciones/1/estado")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(body)))
+                .andExpect(status().isBadRequest());
+    }
+    
+    @Test
+    void testActualizarEstado_NullEstado() throws Exception {
+        java.util.Map<String, String> body = new java.util.HashMap<>();
+        // No estado en el body
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/donaciones/1/estado")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(body)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void testAsignarConductorEndpoint() throws Exception {
+        Donacion asignada = new Donacion();
+        asignada.setId(1L);
+        asignada.setConductorId(100L);
+        asignada.setEstado("ASIGNADO");
+        when(donacionService.asignarConductor(1L, 100L)).thenReturn(asignada);
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/donaciones/1/conductor/100")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.conductorId").value(100))
+                .andExpect(jsonPath("$.estado").value("ASIGNADO"));
+    }
 }

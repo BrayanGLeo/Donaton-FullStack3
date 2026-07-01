@@ -32,3 +32,12 @@ mvn spring-boot:run
 ```
 
 **Puerto por defecto:** `8084`
+
+## 🔌 Endpoints Principales
+* POST /api/necesidades - Reporta una nueva emergencia o necesidad humanitaria.
+* GET /api/necesidades - Lista las necesidades activas geolocalizadas.
+* PUT /api/necesidades/{id}/estado - Actualiza el estado (ej. CUBIERTA) de una necesidad.
+
+## ⚙️ Variables de Entorno Clave
+* SPRING_DATASOURCE_URL: URL de conexión a MySQL.
+* EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: URL del servidor de descubrimiento Eureka.

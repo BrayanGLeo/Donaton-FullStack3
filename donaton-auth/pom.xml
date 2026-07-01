@@ -124,9 +124,13 @@
 			<plugin>
 				<groupId>org.jacoco</groupId>
 				<artifactId>jacoco-maven-plugin</artifactId>
-				<version>0.8.11</version>
+				<version>0.8.12</version>
 				<configuration>
+					<includes>
+						<include>com/donaton/**</include>
+					</includes>
 					<excludes>
+						<exclude>net/bytebuddy/**</exclude>
 						<exclude>com/donaton/donaton_auth/config/**</exclude>
 						<exclude>com/donaton/donaton_auth/dto/**</exclude>
 						<exclude>com/donaton/donaton_auth/entity/**</exclude>
