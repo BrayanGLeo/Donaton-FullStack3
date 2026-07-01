@@ -38,6 +38,71 @@ describe('RegistroSchemas', () => {
     expect(result.success).toBe(true);
   });
 
+  it('registroNaturalSchema debería fallar cuando las contraseñas no coinciden', async () => {
+    const result = await registroNaturalSchema.safeParseAsync({
+      nombre: 'Juan',
+      apellido: 'Perez',
+      email: 'juan@gmail.com',
+      password: 'Password123!',
+      confirmPassword: 'OtraPassword456!',
+      rut: '12.345.678-5',
+      telefono: '912345678',
+      codigoPais: '+56',
+      region: 'Metropolitana de Santiago',
+      comuna: 'Santiago',
+      direccion: 'Calle 123',
+      direccionNumero: '123'
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues.some(i => i.path.includes('confirmPassword'))).toBe(true);
+    }
+  });
+
+  it('registroNaturalSchema debería fallar cuando nombre empieza con espacio', async () => {
+    const result = await registroNaturalSchema.safeParseAsync({
+      nombre: ' Juan',
+      apellido: 'Perez',
+      email: 'juan@gmail.com',
+      password: 'Password123!',
+      confirmPassword: 'Password123!',
+      rut: '12.345.678-5',
+      telefono: '912345678',
+      codigoPais: '+56',
+      region: 'Metropolitana de Santiago',
+      comuna: 'Santiago',
+      direccion: 'Calle 123',
+      direccionNumero: '123'
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const msgs = result.error.issues.map(i => i.message);
+      expect(msgs.some(m => m.includes('espacio'))).toBe(true);
+    }
+  });
+
+  it('registroNaturalSchema debería fallar cuando dirección empieza con espacio', async () => {
+    const result = await registroNaturalSchema.safeParseAsync({
+      nombre: 'Juan',
+      apellido: 'Perez',
+      email: 'juan@gmail.com',
+      password: 'Password123!',
+      confirmPassword: 'Password123!',
+      rut: '12.345.678-5',
+      telefono: '912345678',
+      codigoPais: '+56',
+      region: 'Metropolitana de Santiago',
+      comuna: 'Santiago',
+      direccion: ' Calle con espacio',
+      direccionNumero: '123'
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const msgs = result.error.issues.map(i => i.message);
+      expect(msgs.some(m => m.includes('espacio'))).toBe(true);
+    }
+  });
+
   it('registroJuridicaSchema debería validar datos correctos', async () => {
     const result = await registroJuridicaSchema.safeParseAsync({
       razonSocial: 'Empresa SpA',
@@ -55,6 +120,28 @@ describe('RegistroSchemas', () => {
       giro: 'Comercio'
     });
     expect(result.success).toBe(true);
+  });
+
+  it('registroJuridicaSchema debería fallar cuando contraseñas no coinciden', async () => {
+    const result = await registroJuridicaSchema.safeParseAsync({
+      razonSocial: 'Empresa SpA',
+      rut: '12.345.678-5',
+      nombreContacto: 'Juan Perez',
+      email: 'empresa@gmail.com',
+      password: 'Password123!',
+      confirmPassword: 'Diferente456!',
+      telefono: '912345678',
+      codigoPais: '+56',
+      region: 'Metropolitana de Santiago',
+      comuna: 'Santiago',
+      direccion: 'Calle 123',
+      direccionNumero: '123',
+      giro: 'Comercio'
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues.some(i => i.path.includes('confirmPassword'))).toBe(true);
+    }
   });
 
   it('adminUserSchema logística conductor requiere vehiculo y matricula', async () => {
@@ -106,5 +193,26 @@ describe('RegistroSchemas', () => {
       rol: 'LOGISTICA'
     });
     expect(result.success).toBe(false);
+  });
+
+  it('adminUserSchema falla cuando nombre empieza con espacio', async () => {
+    const result = await adminUserSchema.safeParseAsync({
+      rol: 'COORDINADOR',
+      email: 'admin@gmail.com',
+      rut: '19.000.000-0',
+      nombre: ' Juan',
+      apellido: 'Perez',
+      password: 'Pass123',
+      region: 'Metro',
+      comuna: 'Stgo',
+      direccion: 'Dir',
+      codigoPais: '+56',
+      telefono: '12345678'
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const msgs = result.error.issues.map(i => i.message);
+      expect(msgs.some(m => m.includes('espacio'))).toBe(true);
+    }
   });
 });

@@ -388,6 +388,7 @@ const IngresarNecesidad: React.FC = () => {
                               <Form.Group>
                                 <Form.Label className="small mb-1">Categoría <span className="text-danger">*</span></Form.Label>
                                 <Form.Select
+                                  id="categoria"
                                   value={currentItem.categoria}
                                   isInvalid={!!localErrors.categoria}
                                   onChange={(e) => {

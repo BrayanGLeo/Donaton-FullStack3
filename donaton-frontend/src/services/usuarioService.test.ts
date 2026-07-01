@@ -164,4 +164,38 @@ describe('usuarioService', () => {
     mockedAxios.put.mockRejectedValueOnce(new Error('Network error'));
     await expect(cambiarPassword(1, 'old', 'new')).rejects.toThrow('Network error');
   });
+
+  it('obtenerCentrosAcopioPorRegion retorna [] cuando región es string vacío', async () => {
+    const result = await obtenerCentrosAcopioPorRegion('');
+    expect(result).toEqual([]);
+    expect(mockedAxios.get).not.toHaveBeenCalled();
+  });
+
+  it('obtenerCentrosAcopioPorRegion retorna [] cuando falla', async () => {
+    mockedAxios.get.mockRejectedValueOnce(new Error('Network error'));
+    const result = await obtenerCentrosAcopioPorRegion('Metropolitana');
+    expect(result).toEqual([]);
+  });
+
+  it('obtenerUsuarios filtra parámetros vacíos y null', async () => {
+    mockedAxios.get.mockResolvedValueOnce({ data: { content: [] } });
+    await obtenerUsuarios({ rol: '', region: undefined, rut: null as any, page: 1 });
+    const callArgs = mockedAxios.get.mock.calls[0][1] as any;
+    // solo page debe quedar, los vacíos se eliminan
+    expect(Object.keys(callArgs.params)).not.toContain('rol');
+    expect(Object.keys(callArgs.params)).not.toContain('region');
+    expect(callArgs.params.page).toBe(1);
+  });
+
+  it('verificarEmailDisponible retorna true cuando disponible es undefined en respuesta', async () => {
+    mockedAxios.get.mockResolvedValueOnce({ data: {} });
+    const result = await verificarEmailDisponible('test@gmail.com');
+    expect(result).toBe(true);
+  });
+
+  it('verificarRutDisponible retorna true cuando disponible es undefined en respuesta', async () => {
+    mockedAxios.get.mockResolvedValueOnce({ data: {} });
+    const result = await verificarRutDisponible('12.345.678-5');
+    expect(result).toBe(true);
+  });
 });

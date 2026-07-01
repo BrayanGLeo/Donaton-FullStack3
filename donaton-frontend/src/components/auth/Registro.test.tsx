@@ -141,4 +141,41 @@ describe('Epic 1: Registro de Usuarios (Persona Juridica vs Natural)', () => {
     const closeAlertBtn = alertMsg.parentElement?.querySelector('button.btn-close');
     if (closeAlertBtn) fireEvent.click(closeAlertBtn);
   });
+
+  it('Debe manejar fallo silencioso del auto-login (coverage)', async () => {
+    vi.mocked(usuarioService.registrarDonante).mockResolvedValueOnce({} as any);
+    vi.mocked(axios.post).mockRejectedValueOnce(new Error('Login Failed'));
+    
+    renderWithProviders(<Registro />);
+    fireEvent.click(screen.getByText('Persona Natural'));
+    fireEvent.click(await screen.findByText('Simulate Natural Submit'));
+
+    expect(await screen.findByText('¡Registro Exitoso!')).toBeInTheDocument();
+  });
+
+  it('Debe manejar error de registro sin response.data.message (coverage)', async () => {
+    vi.mocked(usuarioService.registrarDonante).mockRejectedValueOnce(new Error('Network Error'));
+    renderWithProviders(<Registro />);
+    
+    fireEvent.click(screen.getByText('Persona Jurídica'));
+    fireEvent.click(await screen.findByText('Simulate Juridica Submit'));
+    
+    expect(await screen.findByText('Ocurrió un error de conexión.')).toBeInTheDocument();
+  });
+
+  it('Debe cerrar modal de éxito y navegar (coverage)', async () => {
+    vi.mocked(usuarioService.registrarDonante).mockResolvedValueOnce({} as any);
+    vi.mocked(axios.post).mockResolvedValueOnce({ data: { token: '123' } });
+    
+    renderWithProviders(<Registro />);
+    fireEvent.click(screen.getByText('Persona Natural'));
+    fireEvent.click(await screen.findByText('Simulate Natural Submit'));
+    
+    expect(await screen.findByText('¡Registro Exitoso!')).toBeInTheDocument();
+    fireEvent.click(screen.getByText('Ir a Mi Panel'));
+    
+    await waitFor(() => {
+      expect(screen.queryByText('¡Registro Exitoso!')).not.toBeInTheDocument();
+    });
+  });
 });
