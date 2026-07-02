@@ -352,6 +352,48 @@ const flattenPallets = (item: any, rawCantidad: number, subcategoria: string) =>
   return { finalCantidad: rawCantidad * envases, finalUnidad: item.tipoEnvasePallet === 'Bandejas' ? 'Bandejas' : 'Unidades' };
 };
 
+export interface UnidadInfo {
+  finalCantidad: number;
+  finalUnidad: string;
+}
+
+// Helper temporal para corregir la codificación de la BD (Mojibake y Unicode escape)
+export const fixEncoding = (text: string | null | undefined): string => {
+  if (!text) return text || '';
+  return text
+    // JSON escapes
+    .replaceAll('u00e1', 'á')
+    .replaceAll('u00e9', 'é')
+    .replaceAll('u00ed', 'í')
+    .replaceAll('u00f3', 'ó')
+    .replaceAll('u00fa', 'ú')
+    .replaceAll('u00f1', 'ñ')
+    .replaceAll('u00c1', 'Á')
+    .replaceAll('u00c9', 'É')
+    .replaceAll('u00cd', 'Í')
+    .replaceAll('u00d3', 'Ó')
+    .replaceAll('u00da', 'Ú')
+    .replaceAll('u00d1', 'Ñ')
+    // Mojibake
+    .replaceAll('Ã¡', 'á')
+    .replaceAll('Ã©', 'é')
+    .replaceAll('Ã³', 'ó')
+    .replaceAll('Ãº', 'ú')
+    .replaceAll('Ã±', 'ñ')
+    .replaceAll('Ã', 'í'); // General fallback
+};
+
+export const fixEncodingObject = <T extends Record<string, any>>(obj: T): T => {
+  if (!obj) return obj;
+  const newObj = { ...obj };
+  for (const key in newObj) {
+    if (typeof newObj[key] === 'string') {
+      (newObj as any)[key] = fixEncoding((newObj as any)[key]);
+    }
+  }
+  return newObj;
+};
+
 export function flattenResourceUnit(item: any, rawCantidad: number): { finalCantidad: number, finalUnidad: string } {
   const finalUnidad = item.unidadMedida || item.unidad;
   const subcategoria = item.subCategoria || item.subcategoria;

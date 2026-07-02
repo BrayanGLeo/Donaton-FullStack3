@@ -6,6 +6,7 @@ import { AdminUsuariosView } from './AdminUsuariosView';
 import { PanelHistorialNecesidades } from './PanelHistorialNecesidades';
 import { AdminOverview } from './AdminOverview';
 import { AdminDonacionDetalleModal } from './AdminDonacionDetalleModal';
+import { AdminNecesidadDetalleModal } from './AdminNecesidadDetalleModal';
 import { RegionComunaInput } from '../common/RegionComunaInput';
 import { useAuth } from '../../context/AuthContext';
 import { useAdminDashboard } from '../../hooks/useAdminDashboard';
@@ -17,6 +18,7 @@ import {
   getDonanteNameFromMap,
   filterDonaciones,
   filterDonacionesLogistica,
+  filterNecesidadesLogistica,
   getNecesidadBgColor,
   getEstadoBadgeColor
 } from '../../utils/adminDashboardUtils';
@@ -31,15 +33,17 @@ const AdminDashboard: React.FC = () => {
     donaciones, centros, usuariosMapDonacion, donacionFiltros, setDonacionFiltros,
     necesidades, usuarios, mapCenter, setMapCenter, mapFilter, setMapFilter,
     confirmModal, setConfirmModal,
-    filtros, setFiltros, pageInfo, setPageInfo, searchTerm, setSearchTerm,
+    filtros, setFiltros, pageInfo, setPageInfo, searchTerm, setSearchTerm, searchNameTerm, setSearchNameTerm,
     selectedUserIds, setSelectedUserIds, userToDelete, setUserToDelete,
     userToEdit, setUserToEdit, stats, donacionDetalle, setDonacionDetalle,
+    necesidadDetalle, setNecesidadDetalle,
     loadingDonaciones, loadingMapa, loadingUsuarios,
     fetchUsuariosActualizados, handleConfirmarEstado, handleToggleActivo
   } = useAdminDashboard();
 
   const donacionesFiltradas = filterDonaciones(donaciones, donacionFiltros, usuariosMapDonacion);
   const donacionesLogistica = filterDonacionesLogistica(donaciones);
+  const necesidadesLogistica = filterNecesidadesLogistica(necesidades);
 
   const selectUser = (id: number) => setSelectedUserIds(prev => [...prev, id]);
   const deselectUser = (id: number) => setSelectedUserIds(prev => prev.filter(uid => uid !== id));
@@ -143,10 +147,12 @@ const AdminDashboard: React.FC = () => {
                 necesidades={necesidades}
                 centros={centros}
                 usuarios={usuarios}
+                stats={stats}
               />
             )}
             {activeSection === 'donaciones' && (
               <AdminDonacionesView
+                donaciones={donaciones}
                 loadingDonaciones={loadingDonaciones}
                 donacionesFiltradas={donacionesFiltradas}
                 donacionFiltros={donacionFiltros}
@@ -165,13 +171,14 @@ const AdminDashboard: React.FC = () => {
                   mapFilter={mapFilter}
                   setMapFilter={setMapFilter}
                   donacionesLogistica={donacionesLogistica}
-                  necesidades={necesidades.filter(n => ['Pendiente', 'En tránsito'].includes(n.estado || 'Pendiente'))}
+                  necesidades={necesidadesLogistica}
                   loadingMapa={loadingMapa}
                   mapCenter={mapCenter}
                   setMapCenter={setMapCenter}
                   usuario={usuario}
                   setConfirmModal={setConfirmModal}
                   setDonacionDetalle={setDonacionDetalle}
+                  setNecesidadDetalle={setNecesidadDetalle}
                   isDonacionLocked={isDonacionLocked}
                   getOpcionesDonacion={getOpcionesDonacion}
                   isNecesidadLocked={isNecesidadLocked}
@@ -204,6 +211,8 @@ const AdminDashboard: React.FC = () => {
                 setPageInfo={setPageInfo}
                 searchTerm={searchTerm}
                 setSearchTerm={setSearchTerm}
+                searchNameTerm={searchNameTerm}
+                setSearchNameTerm={setSearchNameTerm}
                 selectedUserIds={selectedUserIds}
                 setSelectedUserIds={setSelectedUserIds}
                 userToDelete={userToDelete}
@@ -219,7 +228,7 @@ const AdminDashboard: React.FC = () => {
                 fetchUsuariosActualizados={fetchUsuariosActualizados}
               />
             )}
-            {activeSection === 'historial' && <PanelHistorialNecesidades necesidades={necesidades} getNecesidadBgColor={getNecesidadBgColor} />}
+            {activeSection === 'historial' && <PanelHistorialNecesidades necesidades={necesidades} getNecesidadBgColor={getNecesidadBgColor} setNecesidadDetalle={setNecesidadDetalle} usuarios={usuarios} />}
           </Col>
         </Row>
       </Container>
@@ -228,6 +237,12 @@ const AdminDashboard: React.FC = () => {
         show={!!donacionDetalle}
         onHide={() => setDonacionDetalle(null)}
         donacionDetalle={donacionDetalle}
+        centros={centros}
+      />
+      <AdminNecesidadDetalleModal
+        show={!!necesidadDetalle}
+        onHide={() => setNecesidadDetalle(null)}
+        necesidadDetalle={necesidadDetalle}
         centros={centros}
       />
     </>

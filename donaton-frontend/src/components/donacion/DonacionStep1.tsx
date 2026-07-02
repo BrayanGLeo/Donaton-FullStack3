@@ -953,7 +953,7 @@ export const DonacionStep1: React.FC = () => {
               {tempRecurso.tipoEnvasePallet && (
                 <Col md={4}>
                   <Form.Group className="mb-3">
-                    <Form.Label className="fw-semibold small">Cantidad de {tempRecurso.tipoEnvasePallet} <span className="text-danger">*</span></Form.Label>
+                    <Form.Label className="fw-semibold small">Cantidad de {tempRecurso.tipoEnvasePallet} por Pallet <span className="text-danger">*</span></Form.Label>
                     <Form.Control 
                       type="number" step="1" min="1" max="999"
                       value={tempRecurso.cantidadEnvasePallet}

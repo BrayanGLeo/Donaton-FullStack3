@@ -184,6 +184,8 @@ public class AuthController {
             @RequestParam(required = false) String region,
             @RequestParam(required = false) String comuna,
             @RequestParam(required = false) String rut,
+            @RequestParam(required = false) String nombre,
+            @RequestParam(required = false) String activo,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id") String sortField,
@@ -191,7 +193,7 @@ public class AuthController {
     ) {
         Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name()) ? Sort.by(sortField).ascending() : Sort.by(sortField).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
-        return ResponseEntity.ok(usuarioRepository.findByFiltros(rol, region, comuna, rut, pageable));
+        return ResponseEntity.ok(usuarioRepository.findByFiltros(rol, region, comuna, rut, nombre, activo, pageable));
     }
 
     @GetMapping("/admin/usuarios/stats")

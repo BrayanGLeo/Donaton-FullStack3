@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { fixEncodingObject } from '../utils/unidadesLogic';
 
 const getHeaders = () => {
   const token = localStorage.getItem('donaton_token') || sessionStorage.getItem('donaton_token');
@@ -16,6 +17,7 @@ export interface Necesidad {
   estado?: string;
   region?: string;
   comuna?: string;
+  direccion?: string;
   conductorId?: number;
   coordinadorId?: number;
   centroAcopioId?: number;
@@ -24,7 +26,7 @@ export interface Necesidad {
 export const obtenerNecesidades = async (): Promise<Necesidad[]> => {
   try {
     const response = await axios.get<Necesidad[]>('/api/bff/necesidades', { headers: getHeaders() });
-    return response.data;
+    return response.data.map(n => fixEncodingObject(n));
   } catch (error) {
     console.error('Error al obtener necesidades del BFF:', error);
     throw error;
@@ -51,7 +53,7 @@ export const actualizarEstadoNecesidad = async (id: number, estado: string, cent
       payload.conductorId = conductorId.toString();
     }
     const response = await axios.put<Necesidad>(`/api/bff/necesidades/${id}/estado`, payload, { headers: getHeaders() });
-    return response.data;
+    return fixEncodingObject(response.data);
   } catch (error) {
     console.error('Error al actualizar el estado de la necesidad:', error);
     throw error;
@@ -82,7 +84,7 @@ export interface HistorialNecesidad {
 export const obtenerHistorialNecesidades = async (): Promise<HistorialNecesidad[]> => {
   try {
     const response = await axios.get<HistorialNecesidad[]>('/api/bff/necesidades/historial', { headers: getHeaders() });
-    return response.data;
+    return response.data.map(h => fixEncodingObject(h));
   } catch (error) {
     console.error('Error al obtener historial de necesidades:', error);
     throw error;

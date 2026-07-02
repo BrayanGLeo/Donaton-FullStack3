@@ -36,3 +36,4 @@ bin/
 ### Others ###
 *.log
 *.class
+db-init/*.sql

@@ -7,16 +7,19 @@ import {
 import { Package, AlertTriangle, Home, Users } from 'lucide-react';
 import type { DonacionResponse } from '../../services/donacionService';
 import type { Necesidad } from '../../services/bffService';
-import { flattenResourceUnit } from '../../utils/unidadesLogic';
+import { flattenResourceUnit, fixEncoding } from '../../utils/unidadesLogic';
+
+
 
 interface AdminOverviewProps {
   donaciones: DonacionResponse[];
   necesidades: Necesidad[];
   centros: any[];
   usuarios: any[];
+  stats?: { total: number; activos: number; donantes: number; logistica: number } | null;
 }
 
-export const AdminOverview: React.FC<AdminOverviewProps> = ({ donaciones, necesidades, centros, usuarios }) => {
+export const AdminOverview: React.FC<AdminOverviewProps> = ({ donaciones, necesidades, centros, usuarios, stats }) => {
   // KPIs
   const totalDonaciones = donaciones.length;
   const emergenciasActivas = necesidades.filter(n => {
@@ -24,7 +27,7 @@ export const AdminOverview: React.FC<AdminOverviewProps> = ({ donaciones, necesi
     return !['CUBIERTA', 'ENTREGADO', 'RECHAZADO', 'CANCELADO'].includes(st);
   }).length;
   const totalCentros = centros.length;
-  const totalUsuarios = usuarios.length;
+  const totalUsuarios = stats?.total ?? usuarios.length;
 
   // Chart Data: Flujo de Donaciones y Necesidades (Últimos 7 días)
   const flujoData = useMemo(() => {
@@ -69,7 +72,8 @@ export const AdminOverview: React.FC<AdminOverviewProps> = ({ donaciones, necesi
           const recs = typeof don.recursos === 'string' ? JSON.parse(don.recursos) : don.recursos;
           const recursosArray = Array.isArray(recs) ? recs : JSON.parse(recs);
           recursosArray.forEach((r: any) => {
-            const cat = r.categoria || 'Otros';
+            let cat = r.categoria || 'Otros';
+            cat = fixEncoding(cat);
             if (!counts[cat]) {
               counts[cat] = { Unidades: 0, Kilogramos: 0 };
             }
@@ -93,6 +97,8 @@ export const AdminOverview: React.FC<AdminOverviewProps> = ({ donaciones, necesi
     }));
   }, [donaciones]);
 
+
+
   // Chart Data: Top 5 Centros (por donaciones asignadas)
   const topCentros = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -103,9 +109,8 @@ export const AdminOverview: React.FC<AdminOverviewProps> = ({ donaciones, necesi
     });
     
     return Object.keys(counts)
-      .map(centro => ({ name: centro, Donaciones: counts[centro] }))
-      .sort((a, b) => b.Donaciones - a.Donaciones)
-      .slice(0, 5);
+      .map(centro => ({ name: fixEncoding(centro), Donaciones: counts[centro] }))
+      .sort((a, b) => b.Donaciones - a.Donaciones);
   }, [donaciones]);
 
   // Nuevos KPIs
@@ -264,18 +269,18 @@ export const AdminOverview: React.FC<AdminOverviewProps> = ({ donaciones, necesi
           </Card>
         </Col>
 
-        <Col md={12}>
-          <Card className="border-0 shadow-sm" style={{ borderRadius: '15px' }}>
+        <Col md={9} className="mb-4">
+          <Card className="border-0 shadow-sm h-100" style={{ borderRadius: '15px' }}>
             <Card.Body>
-              <Card.Title className="fw-bold mb-4">Regiones con Más Donaciones</Card.Title>
-              <div style={{ height: 300 }}>
+              <Card.Title className="fw-bold mb-4">Donaciones por Región</Card.Title>
+              <div style={{ height: Math.max(300, topCentros.length * 40) }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={topCentros} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#eee" />
                     <XAxis type="number" axisLine={false} tickLine={false} />
                     <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} width={150} />
                     <RechartsTooltip cursor={{ fill: '#f5f6fa' }} contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }} />
-                    <Bar dataKey="Donaciones" fill="#00C49F" radius={[0, 4, 4, 0]} barSize={30} />
+                    <Bar dataKey="Donaciones" fill="#00C49F" radius={[0, 4, 4, 0]} barSize={20} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>

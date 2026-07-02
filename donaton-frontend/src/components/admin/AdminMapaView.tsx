@@ -1,13 +1,14 @@
 import React from 'react';
 import { Row, Col, Card, Badge, Form, Spinner, Button, Collapse } from 'react-bootstrap';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import { Truck, Filter, X } from 'lucide-react';
+import { Truck, Filter, X, MapPin } from 'lucide-react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { DonacionResponse } from '../../services/donacionService';
 import type { Necesidad } from '../../services/bffService';
 import Select from 'react-select';
 import { RegionComunaInput } from '../common/RegionComunaInput';
+import { formatEstado } from '../../utils/adminDashboardUtils';
 
 export const userIcon = new L.Icon({
   iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
@@ -70,13 +71,7 @@ const renderRecursos = (recursosData: any) => {
     const validItems = items.filter(it => it && typeof it === 'object' && it.categoria);
     if (validItems.length > 0) {
       return (
-        <ul className="list-unstyled mb-0 mt-1 small text-dark" style={{ lineHeight: '1.4' }}>
-          {validItems.map((it: any, idx: number) => (
-            <li key={`${it.id || it.categoria}-${idx}`}>
-              • {it.cantidad || 1} {it.unidad || it.unidadMedida || ''} de <strong>{it.categoria}</strong>
-            </li>
-          ))}
-        </ul>
+        <Badge bg="primary">{validItems.length} Tipos de recursos</Badge>
       );
     }
   }
@@ -96,6 +91,7 @@ interface AdminMapaViewProps {
   usuario: any;
   setConfirmModal: React.Dispatch<React.SetStateAction<{ show: boolean, type: 'donacion' | 'necesidad', id: number, newState: string } | null>>;
   setDonacionDetalle: React.Dispatch<React.SetStateAction<DonacionResponse | null>>;
+  setNecesidadDetalle: React.Dispatch<React.SetStateAction<any>>;
   isDonacionLocked: (estado: string, usuario: any) => boolean;
   getOpcionesDonacion: (estado: string, usuario: any) => string[];
   isNecesidadLocked: (estado: string, usuario: any) => boolean;
@@ -114,6 +110,7 @@ export const AdminMapaView: React.FC<AdminMapaViewProps> = ({
   usuario,
   setConfirmModal,
   setDonacionDetalle,
+  setNecesidadDetalle,
   isDonacionLocked,
   getOpcionesDonacion,
   isNecesidadLocked,
@@ -248,10 +245,10 @@ export const AdminMapaView: React.FC<AdminMapaViewProps> = ({
         <div className="text-center py-5"><Spinner animation="border" variant="primary" /><p className="mt-2 text-muted">Cargando mapa operativo...</p></div>
       ) : (
         <Row>
-          <Col lg={4} className="mb-4 mb-lg-0">
-            <Card className="border-0 shadow-sm h-100" style={{ borderRadius: '16px', maxHeight: '650px', overflowY: 'auto' }}>
-              <Card.Body className="p-0">
-                <div className="p-3 border-bottom d-flex justify-content-between align-items-center" style={{ backgroundColor: '#f8f9ff', position: 'sticky', top: 0, zIndex: 10 }}>
+          <Col lg={5} className="mb-4 mb-lg-0">
+            <Card className="border-0 shadow-sm d-flex flex-column" style={{ borderRadius: '16px', height: 'calc(100vh - 280px)' }}>
+              <Card.Body className="p-0 d-flex flex-column" style={{ overflowY: 'auto', flex: 1 }}>
+                <div className="p-3 border-bottom d-flex justify-content-between align-items-center flex-shrink-0" style={{ backgroundColor: '#f8f9ff', position: 'sticky', top: 0, zIndex: 10 }}>
                   <h6 className="fw-bold mb-0" style={{ color: '#6c63ff' }}>📋 Puntos de Acción</h6>
                   <Button variant="outline-primary" size="sm" onClick={() => setShowFilters(!showFilters)} style={{ borderRadius: '8px' }}>
                     <Filter size={14} className="me-1" />
@@ -324,14 +321,14 @@ export const AdminMapaView: React.FC<AdminMapaViewProps> = ({
                   if (item._tipo === 'donacion') {
                     const d = item as DonacionResponse;
                     return (
-                      <div key={`don-${d.id}`} className="p-3 border-bottom text-start w-100 d-block" style={{ transition: 'background 0.2s', backgroundColor: d.estado === 'En tránsito' ? '#f0f8ff' : '#fff' }}>
+                      <div key={`don-${d.id}`} className="p-3 border-bottom text-start w-100 d-block" style={{ transition: 'background 0.2s', backgroundColor: formatEstado(d.estado) === 'En tránsito' ? '#f0f8ff' : '#fff' }}>
                         <div className="d-flex justify-content-between align-items-center mb-2">
                           <Badge bg="info" style={{ fontSize: '0.7rem', cursor: 'pointer' }} onClick={() => setMapCenter([d.latitudRetiro || 0, d.longitudRetiro || 0])}>
                             📍 Donación #{d.id}
                           </Badge>
                           <Form.Select
                             size="sm"
-                            value={d.estado || 'Pendiente'}
+                            value={formatEstado(d.estado)}
                             onChange={(e) => setConfirmModal({ show: true, type: 'donacion', id: d.id, newState: e.target.value })}
                             style={{ width: '120px', borderRadius: '8px', fontSize: '0.8rem' }}
                             disabled={isDonacionLocked(d.estado || '', usuario)}
@@ -361,7 +358,7 @@ export const AdminMapaView: React.FC<AdminMapaViewProps> = ({
                           </Badge>
                           <Form.Select
                             size="sm"
-                            value={n.estado || 'Pendiente'}
+                            value={formatEstado(n.estado)}
                             onChange={(e) => setConfirmModal({ show: true, type: 'necesidad', id: n.id, newState: e.target.value })}
                             style={{ width: '120px', borderRadius: '8px', fontSize: '0.8rem' }}
                             disabled={isNecesidadLocked(n.estado || '', usuario)}
@@ -372,6 +369,13 @@ export const AdminMapaView: React.FC<AdminMapaViewProps> = ({
                           </Form.Select>
                         </div>
                         <div className="mb-0 fw-semibold text-dark" style={{ fontSize: '0.9rem' }}>{renderRecursos(n.recursos)}</div>
+                        <small className="text-muted d-block mt-1">
+                          <MapPin size={12} className="me-1"/>
+                          {n.comuna || 'Sin Comuna'}, {n.region || 'Sin Región'}
+                        </small>
+                        <div className="mt-2 text-end">
+                          <Button variant="outline-primary" size="sm" style={{ fontSize: '0.75rem', padding: '0.2rem 0.6rem', borderRadius: '8px' }} onClick={() => setNecesidadDetalle(n)}>Ver Detalles</Button>
+                        </div>
                       </div>
                     );
                   }
@@ -387,7 +391,7 @@ export const AdminMapaView: React.FC<AdminMapaViewProps> = ({
               
               {/* Pagination Controls */}
               {totalElements > 0 && (
-                <div className="d-flex justify-content-between align-items-center p-3 border-top bg-light" style={{ position: 'sticky', bottom: 0, zIndex: 10 }}>
+                <div className="d-flex justify-content-between align-items-center p-3 border-top bg-light flex-shrink-0">
                   <small className="text-muted">Mostrando {paginatedPuntos.length} de {totalElements}</small>
                   <div className="d-flex gap-2 align-items-center">
                     <Form.Select size="sm" style={{ width: '70px', borderRadius: '10px' }} value={itemsPerPage} onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(0); }}>
@@ -395,9 +399,12 @@ export const AdminMapaView: React.FC<AdminMapaViewProps> = ({
                       <option value="25">25</option>
                       <option value="50">50</option>
                     </Form.Select>
-                    <div className="d-flex gap-1">
-                      <Button size="sm" variant="outline-secondary" disabled={currentPage === 0} onClick={() => setCurrentPage(prev => prev - 1)} style={{ padding: '0.2rem 0.4rem', fontSize: '0.75rem' }}>&lt;</Button>
-                      <Button size="sm" variant="outline-primary" disabled={currentPage >= totalPages - 1} onClick={() => setCurrentPage(prev => prev + 1)} style={{ padding: '0.2rem 0.4rem', fontSize: '0.75rem' }}>&gt;</Button>
+                    <div className="d-flex gap-1 align-items-center">
+                      <Button size="sm" variant="outline-secondary" disabled={currentPage === 0} onClick={() => setCurrentPage(prev => prev - 1)} style={{ padding: '0.2rem 0.4rem', fontSize: '0.75rem' }}>Anterior</Button>
+                      <span className="text-muted mx-1" style={{ fontSize: '0.75rem' }}>
+                        Pág <strong>{currentPage + 1}</strong> de <strong>{totalPages || 1}</strong>
+                      </span>
+                      <Button size="sm" variant="outline-primary" disabled={currentPage >= totalPages - 1} onClick={() => setCurrentPage(prev => prev + 1)} style={{ padding: '0.2rem 0.4rem', fontSize: '0.75rem' }}>Siguiente</Button>
                     </div>
                   </div>
                 </div>
@@ -405,9 +412,9 @@ export const AdminMapaView: React.FC<AdminMapaViewProps> = ({
             </Card>
           </Col>
 
-          <Col lg={8}>
+          <Col lg={7}>
             <Card className="border-0 shadow-sm overflow-hidden" style={{ borderRadius: '16px' }}>
-              <div style={{ height: '650px' }}>
+              <div style={{ height: 'calc(100vh - 280px)' }}>
                 <MapContainer center={mapCenter} zoom={13} style={{ height: '100%', width: '100%' }}>
                   <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                   <MapUpdater center={mapCenter} />
@@ -417,7 +424,7 @@ export const AdminMapaView: React.FC<AdminMapaViewProps> = ({
                       <Popup>
                         <strong>Donación #{d.id} - {d.nombreArticulo || 'Varias Donaciones'}</strong><br/>
                         {renderRecursos(d.recursos)}
-                        <Badge bg="info" className="mt-1">{d.estado}</Badge>
+                        <Badge bg="info" className="mt-1">{formatEstado(d.estado)}</Badge>
                       </Popup>
                     </Marker>
                   ))}
@@ -427,7 +434,7 @@ export const AdminMapaView: React.FC<AdminMapaViewProps> = ({
                       <Popup>
                         <strong>{n.tipoEmergencia || 'Necesidad'}</strong><br/>
                         {renderRecursos(n.recursos)}<br/>
-                        <Badge bg="danger" className="mt-1">{n.estado || 'Pendiente'}</Badge>
+                        <Badge bg="danger" className="mt-1">{formatEstado(n.estado)}</Badge>
                       </Popup>
                     </Marker>
                   ))}

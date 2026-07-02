@@ -3,7 +3,7 @@ import { Modal, Button, Row, Col, Badge } from 'react-bootstrap';
 import { Truck } from 'lucide-react';
 import type { DonacionResponse } from '../../services/donacionService';
 import type { CentroAcopio } from '../../services/logisticaService';
-import { getEstadoBadgeColor } from '../../utils/adminDashboardUtils';
+import { formatEstado, getEstadoBadgeColor } from '../../utils/adminDashboardUtils';
 import { RecursosDetalleTable } from '../common/RecursosDetalleTable';
 
 interface AdminDonacionDetalleModalProps {
@@ -20,6 +20,8 @@ export const AdminDonacionDetalleModal: React.FC<AdminDonacionDetalleModalProps>
   centros
 }) => {
   if (!donacionDetalle) return null;
+
+  const bgBadge = getEstadoBadgeColor(donacionDetalle.estado || '');
 
   return (
     <Modal show={show} onHide={onHide} size="lg" centered>
@@ -42,8 +44,8 @@ export const AdminDonacionDetalleModal: React.FC<AdminDonacionDetalleModalProps>
             <Col md={6}>
               <strong className="text-primary d-block mb-1">Estado Actual</strong>
               <div className="bg-light p-2 rounded d-flex align-items-center">
-                <Badge bg={getEstadoBadgeColor(donacionDetalle.estado || '')} className="fs-6 px-3 py-2" style={{ borderRadius: '10px' }}>
-                  {donacionDetalle.estado}
+                <Badge bg={bgBadge} className="fs-6 px-3 py-2" style={{ borderRadius: '10px' }}>
+                  {formatEstado(donacionDetalle.estado)}
                 </Badge>
               </div>
             </Col>

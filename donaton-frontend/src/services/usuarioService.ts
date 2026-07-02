@@ -23,6 +23,8 @@ export interface UsuarioFiltros {
   region?: string;
   comuna?: string;
   rut?: string;
+  nombre?: string;
+  activo?: string | boolean;
   page?: number;
   size?: number;
   sortField?: string;
