@@ -43,12 +43,14 @@ public class AuthProxyController {
             @RequestParam(value = "region", required = false) String region,
             @RequestParam(value = "comuna", required = false) String comuna,
             @RequestParam(value = "rut", required = false) String rut,
+            @RequestParam(value = "nombre", required = false) String nombre,
+            @RequestParam(value = "activo", required = false) String activo,
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "10") int size,
             @RequestParam(value = "sortField", defaultValue = "id") String sortField,
             @RequestParam(value = "sortDir", defaultValue = "asc") String sortDir
     ) {
-        return authClient.obtenerUsuarios(rol, region, comuna, rut, page, size, sortField, sortDir);
+        return authClient.obtenerUsuarios(rol, region, comuna, rut, nombre, activo, page, size, sortField, sortDir);
     }
 
     @GetMapping("/admin/usuarios/stats")

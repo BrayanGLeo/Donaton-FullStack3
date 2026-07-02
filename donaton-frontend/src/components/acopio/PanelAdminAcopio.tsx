@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Card, Table, Badge, Button, Spinner, Nav, Modal, Form, Pagination, Collapse } from 'react-bootstrap';
+import { Container, Row, Col, Card, Table, Badge, Button, Spinner, Nav, Modal, Form, Pagination, Collapse, InputGroup } from 'react-bootstrap';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import Select from 'react-select';
-import { Package, CheckCircle, Navigation, Archive, Info, MapPin, Map as MapIcon, Filter, X } from 'lucide-react';
+import { Package, CheckCircle, Navigation, Archive, Info, MapPin, Map as MapIcon, Filter, X, Calendar } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-hot-toast';
 import { listarDonaciones, asignarConductor, actualizarEstadoDonacion, type DonacionResponse } from '../../services/donacionService';
@@ -15,7 +15,7 @@ import { AcopioOverview } from './AcopioOverview';
 import { RecursosDetalleTable } from '../common/RecursosDetalleTable';
 import { RegionComunaInput } from '../common/RegionComunaInput';
 import './PanelAdminAcopio.css';
-import { flattenResourceUnit } from '../../utils/unidadesLogic';
+import { flattenResourceUnit, fixEncodingObject } from '../../utils/unidadesLogic';
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
@@ -124,13 +124,41 @@ const matchRecursos = (recursos: any, catFilter: string, subcatFilter: string) =
   return hasCat && hasSubcat;
 };
 
-const filterItems = (items: any[], filters: any, isDonacion: boolean) => {
+const checkPerson = (item: any, filters: any, isDon: boolean, getName?: (id?: number) => string) => {
+  if (!getName) return true;
+  if (isDon && filters.donante) {
+    return getName(item.donanteId).toLowerCase().includes(filters.donante.toLowerCase());
+  }
+  if (!isDon && filters.coordinador) {
+    return getName(item.coordinadorId).toLowerCase().includes(filters.coordinador.toLowerCase());
+  }
+  return true;
+};
+
+const checkDates = (item: any, filters: any) => {
+  if (!filters.fechaInicio && !filters.fechaFin) return true;
+  const fecha = item.fechaRegistro || item.fechaReporte;
+  if (!fecha) return true;
+  const dateStr = fecha.substring(0, 10);
+  if (filters.fechaInicio && dateStr < filters.fechaInicio) return false;
+  if (filters.fechaFin && dateStr > filters.fechaFin) return false;
+  return true;
+};
+
+const checkComuna = (item: any, filters: any, isDon: boolean) => {
+  if (!filters.comuna) return true;
+  const com = isDon ? (item.comunaRetiro || item.comuna || '') : (item.comuna || '');
+  return com.toLowerCase().includes(filters.comuna.toLowerCase());
+};
+
+const filterItems = (items: any[], filters: any, isDonacion: boolean, getDonanteName?: (id?: number) => string) => {
   return items.filter(item => {
     if (filters.id && !item.id?.toString().includes(filters.id)) return false;
-    const com = isDonacion ? (item.comunaRetiro || item.comuna || '') : (item.comuna || '');
-    if (filters.comuna && !com.toLowerCase().includes(filters.comuna.toLowerCase())) return false;
     if (filters.estado && item.estado?.toUpperCase() !== filters.estado) return false;
-
+    if (!checkPerson(item, filters, isDonacion, getDonanteName)) return false;
+    if (!checkComuna(item, filters, isDonacion)) return false;
+    if (!checkDates(item, filters)) return false;
+    
     if (filters.categoria || filters.subcategoria) {
       if (!matchRecursos(item.recursos, filters.categoria, filters.subcategoria)) return false;
     }
@@ -200,62 +228,16 @@ const renderDonacionNombreText = (don: any) => {
   return don.nombreArticulo || 'Varias Donaciones';
 };
 
-const renderDonacionCategoriaText = (don: any) => {
-  try {
-    const recs = JSON.parse(don.recursos || '[]');
-    if (Array.isArray(recs) && recs.length === 1) {
-      return (
-        <div className="d-flex flex-column">
-          <span>{recs[0].categoria || 'Sin categoría'}</span>
-          {(recs[0].subCategoria || recs[0].subcategoria) && (
-            <small className="text-muted">{recs[0].subCategoria || recs[0].subcategoria}</small>
-          )}
-        </div>
-      );
-    }
-    if (Array.isArray(recs) && recs.length > 1) {
-      const cats = Array.from(new Set(recs.map((r: any) => r.categoria).filter(Boolean)));
-      if (cats.length === 1) {
-        const subcats = Array.from(new Set(recs.map((r: any) => r.subCategoria || r.subcategoria).filter(Boolean)));
-        return (
-          <div className="d-flex flex-column">
-            <span>{cats[0]}</span>
-            {subcats.length > 0 && <small className="text-muted">{subcats.join(', ')}</small>}
-          </div>
-        );
-      }
-    }
-  } catch { }
-  return <span>Varias</span>;
-};
 
-const renderDonacionRecibidaCategoriaText = (don: any) => {
+const renderDonacionCantidadRecursosText = (don: any) => {
   try {
     const recs = JSON.parse(don.recursos || '[]');
-    if (Array.isArray(recs) && recs.length === 1) {
-      return (
-        <div className="d-flex flex-column">
-          <span className="fw-semibold text-dark">{recs[0].categoria || 'Sin categoría'}</span>
-          {(recs[0].subCategoria || recs[0].subcategoria) && (
-            <small className="text-muted">{recs[0].subCategoria || recs[0].subcategoria}</small>
-          )}
-        </div>
-      );
-    }
-    if (Array.isArray(recs) && recs.length > 1) {
-      const cats = Array.from(new Set(recs.map((r: any) => r.categoria).filter(Boolean)));
-      if (cats.length === 1) {
-        const subcats = Array.from(new Set(recs.map((r: any) => r.subCategoria || r.subcategoria).filter(Boolean)));
-        return (
-          <div className="d-flex flex-column">
-            <span className="fw-semibold text-dark">{cats[0]}</span>
-            {subcats.length > 0 && <small className="text-muted">{subcats.join(', ')}</small>}
-          </div>
-        );
-      }
+    if (Array.isArray(recs)) {
+      if (recs.length === 1) return <span className="text-muted"><span className="fw-bold text-dark">1</span> tipo de recurso</span>;
+      return <span className="text-muted"><span className="fw-bold text-dark">{recs.length}</span> tipos de recursos</span>;
     }
   } catch { }
-  return <span className="fw-semibold text-dark">Varias Categorías</span>;
+  return <span className="text-muted">Desconocido</span>;
 };
 
 const renderDonacionRecibidaCantidadText = (don: any) => {
@@ -335,6 +317,9 @@ const PaginationControl = ({ totalItems, startIndex, endIndex, itemsPerPage, set
         Mostrando {startIndex + 1} - {Math.min(endIndex, totalItems)} de {totalItems} registros
       </span>
       <div className="d-flex align-items-center gap-2">
+        <span className="text-muted small me-2 fw-medium">
+          Página {page} de {Math.ceil(totalItems / itemsPerPage)}
+        </span>
         <Form.Select
           size="sm"
           value={itemsPerPage}
@@ -357,7 +342,7 @@ const PaginationControl = ({ totalItems, startIndex, endIndex, itemsPerPage, set
   );
 };
 
-const DonacionPendienteRow = ({ don, conductores, setDonacionAConfirmar, setConductorAConfirmar, setShowConfirmAsignar, setDonacionDetalle, setShowDetallesDonacion, centrarMapa, handleRecibirDonacion }: any) => {
+const DonacionPendienteRow = ({ don, getDonanteName, conductores, setDonacionAConfirmar, setConductorAConfirmar, setShowConfirmAsignar, setDonacionDetalle, setShowDetallesDonacion, centrarMapa, handleRecibirDonacion }: any) => {
   const isRechazada = don.estado?.toUpperCase() === 'RECHAZADA_CONDUCTOR';
   const isAssigned = !isRechazada && (don.conductorId || ['EN_TRANSITO', 'DESPACHADO', 'ASIGNADO', 'EN TRÁNSITO'].includes(don.estado?.toUpperCase() || ''));
   const canReceive = ['EN_TRANSITO', 'DESPACHADO', 'EN TRÁNSITO'].includes(don.estado?.toUpperCase() || '');
@@ -365,9 +350,10 @@ const DonacionPendienteRow = ({ don, conductores, setDonacionAConfirmar, setCond
   return (
     <tr>
       <td><span className="fw-bold text-primary">#{don.id}</span></td>
-      <td>{renderDonacionCantidadText(don)}</td>
+      <td><small style={{ color: '#444', fontWeight: 500 }}>{getDonanteName(don.donanteId)}</small></td>
       <td>{renderDonacionNombreText(don)}</td>
-      <td>{renderDonacionCategoriaText(don)}</td>
+      <td>{renderDonacionCantidadRecursosText(don)}</td>
+      <td>{renderDonacionCantidadText(don)}</td>
       <td>
         {don.transporteEspecial ? (
           <Badge bg="warning" className="soft-badge bg-opacity-10 text-warning border border-warning">Especial</Badge>
@@ -434,13 +420,14 @@ const DonacionPendienteRow = ({ don, conductores, setDonacionAConfirmar, setCond
   );
 };
 
-const NecesidadActivaRow = ({ nec, centrarMapa, setNecesidadSeleccionada, setShowNecesidadModal, setNecesidadDetalle, setShowDetallesNecesidad }: any) => {
+const NecesidadActivaRow = ({ nec, getDonanteName, centrarMapa, setNecesidadSeleccionada, setShowNecesidadModal, setNecesidadDetalle, setShowDetallesNecesidad }: any) => {
   const { finalCant, finalUni } = getNecesidadResourceInfo(nec);
   return (
     <tr>
       <td><span className="fw-bold text-danger">#{nec.id}</span></td>
+      <td><small style={{ color: '#444', fontWeight: 500 }}>{getDonanteName ? getDonanteName(nec.coordinadorId) : 'Coordinador'}</small></td>
       <td><span className="fw-bold">{nec.tipoEmergencia || 'Alerta General'}</span></td>
-      <td>{renderDonacionCategoriaText(nec)}</td>
+      <td><span className="text-muted"><span className="fw-bold text-dark">{parseRecursos(nec.recursos).length}</span> tipos de recursos requeridos</span></td>
       <td><span className="fw-bold">{finalCant}</span> <small className="text-muted">{finalUni}</small></td>
       <td><span className="text-muted">{nec.comuna}</span></td>
       <td>
@@ -499,14 +486,46 @@ const NecesidadActivaRow = ({ nec, centrarMapa, setNecesidadSeleccionada, setSho
   );
 };
 
-const GenericFilterBar = ({ filters, setFilters, comunaOptions, estadoOptions, categoriaOptions, subcategoriaOptions }: any) => {
-  const hasF = Boolean(filters.id || filters.comuna || filters.categoria || filters.subcategoria || filters.estado);
+const GenericFilterBar = ({ filters, setFilters, comunaOptions, estadoOptions, categoriaOptions, subcategoriaOptions, showDonante, showCoordinador, showFechas }: any) => {
+  const hasF = Boolean(filters.id || filters.donante || filters.coordinador || filters.fechaInicio || filters.fechaFin || filters.comuna || filters.categoria || filters.subcategoria || filters.estado);
   return (
     <Row className="g-2 align-items-center">
-      <Col lg={2} md={4} xs={6}>
+      <Col>
         <Form.Control size="sm" placeholder="ID..." value={filters.id} onChange={e => setFilters((prev: any) => ({ ...prev, id: e.target.value }))} style={{ height: '38px' }} />
       </Col>
-      <Col lg={2} md={4} xs={6}>
+      {showDonante && (
+        <Col>
+          <Form.Control size="sm" placeholder="Donante..." value={filters.donante || ''} onChange={e => setFilters((prev: any) => ({ ...prev, donante: e.target.value }))} style={{ height: '38px' }} />
+        </Col>
+      )}
+      {showCoordinador && (
+        <Col>
+          <Form.Control size="sm" placeholder="Coordinador..." value={filters.coordinador || ''} onChange={e => setFilters((prev: any) => ({ ...prev, coordinador: e.target.value }))} style={{ height: '38px' }} />
+        </Col>
+      )}
+      {showFechas && (
+        <Col style={{ minWidth: '280px' }}>
+          <InputGroup size="sm" style={{ height: '38px', flexWrap: 'nowrap' }}>
+            <InputGroup.Text className="px-2 bg-white text-muted">
+              <Calendar size={14} />
+            </InputGroup.Text>
+            <Form.Control 
+              type="date" 
+              value={filters.fechaInicio || ''} 
+              onChange={e => setFilters((prev: any) => ({ ...prev, fechaInicio: e.target.value }))} 
+              title="Fecha Desde" 
+            />
+            <InputGroup.Text className="px-2 bg-white text-muted border-start-0 border-end-0">a</InputGroup.Text>
+            <Form.Control 
+              type="date" 
+              value={filters.fechaFin || ''} 
+              onChange={e => setFilters((prev: any) => ({ ...prev, fechaFin: e.target.value }))} 
+              title="Fecha Hasta" 
+            />
+          </InputGroup>
+        </Col>
+      )}
+      <Col>
         <Select
           options={comunaOptions}
           placeholder="Comuna..."
@@ -515,9 +534,11 @@ const GenericFilterBar = ({ filters, setFilters, comunaOptions, estadoOptions, c
           value={filters.comuna ? { value: filters.comuna, label: filters.comuna } : null}
           onChange={(opt: any) => setFilters((prev: any) => ({ ...prev, comuna: opt?.value || '' }))}
           noOptionsMessage={() => "Sin comunas"}
+          menuPortalTarget={document.body}
+          styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
         />
       </Col>
-      <Col lg={2} md={4} xs={6}>
+      <Col>
         <Select
           options={estadoOptions}
           placeholder="Estado..."
@@ -525,9 +546,11 @@ const GenericFilterBar = ({ filters, setFilters, comunaOptions, estadoOptions, c
           value={filters.estado ? { value: filters.estado, label: filters.estado } : null}
           onChange={(opt: any) => setFilters((prev: any) => ({ ...prev, estado: opt?.value || '' }))}
           noOptionsMessage={() => "Sin estados"}
+          menuPortalTarget={document.body}
+          styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
         />
       </Col>
-      <Col lg={2} md={4} xs={6}>
+      <Col>
         <Select
           options={categoriaOptions}
           placeholder="Categoría..."
@@ -536,9 +559,11 @@ const GenericFilterBar = ({ filters, setFilters, comunaOptions, estadoOptions, c
           value={filters.categoria ? { value: filters.categoria, label: filters.categoria } : null}
           onChange={(opt: any) => setFilters((prev: any) => ({ ...prev, categoria: opt?.value || '', subcategoria: '' }))}
           noOptionsMessage={() => "Sin categorías"}
+          menuPortalTarget={document.body}
+          styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
         />
       </Col>
-      <Col lg={2} md={4} xs={6}>
+      <Col>
         <Select
           options={subcategoriaOptions}
           placeholder="Subcategoría..."
@@ -548,11 +573,13 @@ const GenericFilterBar = ({ filters, setFilters, comunaOptions, estadoOptions, c
           value={filters.subcategoria ? { value: filters.subcategoria, label: filters.subcategoria } : null}
           onChange={(opt: any) => setFilters((prev: any) => ({ ...prev, subcategoria: opt?.value || '' }))}
           noOptionsMessage={() => filters.categoria ? "Sin subcategorías" : "Seleccione una categoría primero"}
+          menuPortalTarget={document.body}
+          styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
         />
       </Col>
       {hasF && (
-        <Col lg={2} md={4} xs={6} className="text-end">
-          <Button variant="link" size="sm" className="text-danger p-0 text-decoration-none" onClick={() => setFilters({ id: '', comuna: '', categoria: '', subcategoria: '', estado: '' })}>
+        <Col xs="auto" className="text-end">
+          <Button variant="link" size="sm" className="text-danger p-0 text-decoration-none" onClick={() => setFilters({ id: '', donante: '', coordinador: '', fechaInicio: '', fechaFin: '', comuna: '', categoria: '', subcategoria: '', estado: '' })}>
             <X size={14} className="me-1" /> Limpiar Filtros
           </Button>
         </Col>
@@ -574,6 +601,8 @@ const InventarioFilterBar = ({ filters, setFilters, categoriaOptions, subcategor
           value={filters.categoria ? { value: filters.categoria, label: filters.categoria } : null}
           onChange={(opt: any) => setFilters((prev: any) => ({ ...prev, categoria: opt?.value || '', subcategoria: '' }))}
           noOptionsMessage={() => "Sin categorías"}
+          menuPortalTarget={document.body}
+          styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
         />
       </Col>
       <Col lg={4} md={4} xs={12}>
@@ -586,6 +615,8 @@ const InventarioFilterBar = ({ filters, setFilters, categoriaOptions, subcategor
           value={filters.subcategoria ? { value: filters.subcategoria, label: filters.subcategoria } : null}
           onChange={(opt: any) => setFilters((prev: any) => ({ ...prev, subcategoria: opt?.value || '' }))}
           noOptionsMessage={() => filters.categoria ? "Sin subcategorías" : "Seleccione una categoría primero"}
+          menuPortalTarget={document.body}
+          styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
         />
       </Col>
       {hasF && (
@@ -599,10 +630,11 @@ const InventarioFilterBar = ({ filters, setFilters, categoriaOptions, subcategor
   );
 };
 
-const DonacionRecibidaRow = ({ don, getBadgeColor, setDonacionDetalle, setShowDetallesDonacion }: any) => (
+const DonacionRecibidaRow = ({ don, getBadgeColor, getDonanteName, setDonacionDetalle, setShowDetallesDonacion }: any) => (
   <tr>
     <td><span className="fw-bold text-primary">#{don.id}</span></td>
-    <td>{renderDonacionRecibidaCategoriaText(don)}</td>
+    <td><small style={{ color: '#444', fontWeight: 500 }}>{getDonanteName(don.donanteId)}</small></td>
+    <td>{renderDonacionCantidadRecursosText(don)}</td>
     <td className="text-muted">{renderDonacionRecibidaCantidadText(don)}</td>
     <td className="text-muted">{don.comunaRetiro || 'N/A'}</td>
     <td>
@@ -624,19 +656,31 @@ const DonacionRecibidaRow = ({ don, getBadgeColor, setDonacionDetalle, setShowDe
   </tr>
 );
 
-const NecesidadCubiertaRow = ({ nec }: any) => {
-  const { recInfo, finalCant, finalUni } = getNecesidadResourceInfo(nec);
+const NecesidadCubiertaRow = ({ nec, getDonanteName, setNecesidadDetalle, setShowDetallesNecesidad }: any) => {
+  const { finalCant, finalUni } = getNecesidadResourceInfo(nec);
   return (
     <tr>
       <td><span className="fw-bold text-primary">#{nec.id}</span></td>
+      <td><small style={{ color: '#444', fontWeight: 500 }}>{getDonanteName ? getDonanteName(nec.coordinadorId) : 'Coordinador'}</small></td>
       <td className="fw-semibold text-dark">{nec.tipoEmergencia || 'General'}</td>
-      <td className="text-muted">{recInfo?.categoria || 'No especificado'}</td>
+      <td className="text-muted"><span className="fw-bold text-dark">{parseRecursos(nec.recursos).length}</span> tipos de recursos requeridos</td>
       <td><span className="fw-bold">{finalCant}</span> <small className="text-muted">{finalUni}</small></td>
       <td className="text-muted">{nec.comuna}</td>
       <td>
         <Badge bg="success" className="soft-badge bg-opacity-10 text-success border border-success">
           <CheckCircle size={12} className="me-1" /> {nec.estado?.replace('_', ' ') || 'Cubierta'}
         </Badge>
+      </td>
+      <td>
+        <Button
+          variant="outline-info"
+          size="sm"
+          onClick={() => { setNecesidadDetalle(nec); setShowDetallesNecesidad(true); }}
+          title="Ver Detalles"
+          className="d-flex align-items-center"
+        >
+          <Info size={14} />
+        </Button>
       </td>
     </tr>
   );
@@ -686,14 +730,24 @@ const PanelAdminAcopio: React.FC = () => {
   const [donaciones, setDonaciones] = useState<DonacionResponse[]>([]);
   const [necesidades, setNecesidades] = useState<Necesidad[]>([]);
   const [conductores, setConductores] = useState<{ value: number; label: string }[]>([]);
+  const [usuariosMap, setUsuariosMap] = useState<Record<number, any>>({});
+
+  const getDonanteName = React.useCallback((donanteId?: number) => {
+    if (!donanteId || !usuariosMap[donanteId]) return 'Solidario/a';
+    const u = usuariosMap[donanteId];
+    const tipo = u.tipoPersona?.toUpperCase() || '';
+    if ((tipo === 'JURÍDICA' || tipo === 'JURIDICA' || tipo === 'JURIDICO') && u.razonSocial) return u.razonSocial;
+    if (u.nombreCompleto) return u.nombreCompleto;
+    return u.nombre || 'Solidario/a';
+  }, [usuariosMap]);
 
   const [page, setPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  const [listFilters, setListFilters] = useState({ id: '', comuna: '', categoria: '', subcategoria: '', estado: '' });
+  const [listFilters, setListFilters] = useState({ id: '', donante: '', comuna: '', categoria: '', subcategoria: '', estado: '' });
   const [showFilters, setShowFilters] = useState(false);
 
-  const [historialFilters, setHistorialFilters] = useState({ id: '', comuna: '', categoria: '', subcategoria: '', estado: '' });
+  const [historialFilters, setHistorialFilters] = useState({ id: '', donante: '', comuna: '', categoria: '', subcategoria: '', estado: '' });
   const [showHistorialFilters, setShowHistorialFilters] = useState(false);
 
   const [inventarioFilters, setInventarioFilters] = useState({ categoria: '', subcategoria: '' });
@@ -730,7 +784,7 @@ const PanelAdminAcopio: React.FC = () => {
       const [donData, necData, users, centros] = await Promise.all([
         listarDonaciones(),
         obtenerNecesidades(),
-        obtenerUsuarios(),
+        obtenerUsuarios({ size: 5000 }),
         obtenerCentrosAcopio()
       ]);
 
@@ -742,15 +796,20 @@ const PanelAdminAcopio: React.FC = () => {
         }
       }
 
-      setDonaciones(donData);
-      setNecesidades(necData);
+      setDonaciones(donData.map(d => fixEncodingObject(d)));
+      setNecesidades(necData.map(n => fixEncodingObject(n)));
 
       const regionUserFilter = centroUser?.region || usuario?.region;
 
       const conds = (users.content || [])
+        .map(u => fixEncodingObject(u))
         .filter((u: any) => u.subRol?.toUpperCase() === 'CONDUCTOR' && u.activo === true && u.region === regionUserFilter)
         .map((u: any) => ({ value: Number(u.id), label: u.nombreCompleto || u.nombre || `Conductor #${u.id}` }));
       setConductores(conds);
+
+      const map: Record<number, any> = {};
+      (users.content || []).map(u => fixEncodingObject(u)).forEach((u: any) => { map[Number(u.id)] = u; });
+      setUsuariosMap(map);
     } catch (err) {
       console.error(err);
     } finally {
@@ -773,8 +832,8 @@ const PanelAdminAcopio: React.FC = () => {
   const donacionesRecibidas = misDonaciones.filter(d => ['RECIBIDO', 'CUBIERTA', 'ENTREGADO'].includes(d.estado?.toUpperCase() || ''));
 
   const donacionesRecibidasFiltradas = React.useMemo(() =>
-    filterItems(donacionesRecibidas, historialFilters, true),
-    [donacionesRecibidas, historialFilters]);
+    filterItems(donacionesRecibidas, historialFilters, true, getDonanteName),
+    [donacionesRecibidas, historialFilters, getDonanteName]);
 
   const historialComunaOptions = React.useMemo(() => getComunaOptions(donacionesRecibidas), [donacionesRecibidas]);
   const historialCategoriaOptions = React.useMemo(() => getCategoriaOptions(donacionesRecibidas), [donacionesRecibidas]);
@@ -782,8 +841,8 @@ const PanelAdminAcopio: React.FC = () => {
   const historialEstadoOptions = React.useMemo(() => getEstadoOptions(donacionesRecibidas), [donacionesRecibidas]);
 
   const donacionesFiltradas = React.useMemo(() =>
-    filterItems(donacionesPendientes, listFilters, true),
-    [donacionesPendientes, listFilters]);
+    filterItems(donacionesPendientes, listFilters, true, getDonanteName),
+    [donacionesPendientes, listFilters, getDonanteName]);
 
   const comunaOptions = React.useMemo(() => getComunaOptions(donacionesPendientes), [donacionesPendientes]);
   const categoriaOptions = React.useMemo(() => getCategoriaOptions(donacionesPendientes), [donacionesPendientes]);
@@ -1004,6 +1063,8 @@ const PanelAdminAcopio: React.FC = () => {
                         estadoOptions={estadoOptions}
                         categoriaOptions={categoriaOptions}
                         subcategoriaOptions={subcategoriaOptions}
+                        showDonante={true}
+                        showFechas={true}
                       />
                     </div>
                   </Collapse>
@@ -1015,14 +1076,15 @@ const PanelAdminAcopio: React.FC = () => {
                     </div>
                   ) : (
                     <Card className="border shadow-sm p-3 rounded-4 bg-white">
-                      <div className="table-responsive">
+                      <div className="table-responsive" style={{ maxHeight: 'calc(100vh - 450px)', overflowY: 'auto' }}>
                         <Table className="modern-table w-100 mb-0" hover borderless style={{ minWidth: '700px' }}>
-                          <thead>
+                          <thead style={{ position: 'sticky', top: 0, backgroundColor: '#fff', zIndex: 1, boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
                             <tr>
                               <th>Tracking</th>
+                              <th>Donante</th>
+                              <th>Nombre de Donación</th>
+                              <th>Cantidad de tipos de Recursos</th>
                               <th>Cantidad</th>
-                              <th>Recurso</th>
-                              <th>Categoría</th>
                               <th>Vehículo</th>
                               <th style={{ minWidth: '220px' }}>Asignación Conductor</th>
                               <th>Acciones</th>
@@ -1033,6 +1095,7 @@ const PanelAdminAcopio: React.FC = () => {
                               <DonacionPendienteRow
                                 key={don.id}
                                 don={don}
+                                getDonanteName={getDonanteName}
                                 conductores={conductores}
                                 setDonacionAConfirmar={setDonacionAConfirmar}
                                 setConductorAConfirmar={setConductorAConfirmar}
@@ -1103,6 +1166,8 @@ const PanelAdminAcopio: React.FC = () => {
                       estadoOptions={historialEstadoOptions}
                       categoriaOptions={historialCategoriaOptions}
                       subcategoriaOptions={historialSubcategoriaOptions}
+                      showDonante={true}
+                      showFechas={true}
                     />
                   </div>
                 </Collapse>
@@ -1113,12 +1178,13 @@ const PanelAdminAcopio: React.FC = () => {
                     <h6 className="text-muted">No se encontraron donaciones con los filtros actuales en el historial.</h6>
                   </div>
                 ) : (
-                  <div className="table-responsive">
+                  <div className="table-responsive" style={{ maxHeight: 'calc(100vh - 450px)', overflowY: 'auto' }}>
                     <Table className="modern-table w-100" hover borderless>
-                      <thead>
+                      <thead style={{ position: 'sticky', top: 0, backgroundColor: '#fff', zIndex: 1, boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
                         <tr>
                           <th>Identificador</th>
-                          <th>Categoría</th>
+                          <th>Donante</th>
+                          <th>Cantidad de tipos de Recursos</th>
                           <th>Volumen</th>
                           <th>Comuna de Origen</th>
                           <th>Estado</th>
@@ -1131,6 +1197,7 @@ const PanelAdminAcopio: React.FC = () => {
                             key={don.id}
                             don={don}
                             getBadgeColor={getBadgeColor}
+                            getDonanteName={getDonanteName}
                             setDonacionDetalle={setDonacionDetalle}
                             setShowDetallesDonacion={setShowDetallesDonacion}
                           />
@@ -1181,9 +1248,9 @@ const PanelAdminAcopio: React.FC = () => {
                     <h6 className="text-muted">No se encontraron ítems en el inventario con los filtros actuales.</h6>
                   </div>
                 ) : (
-                  <div className="table-responsive">
+                  <div className="table-responsive" style={{ maxHeight: 'calc(100vh - 450px)', overflowY: 'auto' }}>
                     <Table className="modern-table w-100" hover borderless>
-                      <thead>
+                      <thead style={{ position: 'sticky', top: 0, backgroundColor: '#fff', zIndex: 1, boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
                         <tr>
                           <th>Recurso / Subcategoría</th>
                           <th>Volumen Disponible</th>
@@ -1235,6 +1302,8 @@ const PanelAdminAcopio: React.FC = () => {
                           estadoOptions={necEstadoOptions}
                           categoriaOptions={necCategoriaOptions}
                           subcategoriaOptions={necSubcategoriaOptions}
+                          showCoordinador={true}
+                          showFechas={true}
                         />
                       </div>
                     </Collapse>
@@ -1246,13 +1315,14 @@ const PanelAdminAcopio: React.FC = () => {
                       </div>
                     ) : (
                       <>
-                        <div className="table-responsive">
+                        <div className="table-responsive" style={{ maxHeight: 'calc(100vh - 450px)', overflowY: 'auto' }}>
                           <Table className="modern-table w-100 mb-0" hover borderless style={{ minWidth: '600px' }}>
-                            <thead>
+                            <thead style={{ position: 'sticky', top: 0, backgroundColor: '#fff', zIndex: 1, boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
                               <tr>
                                 <th>ID</th>
+                                <th>Coordinador</th>
                                 <th>Emergencia</th>
-                                <th>Recurso Requerido</th>
+                                <th>Cantidad de tipos de Recursos</th>
                                 <th>Cantidad</th>
                                 <th>Comuna</th>
                                 <th>Estado</th>
@@ -1264,6 +1334,7 @@ const PanelAdminAcopio: React.FC = () => {
                                 <NecesidadActivaRow
                                   key={nec.id}
                                   nec={nec}
+                                  getDonanteName={getDonanteName}
                                   centrarMapa={centrarMapa}
                                   setNecesidadSeleccionada={setNecesidadSeleccionada}
                                   setShowNecesidadModal={setShowNecesidadModal}
@@ -1334,6 +1405,8 @@ const PanelAdminAcopio: React.FC = () => {
                       estadoOptions={necHistorialEstadoOptions}
                       categoriaOptions={necHistorialCategoriaOptions}
                       subcategoriaOptions={necHistorialSubcategoriaOptions}
+                      showCoordinador={true}
+                      showFechas={true}
                     />
                   </div>
                 </Collapse>
@@ -1346,21 +1419,29 @@ const PanelAdminAcopio: React.FC = () => {
                   </div>
                 ) : (
                   <>
-                    <div className="table-responsive">
+                    <div className="table-responsive" style={{ maxHeight: 'calc(100vh - 450px)', overflowY: 'auto' }}>
                       <Table className="modern-table w-100 mb-0" hover borderless style={{ minWidth: '600px' }}>
-                        <thead>
+                        <thead style={{ position: 'sticky', top: 0, backgroundColor: '#fff', zIndex: 1, boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
                           <tr>
                             <th>Identificador</th>
+                            <th>Coordinador</th>
                             <th>Tipo de Emergencia</th>
-                            <th>Recurso Requerido</th>
+                            <th>Cantidad de tipos de Recursos</th>
                             <th>Cantidad</th>
                             <th>Comuna</th>
                             <th>Estado</th>
+                            <th>Acciones</th>
                           </tr>
                         </thead>
                         <tbody>
                           {paginatedNecesidadesCubiertas.map(nec => (
-                            <NecesidadCubiertaRow key={nec.id} nec={nec} />
+                            <NecesidadCubiertaRow 
+                              key={nec.id} 
+                              nec={nec} 
+                              getDonanteName={getDonanteName} 
+                              setNecesidadDetalle={setNecesidadDetalle}
+                              setShowDetallesNecesidad={setShowDetallesNecesidad}
+                            />
                           ))}
                         </tbody>
                       </Table>

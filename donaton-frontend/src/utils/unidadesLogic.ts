@@ -333,17 +333,65 @@ const flattenPallets = (item: any, rawCantidad: number, subcategoria: string) =>
   const envases = Number(item.cantidadEnvasePallet || 1);
   if (item.tipoEnvasePallet === 'Cajas') {
     return flattenPalletCajas(item, rawCantidad, envases, subcategoria);
-  } else if (item.tipoEnvasePallet === 'Sacos' && item.pesoPorEnvasePallet) {
-    return { finalCantidad: rawCantidad * envases * Number(item.pesoPorEnvasePallet), finalUnidad: 'Kilogramos' };
+  } else if (item.tipoEnvasePallet === 'Sacos') {
+    if (item.pesoPorEnvasePallet) {
+      return { finalCantidad: rawCantidad * Number(item.cantidadEnvasePallet) * Number(item.pesoPorEnvasePallet), finalUnidad: 'Kilogramos' };
+    }
+    if (item.unidadesPorEnvasePallet) {
+      return { finalCantidad: rawCantidad * Number(item.cantidadEnvasePallet) * Number(item.unidadesPorEnvasePallet), finalUnidad: 'Unidades' };
+    }
+    return { finalCantidad: rawCantidad * Number(item.cantidadEnvasePallet), finalUnidad: 'Unidades' };
   } else if (item.tipoEnvasePallet === 'Paquetes') {
     if (['Frutas', 'Verduras', 'Panadería'].includes(subcategoria) && item.pesoPorEnvasePallet) {
       return { finalCantidad: rawCantidad * envases * Number(item.pesoPorEnvasePallet), finalUnidad: 'Kilogramos' };
     }
-    return { finalCantidad: rawCantidad * envases * Number(item.unidadesPorEnvasePallet), finalUnidad: subcategoria === 'Huevos' ? 'Bandejas' : 'Unidades' };
+    return { finalCantidad: rawCantidad * envases * Number(item.unidadesPorEnvasePallet || 1), finalUnidad: subcategoria === 'Huevos' ? 'Bandejas' : 'Unidades' };
   } else if (item.tipoEnvasePallet === 'Bandejas' && item.unidadesPorEnvasePallet) {
     return { finalCantidad: rawCantidad * envases * Number(item.unidadesPorEnvasePallet), finalUnidad: 'Bandejas' };
   }
   return { finalCantidad: rawCantidad * envases, finalUnidad: item.tipoEnvasePallet === 'Bandejas' ? 'Bandejas' : 'Unidades' };
+};
+
+export interface UnidadInfo {
+  finalCantidad: number;
+  finalUnidad: string;
+}
+
+// Helper temporal para corregir la codificación de la BD (Mojibake y Unicode escape)
+export const fixEncoding = (text: string | null | undefined): string => {
+  if (!text) return text || '';
+  return text
+    // JSON escapes
+    .replaceAll('u00e1', 'á')
+    .replaceAll('u00e9', 'é')
+    .replaceAll('u00ed', 'í')
+    .replaceAll('u00f3', 'ó')
+    .replaceAll('u00fa', 'ú')
+    .replaceAll('u00f1', 'ñ')
+    .replaceAll('u00c1', 'Á')
+    .replaceAll('u00c9', 'É')
+    .replaceAll('u00cd', 'Í')
+    .replaceAll('u00d3', 'Ó')
+    .replaceAll('u00da', 'Ú')
+    .replaceAll('u00d1', 'Ñ')
+    // Mojibake
+    .replaceAll('Ã¡', 'á')
+    .replaceAll('Ã©', 'é')
+    .replaceAll('Ã³', 'ó')
+    .replaceAll('Ãº', 'ú')
+    .replaceAll('Ã±', 'ñ')
+    .replaceAll('Ã', 'í'); // General fallback
+};
+
+export const fixEncodingObject = <T extends Record<string, any>>(obj: T): T => {
+  if (!obj) return obj;
+  const newObj = { ...obj };
+  for (const key in newObj) {
+    if (typeof newObj[key] === 'string') {
+      (newObj as any)[key] = fixEncoding((newObj as any)[key]);
+    }
+  }
+  return newObj;
 };
 
 export function flattenResourceUnit(item: any, rawCantidad: number): { finalCantidad: number, finalUnidad: string } {
@@ -357,6 +405,9 @@ export function flattenResourceUnit(item: any, rawCantidad: number): { finalCant
   if (finalUnidad === 'Sacos') {
     if (item.pesoPorSaco) {
       return { finalCantidad: rawCantidad * Number(item.pesoPorSaco), finalUnidad: 'Kilogramos' };
+    }
+    if (item.unidadesPorSaco) {
+      return { finalCantidad: rawCantidad * Number(item.unidadesPorSaco), finalUnidad: 'Unidades' };
     }
     return { finalCantidad: rawCantidad, finalUnidad: 'Unidades' };
   }

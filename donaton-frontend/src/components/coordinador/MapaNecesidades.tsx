@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import { Table, Container, Alert, Row, Col, Card, Badge, Button, Nav, Pagination, Form } from 'react-bootstrap';
+import { Table, Container, Alert, Row, Col, Card, Badge, Button, Nav, Form, Modal } from 'react-bootstrap';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { obtenerNecesidades } from '../../services/bffService';
 import type { Necesidad } from '../../services/bffService';
 import { useAuth } from '../../context/AuthContext';
+import { RecursosDetalleTable } from '../common/RecursosDetalleTable';
 
 import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png';
 import iconUrl from 'leaflet/dist/images/marker-icon.png';
@@ -107,8 +108,11 @@ const MapaNecesidades: React.FC = () => {
   const [mapCenter, setMapCenter] = useState<[number, number] | null>(null);
   const [tab, setTab] = useState<'activas' | 'cubiertas'>('activas');
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(4);
   const [filtroComuna, setFiltroComuna] = useState<string>('');
   const [filtroCategoria, setFiltroCategoria] = useState<string>('');
+  const [showDetallesModal, setShowDetallesModal] = useState<boolean>(false);
+  const [necesidadSeleccionada, setNecesidadSeleccionada] = useState<Necesidad | null>(null);
 
   useEffect(() => { setPage(1); }, [tab, filtroComuna, filtroCategoria]);
 
@@ -218,50 +222,19 @@ const MapaNecesidades: React.FC = () => {
     ? [usuario.latitud, usuario.longitud] 
     : [-33.4489, -70.6693];
 
-  const renderHistorial = () => (
-    <>
-      <div className="table-responsive shadow-sm" style={{ borderRadius: '12px' }}>
-        <Table hover className="mb-0 bg-white small" style={{ borderRadius: '12px', overflow: 'hidden' }}>
-          <thead className="table-light">
-            <tr>
-              <th>Emergencia</th>
-              <th>Comuna</th>
-              <th>Fecha</th>
-              <th>Mapa</th>
-            </tr>
-          </thead>
-          <tbody>
-            {necesidadesFiltradas.slice((page - 1) * 6, page * 6).map(n => (
-              <tr key={n.id}>
-                <td className="fw-semibold text-secondary">{n.tipoEmergencia || 'General'}</td>
-                <td>{n.comuna || 'Ubicación Desconocida'}</td>
-                <td className="text-muted">{new Date(n.fechaReporte).toLocaleDateString()}</td>
-                <td>
-                  <Button variant="outline-success" size="sm" onClick={() => setMapCenter([n.latitud, n.longitud])}>📍</Button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-      </div>
-      {Math.ceil(necesidadesFiltradas.length / 6) > 1 && (
-        <Pagination size="sm" className="justify-content-center mt-3">
-          <Pagination.Prev onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} />
-          {Array.from({ length: Math.ceil(necesidadesFiltradas.length / 6) }).map((_, i) => (
-            <Pagination.Item key={i + 1} active={page === i + 1} onClick={() => setPage(i + 1)}>
-              {i + 1}
-            </Pagination.Item>
-          ))}
-          <Pagination.Next onClick={() => setPage(p => Math.min(Math.ceil(necesidadesFiltradas.length / 6), p + 1))} disabled={page === Math.ceil(necesidadesFiltradas.length / 6)} />
-        </Pagination>
-      )}
-    </>
-  );
+  const renderListaNecesidades = () => {
+    const totalItems = necesidadesFiltradas.length;
+    const totalPages = Math.ceil(totalItems / pageSize) || 1;
+    const startIndex = (page - 1) * pageSize;
+    const displayedItems = necesidadesFiltradas.slice(startIndex, startIndex + pageSize);
 
-  const renderActivas = () => necesidadesFiltradas.map(n => {
-    const esGrave = n.tipoEmergencia?.toLowerCase().includes('incendio') || 
-                    n.tipoEmergencia?.toLowerCase().includes('inundacion') || 
-                    n.tipoEmergencia?.toLowerCase().includes('terremoto');
+    return (
+      <div className="d-flex flex-column h-100" style={{ minHeight: 0, flex: 1 }}>
+        <div className="d-flex flex-column gap-3" style={{ overflowY: 'auto', paddingRight: '5px', flex: 1, minHeight: 0 }}>
+          {displayedItems.map(n => {
+            const esGrave = n.tipoEmergencia?.toLowerCase().includes('incendio') || 
+                            n.tipoEmergencia?.toLowerCase().includes('inundacion') || 
+                            n.tipoEmergencia?.toLowerCase().includes('terremoto');
     
     let distanciaStr = '';
     if (usuario?.latitud && usuario?.longitud && n.latitud && n.longitud) {
@@ -272,36 +245,109 @@ const MapaNecesidades: React.FC = () => {
       distanciaStr = (distM / 1000).toFixed(1) + ' km';
     }
 
+    const isCubierta = n.estado === 'Cubierta';
+    let borderColor = esGrave ? '#dc3545' : '#0d6efd';
+    if (isCubierta) borderColor = '#198754';
+    
+    let badgeBg = "primary";
+    if (isCubierta) badgeBg = "success";
+    else if (esGrave) badgeBg = "danger";
+
     return (
-      <Card key={n.id} className="mb-3 shadow-sm border-0" style={{ borderRadius: '12px', borderLeft: esGrave ? '4px solid #dc3545' : '4px solid #0d6efd' }}>
+      <Card key={n.id} className="mb-3 shadow-sm border-0 flex-shrink-0" style={{ borderRadius: '12px', borderLeft: `4px solid ${borderColor}` }}>
         <Card.Body>
           <div className="d-flex justify-content-between align-items-start mb-2">
-            <Badge bg={esGrave ? "danger" : "primary"} className="rounded-pill px-3 py-2">
+            <Badge bg={badgeBg} className="rounded-pill px-3 py-2">
               {n.tipoEmergencia || 'General'}
             </Badge>
-            {n.comuna && <Badge bg="light" text="dark" className="border px-2 py-1">{n.comuna}</Badge>}
             {distanciaStr && <small className="text-muted fw-semibold">📍 a {distanciaStr}</small>}
           </div>
-          <Card.Text className="mb-2 fw-semibold text-dark">
-            {renderRecursos(n.recursos)}
+          <div className="mb-2 d-flex align-items-center gap-2">
+            <span className="fw-semibold text-dark" style={{ fontSize: '0.9rem' }}>Recursos solicitados:</span>
+            <Badge bg="primary" pill>
+              {parseRecursos(n.recursos).length} Tipos
+            </Badge>
+          </div>
+          <Card.Text className="mb-2 text-muted small">
+            📍 {n.direccion || n.comuna || 'Ubicación no especificada'}
           </Card.Text>
           <div className="d-flex justify-content-between align-items-center mt-3">
             <small className="text-muted">
               ⏱️ {new Date(n.fechaReporte).toLocaleDateString()}
             </small>
-            <Button 
-              variant="outline-secondary" 
-              size="sm" 
-              style={{ borderRadius: '8px' }}
-              onClick={() => setMapCenter([n.latitud, n.longitud])}
-            >
-              Ver en mapa
-            </Button>
+            <div className="d-flex gap-2">
+              <Button 
+                variant="outline-info" 
+                size="sm" 
+                style={{ borderRadius: '8px' }}
+                onClick={() => {
+                  setNecesidadSeleccionada(n);
+                  setShowDetallesModal(true);
+                }}
+              >
+                Detalles
+              </Button>
+              <Button 
+                variant="outline-secondary" 
+                size="sm" 
+                style={{ borderRadius: '8px' }}
+                onClick={() => setMapCenter([n.latitud, n.longitud])}
+              >
+                Ver en mapa
+              </Button>
+            </div>
           </div>
         </Card.Body>
       </Card>
-    );
-  });
+      );
+    })}
+    </div>
+    
+    <div className="d-flex justify-content-between align-items-center mt-3 pt-3 border-top flex-wrap gap-2">
+      <small className="text-muted">
+        Mostrando {displayedItems.length} de {totalItems} registros
+      </small>
+      <div className="d-flex gap-2 align-items-center">
+        <Form.Select 
+          size="sm" 
+          style={{ width: '80px', borderRadius: '10px' }} 
+          value={pageSize} 
+          onChange={(e) => {
+            setPageSize(Number(e.target.value));
+            setPage(1);
+          }}
+        >
+          <option value="4">4</option>
+          <option value="8">8</option>
+          <option value="12">12</option>
+          <option value="20">20</option>
+        </Form.Select>
+        <div className="d-flex gap-1 align-items-center">
+          <Button 
+            size="sm" 
+            variant="outline-secondary" 
+            disabled={page === 1} 
+            onClick={() => setPage(p => Math.max(1, p - 1))}
+          >
+            Anterior
+          </Button>
+          <span className="text-muted mx-2" style={{ fontSize: '0.85rem' }}>
+            Página <strong>{page}</strong> de <strong>{totalPages}</strong>
+          </span>
+          <Button 
+            size="sm" 
+            variant="outline-primary" 
+            disabled={page >= totalPages} 
+            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+          >
+            Siguiente
+          </Button>
+        </div>
+      </div>
+    </div>
+  </div>
+  );
+  };
 
   const renderListContent = () => {
     if (necesidadesFiltradas.length === 0) {
@@ -312,15 +358,15 @@ const MapaNecesidades: React.FC = () => {
       );
     }
     if (tab === 'cubiertas') {
-      return renderHistorial();
+      return renderListaNecesidades();
     }
-    return renderActivas();
+    return renderListaNecesidades();
   };
 
   return (
     <Container fluid className="mt-0">
       <Row>
-        <Col lg={7} className="mb-4 mb-lg-0" style={{ height: 'calc(100vh - 180px)', overflowY: 'auto' }}>
+        <Col lg={7} className="mb-4 mb-lg-0 d-flex flex-column" style={{ height: 'calc(100vh - 180px)' }}>
           <h4 className="fw-bold mb-3 text-primary">Panel de Alertas</h4>
           
           <Nav variant="pills" className="mb-3 w-100" style={{ gap: '10px' }}>
@@ -416,6 +462,44 @@ const MapaNecesidades: React.FC = () => {
           </Card>
         </Col>
       </Row>
+
+      {/* Modal Detalles */}
+      <Modal show={showDetallesModal} onHide={() => setShowDetallesModal(false)} size="lg" centered>
+        <Modal.Header closeButton className="bg-light">
+          <Modal.Title className="fw-bold">
+            Detalles de la Necesidad #{necesidadSeleccionada?.id}
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {necesidadSeleccionada && (
+            <div className="p-3">
+              <Row className="mb-4">
+                <Col md={6}>
+                  <h6 className="fw-bold text-muted mb-3">Información General</h6>
+                  <p className="mb-2"><strong>Tipo de Emergencia:</strong> {necesidadSeleccionada.tipoEmergencia || 'General'}</p>
+                  <p className="mb-2"><strong>Estado:</strong> <Badge bg="primary">{necesidadSeleccionada.estado?.replace('_', ' ') || 'PENDIENTE'}</Badge></p>
+                  <p className="mb-2"><strong>Fecha de Reporte:</strong> {new Date(necesidadSeleccionada.fechaReporte).toLocaleString()}</p>
+                </Col>
+                <Col md={6}>
+                  <h6 className="fw-bold text-muted mb-3">Ubicación</h6>
+                  <p className="mb-2"><strong>Dirección:</strong> {necesidadSeleccionada.direccion || 'No especificada'}</p>
+                  <p className="mb-2"><strong>Comuna:</strong> {necesidadSeleccionada.comuna || 'No especificada'}</p>
+                  <p className="mb-2"><strong>Coordenadas:</strong> {necesidadSeleccionada.latitud}, {necesidadSeleccionada.longitud}</p>
+                </Col>
+              </Row>
+              <h6 className="fw-bold text-muted mb-3 mt-4">Recursos Solicitados</h6>
+              <div className="bg-light p-3 rounded border">
+                <RecursosDetalleTable recursos={necesidadSeleccionada.recursos || '[]'} />
+              </div>
+            </div>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowDetallesModal(false)}>
+            Cerrar
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </Container>
   );
 };

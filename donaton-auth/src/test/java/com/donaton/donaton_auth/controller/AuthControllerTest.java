@@ -208,18 +208,18 @@ class AuthControllerTest {
     @Test
     void testListarUsuarios() {
         Page<Usuario> page = new PageImpl<>(List.of(usuario));
-        when(usuarioRepository.findByFiltros(any(), any(), any(), any(), any(Pageable.class))).thenReturn(page);
+        when(usuarioRepository.findByFiltros(any(), any(), any(), any(), any(), any(), any(Pageable.class))).thenReturn(page);
 
-        ResponseEntity<Page<Usuario>> response = authController.listarUsuarios(null, null, null, null, 0, 10, "id", "asc");
+        ResponseEntity<Page<Usuario>> response = authController.listarUsuarios(null, null, null, null, null, null, 0, 10, "id", "asc");
         assertEquals(HttpStatus.OK, response.getStatusCode());
     }
 
     @Test
     void testListarUsuarios_Desc() {
         Page<Usuario> page = new PageImpl<>(List.of(usuario));
-        when(usuarioRepository.findByFiltros(any(), any(), any(), any(), any(Pageable.class))).thenReturn(page);
+        when(usuarioRepository.findByFiltros(any(), any(), any(), any(), any(), any(), any(Pageable.class))).thenReturn(page);
 
-        ResponseEntity<Page<Usuario>> response = authController.listarUsuarios(null, null, null, null, 0, 10, "id", "desc");
+        ResponseEntity<Page<Usuario>> response = authController.listarUsuarios(null, null, null, null, null, null, 0, 10, "id", "desc");
         assertEquals(HttpStatus.OK, response.getStatusCode());
     }
 

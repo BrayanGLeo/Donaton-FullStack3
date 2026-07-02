@@ -86,6 +86,9 @@ export const donacionStep1Schema = z.object({
       pesoPorSaco: z.number().or(z.nan()).optional()
         .transform(val => (val === undefined || Number.isNaN(val)) ? undefined : val)
         .pipe(z.number().min(0.01, 'Debe ser mayor a 0').max(50, 'Máximo 50kg').optional()),
+      unidadesPorSaco: z.number().or(z.nan()).optional()
+        .transform(val => (val === undefined || Number.isNaN(val)) ? undefined : val)
+        .pipe(z.number().min(1, 'Debe ser mayor a 0').max(99999, 'Cantidad excesiva').optional()),
       tipoEnvaseCaja: z.string().optional(),
       pesoPorCaja: z.number().or(z.nan()).optional()
         .transform(val => (val === undefined || Number.isNaN(val)) ? undefined : val)

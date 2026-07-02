@@ -1,10 +1,13 @@
 import React from 'react';
-import { Row, Col, Card, Badge, Form, Spinner, Button, Modal, Table } from 'react-bootstrap';
+import { Row, Col, Card, Badge, Form, Spinner, Button, Modal, Table, Collapse } from 'react-bootstrap';
 import Select from 'react-select';
 import { AdminEditUserModal } from './AdminEditUserModal';
 import { AdminUserForm } from './AdminUserForm';
 import type { UsuarioExtended } from './AdminDonacionesView';
 import { actualizarEstadoMasivoUsuarios } from '../../services/usuarioService';
+import { REGIONES_CHILE, COMUNAS_POR_REGION } from '../../utils/chileData';
+
+const regionOptions = REGIONES_CHILE.map(r => ({ value: r, label: r }));
 
 const getRolBadgeColor = (rol: string) => {
   if (rol === 'ADMIN') return 'dark';
@@ -45,12 +48,14 @@ interface AdminUsuariosViewProps {
   usuarios: UsuarioExtended[];
   loadingUsuarios: boolean;
   stats: { total: number; activos: number; donantes: number; logistica: number } | null;
-  filtros: { rol: string; region: string; comuna: string };
-  setFiltros: React.Dispatch<React.SetStateAction<{ rol: string; region: string; comuna: string }>>;
+  filtros: { rol: string; region: string; comuna: string; activo: string };
+  setFiltros: React.Dispatch<React.SetStateAction<{ rol: string; region: string; comuna: string; activo: string }>>;
   pageInfo: { page: number; size: number; totalElements: number; totalPages: number };
   setPageInfo: React.Dispatch<React.SetStateAction<{ page: number; size: number; totalElements: number; totalPages: number }>>;
   searchTerm: string;
   setSearchTerm: React.Dispatch<React.SetStateAction<string>>;
+  searchNameTerm: string;
+  setSearchNameTerm: React.Dispatch<React.SetStateAction<string>>;
   selectedUserIds: number[];
   setSelectedUserIds: React.Dispatch<React.SetStateAction<number[]>>;
   userToDelete: UsuarioExtended | null;
@@ -76,6 +81,8 @@ export const AdminUsuariosView: React.FC<AdminUsuariosViewProps> = ({
   setPageInfo,
   searchTerm,
   setSearchTerm,
+  searchNameTerm,
+  setSearchNameTerm,
   selectedUserIds,
   setSelectedUserIds,
   userToDelete,
@@ -90,6 +97,8 @@ export const AdminUsuariosView: React.FC<AdminUsuariosViewProps> = ({
   rolOptions,
   fetchUsuariosActualizados
 }) => {
+  const [showFiltros, setShowFiltros] = React.useState(false);
+
   return (
     <div>
       <div className="d-flex justify-content-between align-items-center mb-4">
@@ -136,40 +145,84 @@ export const AdminUsuariosView: React.FC<AdminUsuariosViewProps> = ({
       <Card className="border-0 shadow-sm mb-4" style={{ borderRadius: '16px' }}>
         <Card.Body className="p-3">
           <Row className="g-2">
-            <Col md={3}>
-              <Form.Control
-                type="text"
-                placeholder="Región"
-                value={filtros.region}
-                onChange={e => setFiltros(prev => ({ ...prev, region: e.target.value, page: 0 }))}
-              />
-            </Col>
-            <Col md={3}>
-              <Form.Control
-                type="text"
-                placeholder="Comuna"
-                value={filtros.comuna}
-                onChange={e => setFiltros(prev => ({ ...prev, comuna: e.target.value, page: 0 }))}
-              />
-            </Col>
-            <Col md={3}>
-              <Select
-                options={rolOptions}
-                value={rolOptions.find(o => o.value === filtros.rol)}
-                onChange={o => setFiltros(prev => ({ ...prev, rol: o?.value || '', page: 0 }))}
-                placeholder="Filtrar por Rol"
-                isClearable
-              />
-            </Col>
-            <Col md={3}>
+            <Col md={5}>
               <Form.Control
                 type="text"
                 placeholder="Buscar por RUT..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setPageInfo(prev => ({ ...prev, page: 0 }));
+                }}
               />
             </Col>
+            <Col md={5}>
+              <Form.Control
+                type="text"
+                placeholder="Buscar por Nombre o Razón Social..."
+                value={searchNameTerm}
+                onChange={(e) => {
+                  setSearchNameTerm(e.target.value);
+                  setPageInfo(prev => ({ ...prev, page: 0 }));
+                }}
+              />
+            </Col>
+            <Col md={2}>
+              <Button 
+                variant="outline-secondary" 
+                className="w-100 d-flex align-items-center justify-content-center gap-2"
+                onClick={() => setShowFiltros(!showFiltros)}
+              >
+                <span>Filtros</span>
+                <span style={{ fontSize: '0.8rem' }}>{showFiltros ? '▲' : '▼'}</span>
+              </Button>
+            </Col>
           </Row>
+
+          <Collapse in={showFiltros}>
+            <div className="mt-3">
+              <Row className="g-2">
+                <Col md={3}>
+                  <Select
+                    options={regionOptions}
+                    value={regionOptions.find(o => o.value === filtros.region) || null}
+                    onChange={o => setFiltros(prev => ({ ...prev, region: o?.value || '', comuna: '', page: 0 }))}
+                    placeholder="Filtrar por Región"
+                    isClearable
+                  />
+                </Col>
+                <Col md={3}>
+                  <Select
+                    options={filtros.region && COMUNAS_POR_REGION[filtros.region] ? COMUNAS_POR_REGION[filtros.region].map(c => ({ value: c, label: c })) : []}
+                    value={filtros.region && COMUNAS_POR_REGION[filtros.region] ? COMUNAS_POR_REGION[filtros.region].map(c => ({ value: c, label: c })).find(o => o.value === filtros.comuna) || null : null}
+                    onChange={o => setFiltros(prev => ({ ...prev, comuna: o?.value || '', page: 0 }))}
+                    placeholder="Filtrar por Comuna"
+                    isClearable
+                    isDisabled={!filtros.region}
+                  />
+                </Col>
+                <Col md={3}>
+                  <Select
+                    options={rolOptions}
+                    value={rolOptions.find(o => o.value === filtros.rol)}
+                    onChange={o => setFiltros(prev => ({ ...prev, rol: o?.value || '', page: 0 }))}
+                    placeholder="Filtrar por Rol"
+                    isClearable
+                  />
+                </Col>
+                <Col md={3}>
+                  <Form.Select
+                    value={filtros.activo}
+                    onChange={e => setFiltros(prev => ({ ...prev, activo: e.target.value, page: 0 }))}
+                  >
+                    <option value="">Todas las Cuentas</option>
+                    <option value="true">Cuentas Activas</option>
+                    <option value="false">Cuentas Desactivadas</option>
+                  </Form.Select>
+                </Col>
+              </Row>
+            </div>
+          </Collapse>
         </Card.Body>
       </Card>
 
@@ -184,8 +237,9 @@ export const AdminUsuariosView: React.FC<AdminUsuariosViewProps> = ({
         </div>
       )}
 
-      <Card className="border-0 shadow-sm" style={{ borderRadius: '16px', overflow: 'hidden' }}>
-        <Table hover responsive className="align-middle mb-0">
+      <Card className="border-0 shadow-sm d-flex flex-column" style={{ borderRadius: '16px', overflow: 'hidden', height: 'calc(100vh - 460px)' }}>
+        <div style={{ overflowY: 'auto', flex: 1 }}>
+          <Table hover responsive className="align-middle mb-0">
           <thead style={{ backgroundColor: '#f8f9ff' }}>
             <tr>
               <th className="py-3 px-4" style={{ width: '40px' }}>
@@ -251,23 +305,27 @@ export const AdminUsuariosView: React.FC<AdminUsuariosViewProps> = ({
             ))}
           </tbody>
         </Table>
-      </Card>
+        </div>
 
-      {/* Pagination */}
-      <div className="d-flex justify-content-between align-items-center mt-4 mb-2">
+        {/* Pagination */}
+        <div className="d-flex justify-content-between align-items-center p-3 border-top bg-white flex-shrink-0">
         <small className="text-muted">Mostrando {usuarios.length} de {pageInfo.totalElements} registros</small>
         <div className="d-flex gap-2 align-items-center">
           <Form.Select size="sm" style={{ width: '80px', borderRadius: '10px' }} value={pageInfo.size} onChange={(e) => setPageInfo(prev => ({ ...prev, size: Number(e.target.value), page: 0 }))}>
-            <option value="10">10</option>
+            <option value="15">15</option>
             <option value="25">25</option>
             <option value="50">50</option>
           </Form.Select>
-          <div className="d-flex gap-1">
+          <div className="d-flex gap-1 align-items-center">
             <Button size="sm" variant="outline-secondary" disabled={pageInfo.page === 0} onClick={() => setPageInfo(prev => ({ ...prev, page: prev.page - 1 }))}>Anterior</Button>
+            <span className="text-muted mx-2" style={{ fontSize: '0.85rem' }}>
+              Página <strong>{pageInfo.page + 1}</strong> de <strong>{pageInfo.totalPages || 1}</strong>
+            </span>
             <Button size="sm" variant="outline-primary" disabled={pageInfo.page >= pageInfo.totalPages - 1} onClick={() => setPageInfo(prev => ({ ...prev, page: prev.page + 1 }))}>Siguiente</Button>
           </div>
         </div>
       </div>
+      </Card>
 
       {/* Modals */}
       <Modal show={!!userToDelete} onHide={() => setUserToDelete(null)} centered>

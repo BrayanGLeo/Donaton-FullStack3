@@ -756,9 +756,9 @@ describe('Epic 4: Cobertura de Mapa y Filtros Avanzados', () => {
     const tabDonaciones = screen.getAllByRole('button').find(b => b.textContent?.includes('Donaciones') && !b.textContent?.includes('Historial'));
     if (tabDonaciones) fireEvent.click(tabDonaciones);
 
-    // 1. Verificar renderDonacionCategoriaText con array del mismo categoría (Alimentos)
-    expect(screen.getAllByText('Alimentos').length).toBeGreaterThan(0);
-    expect(screen.getByText('Arroz, Fideos')).toBeInTheDocument();
+    // 1. Verificar que las donaciones están en la tabla
+    expect(await screen.findByText('#991')).toBeInTheDocument();
+    expect(await screen.findByText('#992')).toBeInTheDocument();
 
     // 2. Select de conductores en la fila (onChange en Select)
       // Wait for table rows to render
@@ -799,7 +799,7 @@ describe('Epic 4: Cobertura de Mapa y Filtros Avanzados', () => {
     const prevBtn = screen.queryByRole('button', { name: /Previous|Anterior/i });
     if (prevBtn) fireEvent.click(prevBtn);
     
-    expect(screen.getAllByText('Alimentos').length).toBeGreaterThan(0); // Muestra todos los elementos nuevamente
+    expect(await screen.findByText('#991')).toBeInTheDocument(); // Muestra todos los elementos nuevamente
 
     // 5. Pestaña de Inventario y sus filtros
     const inventarioTab = screen.getAllByRole('button').find(b => b.textContent?.includes('Inventario'));

@@ -68,7 +68,7 @@ class AuthProxyControllerTest {
 
     @Test
     void testObtenerUsuarios() throws Exception {
-        when(authClient.obtenerUsuarios(isNull(), isNull(), isNull(), isNull(), eq(0), eq(10), eq("id"), eq("asc")))
+        when(authClient.obtenerUsuarios(isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), eq(0), eq(10), eq("id"), eq("asc")))
                 .thenReturn(ResponseEntity.ok().build());
 
         mockMvc.perform(get("/api/auth/usuarios"))

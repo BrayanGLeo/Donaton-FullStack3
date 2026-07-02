@@ -254,7 +254,7 @@ describe('Epic 2: Control y Validación de Donaciones', () => {
 
     const estadoLabel = screen.getByText(/^Estado/);
     const estadoSelect = estadoLabel.parentElement?.querySelector('select') as HTMLSelectElement;
-    fireEvent.change(estadoSelect, { target: { value: 'Buen Estado' } });
+    fireEvent.change(estadoSelect, { target: { value: 'Usado - Buen Estado' } });
 
     const unidadMedidaLabel = screen.getByText(/^Formato de Entrega/);
     const unidadMedida = unidadMedidaLabel.parentElement?.querySelector('select') as HTMLSelectElement;
@@ -427,7 +427,7 @@ describe('Epic 2: Control y Validación de Donaciones', () => {
     fireEvent.change(subCatSelect, { target: { value: 'Martillo' } });
     await waitFor(() => expect(screen.getByText(/^Estado/)).toBeInTheDocument());
     const estadoSelect = screen.getByText(/^Estado/).parentElement?.querySelector('select') as HTMLSelectElement;
-    fireEvent.change(estadoSelect, { target: { value: 'Buen Estado' } });
+    fireEvent.change(estadoSelect, { target: { value: 'Usado - Buen Estado' } });
     const unidadSelect = screen.getByText(/^Formato de Entrega/).parentElement?.querySelector('select') as HTMLSelectElement;
     fireEvent.change(unidadSelect, { target: { value: 'Unidades' } });
     const cantidadInput = screen.getByText(/^Cantidad/).parentElement?.querySelector('input') as HTMLInputElement;
@@ -443,7 +443,7 @@ describe('Epic 2: Control y Validación de Donaciones', () => {
     fireEvent.change(subCatSelect2, { target: { value: 'Palas' } });
     await waitFor(() => expect(screen.getByText(/^Estado/)).toBeInTheDocument());
     const estadoSelect2 = screen.getByText(/^Estado/).parentElement?.querySelector('select') as HTMLSelectElement;
-    fireEvent.change(estadoSelect2, { target: { value: 'Buen Estado' } });
+    fireEvent.change(estadoSelect2, { target: { value: 'Usado - Buen Estado' } });
     const unidadSelect2 = screen.getByText(/^Formato de Entrega/).parentElement?.querySelector('select') as HTMLSelectElement;
     fireEvent.change(unidadSelect2, { target: { value: 'Unidades' } });
     const cantidadInput2 = screen.getByText(/^Cantidad/).parentElement?.querySelector('input') as HTMLInputElement;
@@ -465,7 +465,7 @@ describe('Epic 2: Control y Validación de Donaciones', () => {
 
     await waitFor(() => expect(screen.getByText(/^Estado/)).toBeInTheDocument());
     const estadoSelect = screen.getByText(/^Estado/).parentElement?.querySelector('select') as HTMLSelectElement;
-    fireEvent.change(estadoSelect, { target: { value: 'Buen Estado' } });
+    fireEvent.change(estadoSelect, { target: { value: 'Usado - Buen Estado' } });
 
     const unidadSelect = screen.getByText(/^Formato de Entrega/).parentElement?.querySelector('select') as HTMLSelectElement;
     fireEvent.change(unidadSelect, { target: { value: 'Unidades' } });
@@ -597,7 +597,7 @@ describe('Epic 2: Control y Validación de Donaciones', () => {
 
     const estadoLabel = screen.getByText(/^Estado/);
     const estadoSelect = estadoLabel.parentElement?.querySelector('select') as HTMLSelectElement;
-    fireEvent.change(estadoSelect, { target: { value: 'Buen Estado' } });
+    fireEvent.change(estadoSelect, { target: { value: 'Usado - Buen Estado' } });
 
     const unidadMedidaLabel = screen.getByText(/^Formato de Entrega/);
     const unidadMedida = unidadMedidaLabel.parentElement?.querySelector('select') as HTMLSelectElement;
@@ -739,7 +739,7 @@ describe('Epic 2: Control y Validación de Donaciones', () => {
 
     await waitFor(() => expect(screen.getByText(/^Estado/)).toBeInTheDocument());
     const estadoSelect = screen.getByText(/^Estado/).parentElement?.querySelector('select') as HTMLSelectElement;
-    fireEvent.change(estadoSelect, { target: { value: 'Buen Estado' } });
+    fireEvent.change(estadoSelect, { target: { value: 'Usado - Buen Estado' } });
 
     const unidadSelect = screen.getByText(/^Formato de Entrega/).parentElement?.querySelector('select') as HTMLSelectElement;
     fireEvent.change(unidadSelect, { target: { value: 'Unidades' } });
@@ -1156,7 +1156,7 @@ describe('Epic 2: Control y Validación de Donaciones', () => {
     const estadoLabels = screen.getAllByText(/^Estado/);
     const estadoSelect = estadoLabels[0].parentElement?.querySelector('select') as HTMLSelectElement;
     expect(estadoSelect).toBeTruthy();
-    fireEvent.change(estadoSelect, { target: { value: 'Buen Estado' } });
+    fireEvent.change(estadoSelect, { target: { value: 'Usado - Buen Estado' } });
 
     // Formato de Entrega should be enabled since subCategoria is set ('Poleras')
     const allUnidadMedida = screen.getByText(/^Formato de Entrega/).parentElement?.querySelectorAll('select');
