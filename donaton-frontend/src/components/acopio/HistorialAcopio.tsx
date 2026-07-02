@@ -346,10 +346,22 @@ const HistorialAcopio: React.FC = () => {
                             totalItems = recs.reduce((s: number, r: any) => s + flattenResourceUnit(r, r.cantidad || 0).finalCantidad, 0);
                             unidadLabel = flattenResourceUnit(recs[0], recs[0].cantidad || 0).finalUnidad.toLowerCase();
                             
+                            const formatSubcategory = (r: any) => {
+                              const base = r.subCategoria || r.subcategoria || '';
+                              if (!base) return '';
+                              const attrs = [];
+                              if (r.genero) attrs.push(r.genero);
+                              if (r.talla) attrs.push(r.talla);
+                              if (r.tamano) attrs.push(r.tamano);
+                              if (r.etapa) attrs.push(r.etapa);
+                              
+                              return attrs.length > 0 ? `${base} (${attrs.join('-')})` : base;
+                            };
+
                             const categoriasMap = new Map<string, Set<string>>();
                             recs.forEach((r: any) => {
                                 const c = r.categoria || 'Otros';
-                                const s = r.subCategoria || r.subcategoria || '';
+                                const s = formatSubcategory(r);
                                 if (!categoriasMap.has(c)) {
                                     categoriasMap.set(c, new Set());
                                 }

@@ -333,13 +333,19 @@ const flattenPallets = (item: any, rawCantidad: number, subcategoria: string) =>
   const envases = Number(item.cantidadEnvasePallet || 1);
   if (item.tipoEnvasePallet === 'Cajas') {
     return flattenPalletCajas(item, rawCantidad, envases, subcategoria);
-  } else if (item.tipoEnvasePallet === 'Sacos' && item.pesoPorEnvasePallet) {
-    return { finalCantidad: rawCantidad * envases * Number(item.pesoPorEnvasePallet), finalUnidad: 'Kilogramos' };
+  } else if (item.tipoEnvasePallet === 'Sacos') {
+    if (item.pesoPorEnvasePallet) {
+      return { finalCantidad: rawCantidad * Number(item.cantidadEnvasePallet) * Number(item.pesoPorEnvasePallet), finalUnidad: 'Kilogramos' };
+    }
+    if (item.unidadesPorEnvasePallet) {
+      return { finalCantidad: rawCantidad * Number(item.cantidadEnvasePallet) * Number(item.unidadesPorEnvasePallet), finalUnidad: 'Unidades' };
+    }
+    return { finalCantidad: rawCantidad * Number(item.cantidadEnvasePallet), finalUnidad: 'Unidades' };
   } else if (item.tipoEnvasePallet === 'Paquetes') {
     if (['Frutas', 'Verduras', 'Panadería'].includes(subcategoria) && item.pesoPorEnvasePallet) {
       return { finalCantidad: rawCantidad * envases * Number(item.pesoPorEnvasePallet), finalUnidad: 'Kilogramos' };
     }
-    return { finalCantidad: rawCantidad * envases * Number(item.unidadesPorEnvasePallet), finalUnidad: subcategoria === 'Huevos' ? 'Bandejas' : 'Unidades' };
+    return { finalCantidad: rawCantidad * envases * Number(item.unidadesPorEnvasePallet || 1), finalUnidad: subcategoria === 'Huevos' ? 'Bandejas' : 'Unidades' };
   } else if (item.tipoEnvasePallet === 'Bandejas' && item.unidadesPorEnvasePallet) {
     return { finalCantidad: rawCantidad * envases * Number(item.unidadesPorEnvasePallet), finalUnidad: 'Bandejas' };
   }
@@ -357,6 +363,9 @@ export function flattenResourceUnit(item: any, rawCantidad: number): { finalCant
   if (finalUnidad === 'Sacos') {
     if (item.pesoPorSaco) {
       return { finalCantidad: rawCantidad * Number(item.pesoPorSaco), finalUnidad: 'Kilogramos' };
+    }
+    if (item.unidadesPorSaco) {
+      return { finalCantidad: rawCantidad * Number(item.unidadesPorSaco), finalUnidad: 'Unidades' };
     }
     return { finalCantidad: rawCantidad, finalUnidad: 'Unidades' };
   }

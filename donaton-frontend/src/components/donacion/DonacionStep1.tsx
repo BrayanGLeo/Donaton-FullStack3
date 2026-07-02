@@ -39,6 +39,7 @@ const INITIAL_TEMP_RECURSO = {
   litros: '',
   unidadesPorEnvase: '',
   pesoPorSaco: '',
+  unidadesPorSaco: '',
   tipoEnvaseCaja: '',
   pesoPorCaja: '',
   tipoEnvasePallet: '',
@@ -156,8 +157,13 @@ const checkUnidadCantidad = (tempRecurso: typeof INITIAL_TEMP_RECURSO, errs: Rec
     validatePallets(tempRecurso, errs);
   }
 
-  if (tempRecurso.unidadMedida === 'Sacos' && !tempRecurso.pesoPorSaco) {
-    errs.pesoPorSaco = "Indique el peso aproximado de cada saco (en kg)";
+  if (tempRecurso.unidadMedida === 'Sacos') {
+    const isSacoKg = ["Alimentos", "Alimentos imperecederos", "Materiales de Construcción", "Alimentos para Mascotas", "Insumos Agrícolas"].includes(tempRecurso.categoria) || ["Frutas", "Verduras", "Panadería"].includes(tempRecurso.subCategoria);
+    if (isSacoKg && !tempRecurso.pesoPorSaco) {
+      errs.pesoPorSaco = "Indique el peso aproximado de cada saco (en kg)";
+    } else if (!isSacoKg && !tempRecurso.unidadesPorSaco) {
+      errs.unidadesPorSaco = "Indique la cantidad de unidades por saco";
+    }
   }
 
   checkFormatosEspeciales(tempRecurso, errs);
@@ -297,6 +303,7 @@ export const DonacionStep1: React.FC = () => {
       litros: tempRecurso.litros || undefined,
       unidadesPorEnvase: tempRecurso.unidadesPorEnvase ? Number(tempRecurso.unidadesPorEnvase) : undefined,
       pesoPorSaco: tempRecurso.pesoPorSaco ? Number(tempRecurso.pesoPorSaco) : undefined,
+      unidadesPorSaco: tempRecurso.unidadesPorSaco ? Number(tempRecurso.unidadesPorSaco) : undefined,
       tipoEnvaseCaja: tempRecurso.tipoEnvaseCaja || undefined,
       pesoPorCaja: tempRecurso.pesoPorCaja ? Number(tempRecurso.pesoPorCaja) : undefined,
       tipoEnvasePallet: tempRecurso.tipoEnvasePallet || undefined,
@@ -664,9 +671,9 @@ export const DonacionStep1: React.FC = () => {
                     }}
                   >
                     <option value="">Selecciona una opción</option>
-                    <option value="Nuevo">Nuevo (Sin abrir/Sin uso)</option>
-                    <option value="Buen Estado">Buen Estado (Usado pero funcional)</option>
-                    <option value="Para Reparar">Para Reparar (Requiere arreglos menores)</option>
+                    <option value="Nuevo">Nuevo</option>
+                    <option value="Usado - Buen Estado">Usado - Buen Estado</option>
+                    <option value="Usado - Desgaste Visible">Usado - Desgaste Visible pero Funcional</option>
                   </Form.Select>
                   <Form.Control.Feedback type="invalid">{localErrors.estadoArticulo}</Form.Control.Feedback>
                 </Form.Group>
@@ -867,24 +874,46 @@ export const DonacionStep1: React.FC = () => {
             <Row>
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Label className="fw-semibold small">Peso por Saco (Kg) <span className="text-danger">*</span></Form.Label>
-                  <Form.Control
-                    type="number" step="any" min="1" max={25}
-                    placeholder="Ej: 25"
-                    value={tempRecurso.pesoPorSaco}
-                    isInvalid={!!localErrors.pesoPorSaco}
-                    onKeyDown={(e) => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (val === '' || (Number(val) >= 0 && Number(val) <= 25 && val.length <= 5)) {
-                        setTempRecurso({ ...tempRecurso, pesoPorSaco: val });
-                      }
-                    }}
-                  />
-                  <Form.Text className="text-muted d-block mt-1">
-                    <small>Máximo 25 kg (Ley 20.949)</small>
-                  </Form.Text>
-                  <Form.Control.Feedback type="invalid">{localErrors.pesoPorSaco}</Form.Control.Feedback>
+                  {(["Alimentos", "Alimentos imperecederos", "Materiales de Construcción", "Alimentos para Mascotas", "Insumos Agrícolas"].includes(tempRecurso.categoria) || ["Frutas", "Verduras", "Panadería"].includes(tempRecurso.subCategoria)) ? (
+                    <>
+                      <Form.Label className="fw-semibold small">Peso por Saco (Kg) <span className="text-danger">*</span></Form.Label>
+                      <Form.Control
+                        type="number" step="any" min="1" max={25}
+                        placeholder="Ej: 25"
+                        value={tempRecurso.pesoPorSaco}
+                        isInvalid={!!localErrors.pesoPorSaco}
+                        onKeyDown={(e) => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === '' || (Number(val) >= 0 && Number(val) <= 25 && val.length <= 5)) {
+                            setTempRecurso({ ...tempRecurso, pesoPorSaco: val });
+                          }
+                        }}
+                      />
+                      <Form.Text className="text-muted d-block mt-1">
+                        <small>Máximo 25 kg (Ley 20.949)</small>
+                      </Form.Text>
+                      <Form.Control.Feedback type="invalid">{localErrors.pesoPorSaco}</Form.Control.Feedback>
+                    </>
+                  ) : (
+                    <>
+                      <Form.Label className="fw-semibold small">Unidades por Saco <span className="text-danger">*</span></Form.Label>
+                      <Form.Control
+                        type="number" min="1"
+                        placeholder="Ej: 50"
+                        value={tempRecurso.unidadesPorSaco}
+                        isInvalid={!!localErrors.unidadesPorSaco}
+                        onKeyDown={(e) => ['e', 'E', '+', '-', '.'].includes(e.key) && e.preventDefault()}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === '' || (Number(val) > 0 && val.length <= 5)) {
+                            setTempRecurso({ ...tempRecurso, unidadesPorSaco: val });
+                          }
+                        }}
+                      />
+                      <Form.Control.Feedback type="invalid">{localErrors.unidadesPorSaco}</Form.Control.Feedback>
+                    </>
+                  )}
                 </Form.Group>
               </Col>
             </Row>
