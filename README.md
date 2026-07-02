@@ -100,14 +100,14 @@ Una vez que todos los proyectos compilen con éxito (`BUILD SUCCESS`), ejecuta e
 > *Tip: Puedes verificar el estado de los contenedores con `docker ps`. El panel de Eureka estará disponible en `http://localhost:8761`. Para detener de manera segura toda la arquitectura, ejecuta `.\stop-all.ps1`.*
 
 ### Paso 2: Inyección de Datos de Prueba (Opcional)
-Para probar el sistema con miles de registros (usuarios, donaciones, centros de acopio y necesidades), hemos desarrollado un script en Python que interactúa directamente con los contenedores.
+Para probar el sistema con miles de registros (usuarios, donaciones, centros de acopio y necesidades), hemos desarrollado un proceso automatizado que genera e inyecta la data en los contenedores.
 
-1. Abre una terminal y dirígete a la carpeta `db-init`.
-2. Ejecuta el script generador (requiere Python 3+):
-   ```bash
-   python generate_seed.py
-   ```
-3. El script automáticamente generará y particionará los archivos `.sql` y los inyectará dentro de los contenedores de Docker correspondientes (`donaton-mysql-auth`, `donaton-mysql-donaciones` y `donaton-mysql-necesidades`) usando `docker exec`.
+Abre una terminal en la raíz del proyecto y ejecuta el siguiente script:
+```powershell
+.\inject-seed.ps1
+```
+
+> **Nota:** Este script borrará los datos actuales de la base de datos (limpiándola), reiniciará los microservicios para regenerar las tablas, generará los datos mediante scripts de Python y los inyectará de forma segura. La contraseña para todos los usuarios de prueba será `admin123`.
 
 ### Paso 3: Iniciar el Frontend
 En una nueva terminal, navega al directorio de la aplicación frontend (ej. `cd donaton-frontend`) y levanta el servidor de desarrollo:
